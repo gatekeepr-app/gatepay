@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import darvizMark from "@/assets/darviz-logomark.png";
 
 type Biz = {
   name: string;
@@ -107,7 +108,11 @@ export function Businesses() {
               <div>
                 <div className="flex items-start justify-between">
                   <div className="text-eyebrow text-background/50">{b.label}</div>
-                  <div className="text-display text-3xl text-background/30">{b.accent}</div>
+                  {b.name === "Darviz Labs" ? (
+                    <img src={darvizMark} alt="Darviz Labs" className="h-10 w-10 object-contain" />
+                  ) : (
+                    <div className="text-display text-3xl text-background/30">{b.accent}</div>
+                  )}
                 </div>
                 <h3 className="text-display mt-8 text-3xl md:text-4xl">{b.name}</h3>
                 <p className="mt-3 text-lg italic text-background/70">{b.tagline}</p>

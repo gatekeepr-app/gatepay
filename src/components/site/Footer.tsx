@@ -1,3 +1,5 @@
+import logo from "@/assets/gatekeepr-logo.png";
+
 const cols = [
   {
     title: "Our businesses",
@@ -24,10 +26,7 @@ export function Footer() {
         <div className="grid grid-cols-2 gap-10 md:grid-cols-6">
           <div className="col-span-2">
             <img src={logo} alt="Gatekeepr" className="h-7 w-auto" />
-          </div>
-          <div className="hidden">
-            <div>
-            <p className="mt-4 max-w-xs text-sm text-muted-foreground">
+            <p className="mt-6 max-w-xs text-sm text-muted-foreground">
               A modern business house — creative, technical and operational
               power for ambitious companies.
             </p>
