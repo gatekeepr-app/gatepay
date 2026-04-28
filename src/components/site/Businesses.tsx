@@ -1,5 +1,6 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import darvizMark from "@/assets/darviz-logomark.png";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 type Biz = {
   name: string;
@@ -7,6 +8,7 @@ type Biz = {
   tagline: string;
   description: string;
   services: string[];
+  focus: string[];
   accent: string;
 };
 
@@ -18,6 +20,11 @@ const businesses: Biz[] = [
     description:
       "Timeline Studios is Gatekeepr's creative and marketing arm — branding, graphic design, motion graphics, video, websites and social media execution for businesses that need a sharper digital presence.",
     services: ["Branding", "Graphic Design", "Motion", "Video", "Websites", "Social"],
+    focus: [
+      "Brand identity systems for founders and challenger brands",
+      "Performance creative and content engines for social",
+      "Editorial websites that double as sales tools",
+    ],
     accent: "TS",
   },
   {
@@ -27,6 +34,11 @@ const businesses: Biz[] = [
     description:
       "Darviz Labs is Gatekeepr's technology and product arm — websites, web apps, internal tools, automations and digital systems for businesses that need stronger technical infrastructure.",
     services: ["Websites", "Web Apps", "Products", "Tools", "Automation", "AI Systems"],
+    focus: [
+      "Custom web apps and internal tools for operating teams",
+      "AI-powered workflows and automation systems",
+      "Product engineering for early-stage and scaling companies",
+    ],
     accent: "DL",
   },
   {
@@ -36,6 +48,11 @@ const businesses: Biz[] = [
     description:
       "Event management, brand activations, launch experiences, campus campaigns and business gatherings — with strong creative direction and operational control.",
     services: ["Events", "Activations", "Launches", "Campus", "Corporate", "Experience"],
+    focus: [
+      "Brand launches and product reveals end-to-end",
+      "Campus and community activation campaigns",
+      "Corporate gatherings with creative direction",
+    ],
     accent: "GE",
   },
   {
@@ -45,12 +62,18 @@ const businesses: Biz[] = [
     description:
       "Helping founders clarify positioning, sharpen offers, plan digital operations and build execution systems before scaling campaigns, products or websites.",
     services: ["Strategy", "Positioning", "Growth", "Operations", "Launch Planning", "Offers"],
+    focus: [
+      "Positioning and offer design for founders",
+      "Go-to-market and launch planning",
+      "Operating systems for marketing and sales",
+    ],
     accent: "GA",
   },
 ];
 
 export function Businesses() {
   const scroller = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState<Biz | null>(null);
 
   const scroll = (dir: 1 | -1) => {
     const el = scroller.current;
@@ -101,7 +124,6 @@ export function Businesses() {
               className="card-hover group relative flex w-[88%] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-3xl bg-foreground p-8 text-background sm:w-[60%] lg:w-[42%] xl:w-[34%]"
               style={{ minHeight: 520 }}
             >
-              {/* Marble accent panel */}
               <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full opacity-[0.08] marble-bg" />
               <div className="pointer-events-none absolute bottom-0 right-0 h-1 w-0 bg-accent transition-all duration-500 group-hover:w-full" />
 
@@ -132,18 +154,94 @@ export function Businesses() {
                     </span>
                   ))}
                 </div>
-                <a
-                  href="#contact"
+                <button
+                  type="button"
+                  onClick={() => setActive(b)}
                   className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-background"
                 >
                   <span className="neon-underline">Learn more</span>
                   <span>→</span>
-                </a>
+                </button>
               </div>
             </article>
           ))}
         </div>
       </div>
+
+      <Dialog open={!!active} onOpenChange={(o) => !o && setActive(null)}>
+        <DialogContent className="max-w-2xl border-border bg-background p-0 sm:rounded-2xl">
+          {active && (
+            <div className="p-8 md:p-10">
+              <DialogHeader className="space-y-3 text-left">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="text-eyebrow text-muted-foreground">{active.label}</div>
+                  {active.name === "Darviz Labs" ? (
+                    <img src={darvizMark} alt="" className="h-9 w-9 object-contain" />
+                  ) : (
+                    <div className="text-display text-2xl text-muted-foreground/50">
+                      {active.accent}
+                    </div>
+                  )}
+                </div>
+                <DialogTitle className="text-display text-3xl md:text-4xl">
+                  {active.name}
+                </DialogTitle>
+                <DialogDescription className="text-base italic text-muted-foreground">
+                  {active.tagline}
+                </DialogDescription>
+              </DialogHeader>
+
+              <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
+                {active.description}
+              </p>
+
+              <div className="mt-8">
+                <div className="text-eyebrow mb-3 text-foreground/60">Services</div>
+                <div className="flex flex-wrap gap-2">
+                  {active.services.map((s) => (
+                    <span
+                      key={s}
+                      className="rounded-full border border-border px-3 py-1 text-xs text-foreground/80"
+                    >
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <div className="text-eyebrow mb-3 text-foreground/60">Focus areas</div>
+                <ul className="space-y-2">
+                  {active.focus.map((f) => (
+                    <li key={f} className="flex gap-3 text-sm text-foreground/80">
+                      <span className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="mt-10 flex flex-wrap gap-3">
+                <a
+                  href="#contact"
+                  onClick={() => setActive(null)}
+                  className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition hover:bg-foreground/85"
+                >
+                  Contact Us
+                  <span>→</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setActive(null)}
+                  className="inline-flex items-center rounded-full border border-border px-6 py-3 text-sm font-medium hover:border-foreground"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
