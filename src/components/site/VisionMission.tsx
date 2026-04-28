@@ -107,31 +107,29 @@ export function VisionMission() {
                     </div>
                   </div>
 
-                  <div className="relative mt-5 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-center">
-                    <p className="text-display text-3xl leading-[1.1] md:text-4xl lg:col-span-8 lg:text-[2.6rem]">
-                      {p.body}
-                    </p>
+                  <p className="text-display mt-5 text-3xl leading-[1.1] md:text-4xl lg:text-[2.6rem]">
+                    {p.body}
+                  </p>
 
-                    {/* Hover image preview */}
-                    <div
-                      aria-hidden
-                      className={`pointer-events-none hidden lg:col-span-4 lg:block ${
-                        hovered === p.n
-                          ? "opacity-100 translate-y-0"
-                          : "opacity-0 translate-y-3"
-                      } transition-all duration-500`}
-                    >
-                      <div className="relative overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_-30px_oklch(0.16_0_0/0.25)]">
-                        <img
-                          src={p.image}
-                          alt=""
-                          width={640}
-                          height={480}
-                          loading="lazy"
-                          className="h-56 w-full object-cover grayscale transition-transform duration-700 group-hover:scale-[1.04]"
-                        />
-                        <div className="pointer-events-none absolute inset-2 rounded-xl border border-background/30" />
-                      </div>
+                  {/* Hover image preview — full width */}
+                  <div
+                    aria-hidden
+                    className={`pointer-events-none mt-8 hidden overflow-hidden transition-all duration-500 lg:block ${
+                      hovered === p.n
+                        ? "max-h-[420px] opacity-100 translate-y-0"
+                        : "max-h-0 opacity-0 translate-y-3"
+                    }`}
+                  >
+                    <div className="relative w-full overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_-30px_oklch(0.16_0_0/0.25)]">
+                      <img
+                        src={p.image}
+                        alt=""
+                        width={1600}
+                        height={600}
+                        loading="lazy"
+                        className="h-[380px] w-full object-cover grayscale transition-transform duration-700 group-hover:scale-[1.03]"
+                      />
+                      <div className="pointer-events-none absolute inset-2 rounded-xl border border-background/30" />
                     </div>
                   </div>
                 </article>
