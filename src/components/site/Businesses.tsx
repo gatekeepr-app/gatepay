@@ -145,9 +145,10 @@ export function Businesses() {
             <h2 className="text-display text-5xl md:text-6xl lg:text-7xl">
               Our businesses
             </h2>
-            <p className="mt-6 text-base leading-relaxed text-muted-foreground md:text-lg">
-              At the heart of Gatekeepr is a group of businesses built around one
-              operating belief: better branding, better technology, better execution.
+            <p className="mt-6 text-[17px] leading-relaxed text-muted-foreground md:text-lg">
+              At the heart of Gatekeepr is a group of businesses built around
+              one operating belief: better branding, better technology, and
+              better execution.
             </p>
           </div>
 
@@ -176,34 +177,38 @@ export function Businesses() {
           {businesses.map((b, i) => (
             <article
               key={b.name}
-              className="card-hover group relative flex w-[88%] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-3xl bg-foreground p-8 text-background transition-transform duration-500 sm:w-[60%] lg:w-[42%] xl:w-[34%]"
-              style={{ minHeight: 520, animation: `fadeUp 0.8s cubic-bezier(.2,.8,.2,1) ${i * 0.08}s both` }}
+              className="card-hover group relative flex w-[88%] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-3xl bg-foreground p-10 text-background transition-transform duration-500 sm:w-[60%] lg:w-[44%] xl:w-[36%] md:p-12"
+              style={{ minHeight: 560, animation: `fadeUp 0.8s cubic-bezier(.2,.8,.2,1) ${i * 0.08}s both` }}
             >
-              <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full opacity-[0.08] marble-bg" />
-              <div className="pointer-events-none absolute bottom-0 right-0 h-1 w-0 bg-accent transition-all duration-500 group-hover:w-full" />
+              {/* Marble corner glow */}
+              <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full opacity-[0.10] marble-bg" />
+              {/* Per-business motif */}
+              <Motif kind={b.motif} />
+              {/* Bottom accent line */}
+              <div className="pointer-events-none absolute bottom-0 left-0 h-px w-0 bg-background/60 transition-all duration-500 group-hover:w-full" />
 
-              <div>
+              <div className="relative">
                 <div className="flex items-start justify-between">
-                  <div className="text-eyebrow text-background/50">{b.label}</div>
+                  <div className="text-eyebrow text-background/55">{b.label}</div>
                   {b.name === "Darviz Labs" ? (
                     <img src={darvizMark} alt="Darviz Labs" className="h-10 w-10 object-contain" />
                   ) : (
                     <div className="text-display text-3xl text-background/30">{b.accent}</div>
                   )}
                 </div>
-                <h3 className="text-display mt-8 text-3xl md:text-4xl">{b.name}</h3>
-                <p className="mt-3 text-lg italic text-background/70">{b.tagline}</p>
-                <p className="mt-6 text-[15px] leading-relaxed text-background/75">
+                <h3 className="text-display mt-10 text-3xl md:text-4xl">{b.name}</h3>
+                <p className="mt-4 text-lg italic text-background/75">{b.tagline}</p>
+                <p className="mt-6 text-[16px] leading-relaxed text-background/80">
                   {b.description}
                 </p>
               </div>
 
-              <div className="mt-8">
+              <div className="relative mt-10">
                 <div className="flex flex-wrap gap-2">
                   {b.services.map((s) => (
                     <span
                       key={s}
-                      className="rounded-full border border-background/20 px-3 py-1 text-[13px] text-background/85"
+                      className="rounded-full border border-background/25 px-3.5 py-1.5 text-[13px] text-background/90"
                     >
                       {s}
                     </span>
@@ -212,7 +217,7 @@ export function Businesses() {
                 <button
                   type="button"
                   onClick={() => setActive(b)}
-                  className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-background"
+                  className="mt-10 inline-flex items-center gap-2 text-[15px] font-medium text-background"
                 >
                   <span className="neon-underline">Learn more</span>
                   <span>→</span>
