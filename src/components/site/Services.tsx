@@ -55,17 +55,20 @@ export function Services() {
           {services.map((s, i) => (
             <article
               key={s.title}
-              className="group relative flex flex-col gap-6 bg-background p-8 transition-colors duration-300 hover:bg-card md:p-10"
+              className="group relative flex flex-col gap-7 bg-background p-10 transition-colors duration-300 hover:bg-card md:p-12"
             >
               <div className="flex items-center justify-between">
-                <span className="inline-block transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-110">
+                <span className="inline-block text-foreground/60 transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-110">
                   <Glyph i={i} />
                 </span>
                 <span className="text-eyebrow text-foreground/40">{s.n}</span>
               </div>
               <h3 className="text-display text-2xl md:text-3xl">{s.title}</h3>
-              <p className="text-[15px] leading-relaxed text-muted-foreground">{s.desc}</p>
-              <div className="mt-auto h-px w-0 bg-accent transition-all duration-500 group-hover:w-full" />
+              <p className="text-[16px] leading-relaxed text-muted-foreground">{s.desc}</p>
+              <div
+                className="mt-auto h-[2px] w-0 transition-all duration-500 group-hover:w-full"
+                style={{ backgroundColor: "#7DFF6A" }}
+              />
             </article>
           ))}
         </div>
