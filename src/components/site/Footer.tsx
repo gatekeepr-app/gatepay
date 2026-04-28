@@ -1,0 +1,60 @@
+const cols = [
+  {
+    title: "Our businesses",
+    links: ["Timeline Studios", "Darviz Labs", "Gatekeepr Experiences", "Gatekeepr Advisory"],
+  },
+  {
+    title: "Services",
+    links: ["Marketing", "Website Development", "Tool Development", "Event Management", "Creative Production", "Business Systems"],
+  },
+  {
+    title: "Company",
+    links: ["Culture", "Work", "Blog", "Careers", "Contact"],
+  },
+  {
+    title: "Get in touch",
+    links: ["Contact Us", "Start a project", "Business inquiries"],
+  },
+];
+
+export function Footer() {
+  return (
+    <footer className="border-t border-border bg-background">
+      <div className="mx-auto max-w-[1400px] px-6 py-20 md:px-10">
+        <div className="grid grid-cols-2 gap-10 md:grid-cols-6">
+          <div className="col-span-2">
+            <div className="text-display text-3xl">
+              gatekeepr<span className="text-accent">.</span>
+            </div>
+            <p className="mt-4 max-w-xs text-sm text-muted-foreground">
+              A modern business house — creative, technical and operational
+              power for ambitious companies.
+            </p>
+          </div>
+          {cols.map((c) => (
+            <div key={c.title}>
+              <div className="text-eyebrow mb-5 text-foreground/50">{c.title}</div>
+              <ul className="space-y-3">
+                {c.links.map((l) => (
+                  <li key={l}>
+                    <a href="#contact" className="neon-underline text-sm text-foreground/80">
+                      {l}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-16 flex flex-col gap-4 border-t border-border pt-8 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
+          <div>© 2026 Gatekeepr. All rights reserved.</div>
+          <div className="flex gap-6">
+            <a href="#" className="hover:text-foreground">Privacy Policy</a>
+            <a href="#" className="hover:text-foreground">Terms</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
