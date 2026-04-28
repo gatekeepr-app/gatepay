@@ -64,26 +64,6 @@ export function Hero() {
           </a>
         </div>
 
-        {/* Founder note card */}
-        <a
-          href="#contact"
-          className="card-hover fade-up group mt-16 inline-flex max-w-md items-start gap-5 rounded-2xl border border-border bg-background/70 p-5 backdrop-blur-sm md:p-6"
-          style={{ animationDelay: "0.65s" }}
-        >
-          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-border text-display text-base text-foreground/70">
-            FN
-          </div>
-          <div className="min-w-0">
-            <div className="text-eyebrow text-foreground/50">A note from our Founder</div>
-            <div className="mt-1.5 text-display text-lg leading-tight text-foreground">
-              Farzan Noor Chowdhury
-            </div>
-            <div className="mt-2 inline-flex items-center gap-1.5 text-[14px] font-medium text-foreground/70 group-hover:text-foreground">
-              <span className="neon-underline">Read more</span>
-              <span className="transition-transform group-hover:translate-x-0.5">→</span>
-            </div>
-          </div>
-        </a>
       </div>
 
       {/* Scroll indicator */}
