@@ -1,21 +1,8 @@
 import statue from "@/assets/statue-bust.jpg";
-import marble from "@/assets/marble.jpg";
 
 export function Hero() {
   return (
     <section id="home" className="relative overflow-hidden">
-      {/* Subtle marble texture wash */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.05]"
-        style={{
-          backgroundImage: `url(${marble})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          mixBlendMode: "multiply",
-        }}
-      />
-
       {/* Background statue silhouette */}
       <div
         aria-hidden
