@@ -1,10 +1,34 @@
 const services = [
-  { n: "01", title: "Marketing & Brand Building", desc: "Brand identity, campaigns, content systems, social creatives, and launch storytelling." },
-  { n: "02", title: "Website Development", desc: "Fast, modern, conversion-focused websites for companies, creators, events, and products." },
-  { n: "03", title: "Tool & Product Development", desc: "Custom business tools, internal dashboards, automations, and digital products." },
-  { n: "04", title: "Creative Production", desc: "Motion graphics, videos, visuals, pitch assets, and campaign material." },
-  { n: "05", title: "Event Management", desc: "Launches, activations, campus events, corporate gatherings, and branded experiences." },
-  { n: "06", title: "Business Systems", desc: "Operational workflows, digital process design, client journeys, and execution infrastructure." },
+  {
+    n: "01",
+    title: "Marketing & Brand Building",
+    desc: "Brand identity, campaigns, content systems, and launch storytelling designed to make the business look sharper and sell better.",
+  },
+  {
+    n: "02",
+    title: "Website Development",
+    desc: "Premium websites built for credibility, speed, clarity, and conversion.",
+  },
+  {
+    n: "03",
+    title: "Tool & Product Development",
+    desc: "Custom tools, internal dashboards, automations, and digital products built around real business workflows.",
+  },
+  {
+    n: "04",
+    title: "Creative Production",
+    desc: "Motion graphics, videos, visuals, pitch assets, and campaign materials with strong creative direction.",
+  },
+  {
+    n: "05",
+    title: "Event Management",
+    desc: "Launches, activations, campus events, corporate gatherings, and branded experiences managed with operational control.",
+  },
+  {
+    n: "06",
+    title: "Business Systems",
+    desc: "Digital workflows, client journeys, process design, and execution infrastructure for businesses outgrowing chaos.",
+  },
 ];
 
 const Glyph = ({ i }: { i: number }) => {
