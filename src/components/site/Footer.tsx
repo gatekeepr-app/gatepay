@@ -7,7 +7,14 @@ const cols = [
   },
   {
     title: "Services",
-    links: ["Marketing", "Website Development", "Tool Development", "Event Management", "Creative Production", "Business Systems"],
+    links: [
+      "Marketing",
+      "Website Development",
+      "Tool Development",
+      "Event Management",
+      "Creative Production",
+      "Business Systems",
+    ],
   },
   {
     title: "Company",
