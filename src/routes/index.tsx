@@ -1,26 +1,49 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Header } from "@/components/site/Header";
+import { Hero } from "@/components/site/Hero";
+import { Businesses } from "@/components/site/Businesses";
+import { VisionMission } from "@/components/site/VisionMission";
+import { Services } from "@/components/site/Services";
+import { Culture } from "@/components/site/Culture";
+import { Work } from "@/components/site/Work";
+import { Impact } from "@/components/site/Impact";
+import { ContactCTA } from "@/components/site/ContactCTA";
+import { Footer } from "@/components/site/Footer";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Gatekeepr — A standard for modern business execution" },
+      {
+        name: "description",
+        content:
+          "Gatekeepr builds brands, websites, tools, campaigns and experiences for ambitious businesses. A modern business house with creative, technical and operational power.",
+      },
+      { property: "og:title", content: "Gatekeepr — Modern business execution" },
+      {
+        property: "og:description",
+        content:
+          "Brands, websites, tools, campaigns and experiences for businesses that refuse to look average.",
+      },
+      { property: "og:type", content: "website" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
-}
-
 function Index() {
-  return <PlaceholderIndex />;
+  return (
+    <main className="bg-background text-foreground">
+      <Header />
+      <Hero />
+      <Businesses />
+      <VisionMission />
+      <Services />
+      <Culture />
+      <Work />
+      <Impact />
+      <ContactCTA />
+      <Footer />
+    </main>
+  );
 }
