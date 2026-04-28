@@ -54,19 +54,19 @@ export function Footer() {
           filter: "grayscale(1) contrast(1.1)",
         }}
       />
-      <div className="relative mx-auto max-w-[1400px] px-6 py-20 md:px-10">
-        <div className="grid grid-cols-2 gap-10 md:grid-cols-6">
+      <div className="relative mx-auto max-w-[1400px] px-6 py-24 md:px-10">
+        <div className="grid grid-cols-2 gap-12 md:grid-cols-6 md:gap-14 lg:gap-16">
           <div className="col-span-2">
             <img src={logo} alt="Gatekeepr" className="h-7 w-auto" />
-            <p className="mt-6 max-w-xs text-[15px] leading-relaxed text-muted-foreground">
-              A modern business house — creative, technical and operational
-              execution for ambitious companies.
+            <p className="mt-6 max-w-xs text-[16px] leading-relaxed text-muted-foreground">
+              A business execution company building brands, websites, tools,
+              campaigns, events, and digital systems.
             </p>
           </div>
           {cols.map((c) => (
             <div key={c.title}>
-              <div className="text-eyebrow mb-5 text-foreground/50">{c.title}</div>
-              <ul className="space-y-3">
+              <div className="text-eyebrow mb-6 text-foreground/50">{c.title}</div>
+              <ul className="space-y-4">
                 {c.links.map((l) => {
                   const isCareers = l === "Careers";
                   return (
@@ -75,7 +75,7 @@ export function Footer() {
                         href={isCareers ? "https://darvizlabs.com/career" : "#contact"}
                         target={isCareers ? "_blank" : undefined}
                         rel={isCareers ? "noopener noreferrer" : undefined}
-                        className="neon-underline text-[15px] text-foreground/80"
+                        className="neon-underline text-[16px] text-foreground/80"
                       >
                         {l}
                       </a>
@@ -87,9 +87,9 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-16 flex flex-col gap-4 border-t border-border pt-8 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
-          <div>© 2024 Gatekeepr. All rights reserved.</div>
-          <div className="flex gap-6">
+        <div className="mt-20 flex flex-col gap-4 border-t border-border pt-8 text-[15px] text-muted-foreground md:flex-row md:items-center md:justify-between">
+          <div>© 2026 Gatekeepr. All rights reserved.</div>
+          <div className="flex gap-8">
             <a href="#" className="hover:text-foreground">Privacy Policy</a>
             <a href="#" className="hover:text-foreground">Terms</a>
           </div>
