@@ -61,7 +61,7 @@ export function VisionMission() {
               02 — Principles
             </div>
             <h2 className="text-display text-5xl leading-[0.95] md:text-6xl lg:text-7xl">
-              The two ideas <br />
+              The two principles <br />
               <span className="italic font-light text-muted-foreground">
                 we operate by.
               </span>
@@ -84,7 +84,7 @@ export function VisionMission() {
               className="absolute left-0 top-2 hidden h-[calc(100%-1rem)] w-px bg-foreground/15 md:block"
             />
 
-            <div className="space-y-16 md:pl-12">
+            <div className="space-y-20 md:space-y-24 md:pl-12">
               {principles.map((p) => (
                 <article
                   key={p.n}
