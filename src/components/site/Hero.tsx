@@ -32,7 +32,7 @@ export function Hero() {
       <div className="relative mx-auto max-w-[1400px] px-6 pb-28 pt-20 md:px-10 md:pb-40 md:pt-32">
         <div className="text-eyebrow mb-8 flex items-center gap-3 text-muted-foreground fade-up" style={{ animationDelay: "0.05s" }}>
           <span className="ticker inline-block h-1.5 w-1.5 rounded-full bg-accent" />
-          Est. 2026 — A modern business house
+          Est. 2024 — A modern business house
         </div>
 
         <h1 className="text-display text-[12vw] leading-[0.9] sm:text-[9vw] lg:text-[6.4vw] fade-up" style={{ animationDelay: "0.15s" }}>

@@ -139,7 +139,7 @@ export function VisionMission() {
 
           {/* Footer signature */}
           <div className="mt-20 flex items-center justify-between border-t border-border pt-6 text-sm text-muted-foreground md:pl-12">
-            <span className="text-eyebrow">Est. 2026</span>
+            <span className="text-eyebrow">Est. 2024</span>
             <span className="text-eyebrow">Taste · Systems · Speed</span>
             <span className="text-eyebrow">Mumbai · Remote</span>
           </div>
