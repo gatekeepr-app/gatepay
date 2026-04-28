@@ -1,4 +1,4 @@
-import statue from "@/assets/statue-bust.jpg";
+import statue from "@/assets/hero-statue.jpg";
 import marble from "@/assets/marble.jpg";
 
 export function Hero() {
