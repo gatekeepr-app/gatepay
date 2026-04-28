@@ -94,7 +94,7 @@
   }
   ::selection {
     background: var(--neon);
-    color: var(--ink);
+    color: oklch(0.99 0 0);
   }
 }
 
