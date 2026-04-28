@@ -35,13 +35,21 @@ export function Footer() {
             <div key={c.title}>
               <div className="text-eyebrow mb-5 text-foreground/50">{c.title}</div>
               <ul className="space-y-3">
-                {c.links.map((l) => (
-                  <li key={l}>
-                    <a href="#contact" className="neon-underline text-sm text-foreground/80">
-                      {l}
-                    </a>
-                  </li>
-                ))}
+                {c.links.map((l) => {
+                  const isCareers = l === "Careers";
+                  return (
+                    <li key={l}>
+                      <a
+                        href={isCareers ? "https://darvizlabs.com/career" : "#contact"}
+                        target={isCareers ? "_blank" : undefined}
+                        rel={isCareers ? "noopener noreferrer" : undefined}
+                        className="neon-underline text-sm text-foreground/80"
+                      >
+                        {l}
+                      </a>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}
