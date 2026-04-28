@@ -10,66 +10,121 @@ type Biz = {
   services: string[];
   focus: string[];
   accent: string;
+  motif: "studio" | "grid" | "stage" | "document";
 };
 
 const businesses: Biz[] = [
   {
     name: "Timeline Studios",
     label: "A Gatekeepr company",
-    tagline: "Brands that move, speak, and sell.",
+    tagline: "Creative and marketing for sharper brands.",
     description:
-      "Timeline Studios is Gatekeepr's creative and marketing arm — branding, graphic design, motion graphics, video, websites and social media execution for businesses that need a sharper digital presence.",
-    services: ["Branding", "Graphic Design", "Motion", "Video", "Websites", "Social"],
+      "Branding, websites, motion, video, and campaign assets for businesses that need to look serious online.",
+    services: ["Branding", "Websites", "Motion"],
     focus: [
       "Brand identity systems for founders and challenger brands",
       "Performance creative and content engines for social",
       "Editorial websites that double as sales tools",
     ],
     accent: "TS",
+    motif: "studio",
   },
   {
     name: "Darviz Labs",
     label: "A Gatekeepr company",
     tagline: "Technology built with business intent.",
     description:
-      "Darviz Labs is Gatekeepr's technology and product arm — websites, web apps, internal tools, automations and digital systems for businesses that need stronger technical infrastructure.",
-    services: ["Websites", "Web Apps", "Products", "Tools", "Automation", "AI Systems"],
+      "Websites, web apps, internal tools, automations, and product systems for businesses that need stronger technical infrastructure.",
+    services: ["Web Apps", "Tools", "Automation"],
     focus: [
       "Custom web apps and internal tools for operating teams",
       "AI-powered workflows and automation systems",
       "Product engineering for early-stage and scaling companies",
     ],
     accent: "DL",
+    motif: "grid",
   },
   {
     name: "Gatekeepr Experiences",
     label: "A Gatekeepr service vertical",
-    tagline: "Events, activations and experiences with taste.",
+    tagline: "Events and activations with taste.",
     description:
-      "Event management, brand activations, launch experiences, campus campaigns and business gatherings — with strong creative direction and operational control.",
-    services: ["Events", "Activations", "Launches", "Campus", "Corporate", "Experience"],
+      "Launches, activations, campus campaigns, corporate events, and branded experiences executed with creative and operational control.",
+    services: ["Events", "Activations", "Launches"],
     focus: [
       "Brand launches and product reveals end-to-end",
       "Campus and community activation campaigns",
       "Corporate gatherings with creative direction",
     ],
     accent: "GE",
+    motif: "stage",
   },
   {
     name: "Gatekeepr Advisory",
     label: "A Gatekeepr service vertical",
     tagline: "Strategy before execution.",
     description:
-      "Helping founders clarify positioning, sharpen offers, plan digital operations and build execution systems before scaling campaigns, products or websites.",
-    services: ["Strategy", "Positioning", "Growth", "Operations", "Launch Planning", "Offers"],
+      "Positioning, launch planning, offer design, and digital operations for founders and businesses before they scale.",
+    services: ["Strategy", "Positioning", "Operations"],
     focus: [
       "Positioning and offer design for founders",
       "Go-to-market and launch planning",
       "Operating systems for marketing and sales",
     ],
     accent: "GA",
+    motif: "document",
   },
 ];
+
+function Motif({ kind }: { kind: Biz["motif"] }) {
+  // Subtle, distinct background motif for each business — kept low-opacity & monochrome
+  if (kind === "studio") {
+    // Brand board / creative tiles
+    return (
+      <div className="pointer-events-none absolute inset-x-6 bottom-6 grid grid-cols-4 gap-2 opacity-[0.10]">
+        <div className="aspect-square rounded-md bg-background" />
+        <div className="aspect-square rounded-md border border-background/40" />
+        <div className="aspect-square rounded-md bg-background/60" />
+        <div className="aspect-square rounded-full border border-background/40" />
+      </div>
+    );
+  }
+  if (kind === "grid") {
+    // UI grid / column lines (technical + classical)
+    return (
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.08]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)",
+          backgroundSize: "44px 44px",
+          color: "var(--background)",
+        }}
+      />
+    );
+  }
+  if (kind === "stage") {
+    // Stage / spotlight rays
+    return (
+      <div className="pointer-events-none absolute -bottom-20 left-1/2 h-72 w-[140%] -translate-x-1/2 opacity-[0.10]"
+        style={{
+          backgroundImage:
+            "conic-gradient(from 200deg at 50% 100%, transparent 0deg, var(--background) 8deg, transparent 16deg, var(--background) 28deg, transparent 36deg, var(--background) 52deg, transparent 60deg)",
+        }}
+      />
+    );
+  }
+  // document — ruled lines like a planning page
+  return (
+    <div
+      className="pointer-events-none absolute inset-x-8 bottom-8 h-40 opacity-[0.10]"
+      style={{
+        backgroundImage:
+          "repeating-linear-gradient(to bottom, var(--background) 0 1px, transparent 1px 14px)",
+      }}
+    />
+  );
+}
 
 export function Businesses() {
   const scroller = useRef<HTMLDivElement>(null);
@@ -90,9 +145,10 @@ export function Businesses() {
             <h2 className="text-display text-5xl md:text-6xl lg:text-7xl">
               Our businesses
             </h2>
-            <p className="mt-6 text-base leading-relaxed text-muted-foreground md:text-lg">
-              At the heart of Gatekeepr is a group of businesses built around one
-              operating belief: better branding, better technology, better execution.
+            <p className="mt-6 text-[17px] leading-relaxed text-muted-foreground md:text-lg">
+              At the heart of Gatekeepr is a group of businesses built around
+              one operating belief: better branding, better technology, and
+              better execution.
             </p>
           </div>
 
@@ -121,34 +177,38 @@ export function Businesses() {
           {businesses.map((b, i) => (
             <article
               key={b.name}
-              className="card-hover group relative flex w-[88%] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-3xl bg-foreground p-8 text-background transition-transform duration-500 sm:w-[60%] lg:w-[42%] xl:w-[34%]"
-              style={{ minHeight: 520, animation: `fadeUp 0.8s cubic-bezier(.2,.8,.2,1) ${i * 0.08}s both` }}
+              className="card-hover group relative flex w-[88%] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-3xl bg-foreground p-10 text-background transition-transform duration-500 sm:w-[60%] lg:w-[44%] xl:w-[36%] md:p-12"
+              style={{ minHeight: 560, animation: `fadeUp 0.8s cubic-bezier(.2,.8,.2,1) ${i * 0.08}s both` }}
             >
-              <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full opacity-[0.08] marble-bg" />
-              <div className="pointer-events-none absolute bottom-0 right-0 h-1 w-0 bg-accent transition-all duration-500 group-hover:w-full" />
+              {/* Marble corner glow */}
+              <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full opacity-[0.10] marble-bg" />
+              {/* Per-business motif */}
+              <Motif kind={b.motif} />
+              {/* Bottom accent line */}
+              <div className="pointer-events-none absolute bottom-0 left-0 h-px w-0 bg-background/60 transition-all duration-500 group-hover:w-full" />
 
-              <div>
+              <div className="relative">
                 <div className="flex items-start justify-between">
-                  <div className="text-eyebrow text-background/50">{b.label}</div>
+                  <div className="text-eyebrow text-background/55">{b.label}</div>
                   {b.name === "Darviz Labs" ? (
                     <img src={darvizMark} alt="Darviz Labs" className="h-10 w-10 object-contain" />
                   ) : (
                     <div className="text-display text-3xl text-background/30">{b.accent}</div>
                   )}
                 </div>
-                <h3 className="text-display mt-8 text-3xl md:text-4xl">{b.name}</h3>
-                <p className="mt-3 text-lg italic text-background/70">{b.tagline}</p>
-                <p className="mt-6 text-[15px] leading-relaxed text-background/75">
+                <h3 className="text-display mt-10 text-3xl md:text-4xl">{b.name}</h3>
+                <p className="mt-4 text-lg italic text-background/75">{b.tagline}</p>
+                <p className="mt-6 text-[16px] leading-relaxed text-background/80">
                   {b.description}
                 </p>
               </div>
 
-              <div className="mt-8">
+              <div className="relative mt-10">
                 <div className="flex flex-wrap gap-2">
                   {b.services.map((s) => (
                     <span
                       key={s}
-                      className="rounded-full border border-background/20 px-3 py-1 text-[13px] text-background/85"
+                      className="rounded-full border border-background/25 px-3.5 py-1.5 text-[13px] text-background/90"
                     >
                       {s}
                     </span>
@@ -157,7 +217,7 @@ export function Businesses() {
                 <button
                   type="button"
                   onClick={() => setActive(b)}
-                  className="mt-8 inline-flex items-center gap-2 text-sm font-medium text-background"
+                  className="mt-10 inline-flex items-center gap-2 text-[15px] font-medium text-background"
                 >
                   <span className="neon-underline">Learn more</span>
                   <span>→</span>
