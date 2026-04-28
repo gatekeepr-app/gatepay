@@ -118,11 +118,11 @@ export function Businesses() {
           ref={scroller}
           className="mt-14 flex snap-x snap-mandatory gap-6 overflow-x-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {businesses.map((b) => (
+          {businesses.map((b, i) => (
             <article
               key={b.name}
-              className="card-hover group relative flex w-[88%] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-3xl bg-foreground p-8 text-background sm:w-[60%] lg:w-[42%] xl:w-[34%]"
-              style={{ minHeight: 520 }}
+              className="card-hover group relative flex w-[88%] shrink-0 snap-start flex-col justify-between overflow-hidden rounded-3xl bg-foreground p-8 text-background transition-transform duration-500 sm:w-[60%] lg:w-[42%] xl:w-[34%]"
+              style={{ minHeight: 520, animation: `fadeUp 0.8s cubic-bezier(.2,.8,.2,1) ${i * 0.08}s both` }}
             >
               <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full opacity-[0.08] marble-bg" />
               <div className="pointer-events-none absolute bottom-0 right-0 h-1 w-0 bg-accent transition-all duration-500 group-hover:w-full" />
