@@ -138,7 +138,7 @@ export function Businesses() {
                 </div>
                 <h3 className="text-display mt-8 text-3xl md:text-4xl">{b.name}</h3>
                 <p className="mt-3 text-lg italic text-background/70">{b.tagline}</p>
-                <p className="mt-6 text-sm leading-relaxed text-background/70">
+                <p className="mt-6 text-[15px] leading-relaxed text-background/75">
                   {b.description}
                 </p>
               </div>
@@ -148,7 +148,7 @@ export function Businesses() {
                   {b.services.map((s) => (
                     <span
                       key={s}
-                      className="rounded-full border border-background/20 px-3 py-1 text-xs text-background/80"
+                      className="rounded-full border border-background/20 px-3 py-1 text-[13px] text-background/85"
                     >
                       {s}
                     </span>
@@ -191,7 +191,7 @@ export function Businesses() {
                 </DialogDescription>
               </DialogHeader>
 
-              <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
+              <p className="mt-6 text-[15px] leading-relaxed text-muted-foreground">
                 {active.description}
               </p>
 

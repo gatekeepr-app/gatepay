@@ -21,9 +21,9 @@ export function Services() {
             <div className="text-eyebrow mb-4 text-muted-foreground">03 — Capabilities</div>
             <h2 className="text-display text-5xl md:text-6xl lg:text-7xl">What we build</h2>
           </div>
-          <p className="max-w-md text-muted-foreground">
-            Six disciplines under one roof — engineered to work together, sold
-            individually when you need them.
+          <p className="max-w-md text-[15px] leading-relaxed text-muted-foreground md:text-base">
+            Six disciplines under one roof — engineered to work together,
+            available individually when you need them.
           </p>
         </div>
 
@@ -40,7 +40,7 @@ export function Services() {
                 <span className="text-eyebrow text-foreground/40">{s.n}</span>
               </div>
               <h3 className="text-display text-2xl md:text-3xl">{s.title}</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
+              <p className="text-[15px] leading-relaxed text-muted-foreground">{s.desc}</p>
               <div className="mt-auto h-px w-0 bg-accent transition-all duration-500 group-hover:w-full" />
             </article>
           ))}

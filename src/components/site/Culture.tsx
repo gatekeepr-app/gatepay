@@ -37,7 +37,7 @@ export function Culture() {
             {principles.map((p, i) => (
               <li
                 key={p}
-                className="flex items-center gap-4 bg-background px-5 py-4 text-sm"
+                className="flex items-center gap-4 bg-background px-5 py-4 text-[15px]"
               >
                 <span className="text-eyebrow text-foreground/40">
                   {String(i + 1).padStart(2, "0")}
@@ -49,9 +49,9 @@ export function Culture() {
 
           <a
             href="#contact"
-            className="mt-10 inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-medium hover:border-foreground"
+            className="mt-10 inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-[15px] font-medium hover:border-foreground"
           >
-            Learn more about our culture →
+            Contact Us →
           </a>
         </div>
       </div>

@@ -24,16 +24,16 @@ export function Work() {
             <h2 className="text-display text-5xl md:text-6xl lg:text-7xl">
               Our work<br />at a glance
             </h2>
-            <p className="mt-8 max-w-md text-muted-foreground">
-              A look at the brands, websites, campaigns, products and
-              experiences being built across Gatekeepr.
+            <p className="mt-8 max-w-md text-[15px] leading-relaxed text-muted-foreground md:text-base">
+              A view into the brands, websites, campaigns, products and
+              experiences being shipped across Gatekeepr.
             </p>
             <div className="mt-10 flex items-center gap-3">
               <a
                 href="#contact"
-                className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm text-background hover:bg-foreground/85"
+                className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-[15px] font-medium text-background hover:bg-foreground/85"
               >
-                View our work →
+                View Our Work →
               </a>
               <div className="flex gap-2">
                 <button
@@ -71,10 +71,10 @@ export function Work() {
                   </div>
                   <div className="mt-12">
                     <h3 className="text-display text-2xl md:text-3xl">{it.title}</h3>
-                    <p className="mt-3 text-sm text-muted-foreground">{it.desc}</p>
+                    <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">{it.desc}</p>
                   </div>
                   <div className="mt-8 flex items-center justify-between border-t border-border pt-5">
-                    <span className="neon-underline text-sm font-medium">Open report</span>
+                    <span className="neon-underline text-[15px] font-medium">Open report</span>
                     <span className="text-xl">→</span>
                   </div>
                 </article>

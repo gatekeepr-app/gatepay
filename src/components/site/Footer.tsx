@@ -58,9 +58,9 @@ export function Footer() {
         <div className="grid grid-cols-2 gap-10 md:grid-cols-6">
           <div className="col-span-2">
             <img src={logo} alt="Gatekeepr" className="h-7 w-auto" />
-            <p className="mt-6 max-w-xs text-sm text-muted-foreground">
+            <p className="mt-6 max-w-xs text-[15px] leading-relaxed text-muted-foreground">
               A modern business house — creative, technical and operational
-              power for ambitious companies.
+              execution for ambitious companies.
             </p>
           </div>
           {cols.map((c) => (
@@ -75,7 +75,7 @@ export function Footer() {
                         href={isCareers ? "https://darvizlabs.com/career" : "#contact"}
                         target={isCareers ? "_blank" : undefined}
                         rel={isCareers ? "noopener noreferrer" : undefined}
-                        className="neon-underline text-sm text-foreground/80"
+                        className="neon-underline text-[15px] text-foreground/80"
                       >
                         {l}
                       </a>
@@ -87,7 +87,7 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="mt-16 flex flex-col gap-4 border-t border-border pt-8 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
+        <div className="mt-16 flex flex-col gap-4 border-t border-border pt-8 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
           <div>© 2024 Gatekeepr. All rights reserved.</div>
           <div className="flex gap-6">
             <a href="#" className="hover:text-foreground">Privacy Policy</a>
