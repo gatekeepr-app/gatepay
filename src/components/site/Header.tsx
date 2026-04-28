@@ -30,17 +30,17 @@ export function Header() {
           : "bg-transparent"
       }`}
     >
-      <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-4 md:px-10">
+      <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-5 md:px-10">
         <a href="#home" className="flex items-center" aria-label="Gatekeepr">
           <img src={logo} alt="Gatekeepr" className="h-5 w-auto md:h-6" />
         </a>
 
-        <nav className="hidden items-center gap-8 lg:flex">
+        <nav className="hidden items-center gap-10 lg:flex xl:gap-12">
           {nav.map((n) => (
             <a
               key={n.label}
               href={n.href}
-              className="neon-underline text-[15px] font-medium text-foreground/80 hover:text-foreground"
+              className="neon-underline text-base font-medium text-foreground/80 hover:text-foreground"
             >
               {n.label}
             </a>
