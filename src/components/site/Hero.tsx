@@ -16,16 +16,16 @@ export function Hero() {
         }}
       />
 
-      {/* Background statue silhouette */}
+      {/* Background marble bust silhouette — soft, typographic-led hero */}
       <div
         aria-hidden
-        className="float-slow pointer-events-none absolute -right-24 top-10 hidden h-[120%] w-[55%] opacity-[0.07] md:block"
+        className="float-slow pointer-events-none absolute -right-32 top-20 hidden h-[110%] w-[48%] opacity-[0.04] md:block"
         style={{
           backgroundImage: `url(${statue})`,
           backgroundSize: "contain",
           backgroundRepeat: "no-repeat",
           backgroundPosition: "right top",
-          filter: "grayscale(1) contrast(1.1)",
+          filter: "grayscale(1) contrast(0.9) blur(1px) drop-shadow(0 30px 40px oklch(0.16 0 0 / 0.15))",
         }}
       />
 
@@ -43,26 +43,47 @@ export function Hero() {
           execution.
         </h1>
 
-        <p className="mt-10 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg fade-up" style={{ animationDelay: "0.35s" }}>
-          We build brands, websites, tools, campaigns, and experiences for
-          businesses that refuse to look average.
+        <p className="mt-10 max-w-2xl text-[17px] leading-relaxed text-muted-foreground md:text-lg fade-up" style={{ animationDelay: "0.35s" }}>
+          We build brands, websites, tools, campaigns, events, and digital
+          systems for businesses that refuse to look average.
         </p>
 
         <div className="mt-10 flex flex-wrap items-center gap-3 fade-up" style={{ animationDelay: "0.5s" }}>
           <a
             href="#contact"
-            className="group inline-flex items-center gap-2 rounded-full bg-foreground px-7 py-4 text-sm font-medium text-background transition hover:-translate-y-0.5 hover:bg-foreground/85 hover:shadow-lg"
+            className="group inline-flex items-center gap-2 rounded-full bg-foreground px-7 py-4 text-[15px] font-medium text-background transition hover:-translate-y-0.5 hover:bg-foreground/85 hover:shadow-lg"
           >
             Contact Us
             <span className="transition-transform group-hover:translate-x-1">→</span>
           </a>
           <a
             href="#businesses"
-            className="inline-flex items-center gap-2 rounded-full border border-border px-7 py-4 text-sm font-medium transition hover:-translate-y-0.5 hover:border-foreground"
+            className="inline-flex items-center gap-2 rounded-full border border-border px-7 py-4 text-[15px] font-medium transition hover:-translate-y-0.5 hover:border-foreground"
           >
             View Our Businesses
           </a>
         </div>
+
+        {/* Founder note card */}
+        <a
+          href="#contact"
+          className="card-hover fade-up group mt-16 inline-flex max-w-md items-start gap-5 rounded-2xl border border-border bg-background/70 p-5 backdrop-blur-sm md:p-6"
+          style={{ animationDelay: "0.65s" }}
+        >
+          <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-border text-display text-base text-foreground/70">
+            FN
+          </div>
+          <div className="min-w-0">
+            <div className="text-eyebrow text-foreground/50">A note from our Founder</div>
+            <div className="mt-1.5 text-display text-lg leading-tight text-foreground">
+              Farzan Noor Chowdhury
+            </div>
+            <div className="mt-2 inline-flex items-center gap-1.5 text-[14px] font-medium text-foreground/70 group-hover:text-foreground">
+              <span className="neon-underline">Read more</span>
+              <span className="transition-transform group-hover:translate-x-0.5">→</span>
+            </div>
+          </div>
+        </a>
       </div>
 
       {/* Scroll indicator */}
