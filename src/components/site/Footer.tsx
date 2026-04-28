@@ -23,9 +23,10 @@ export function Footer() {
       <div className="mx-auto max-w-[1400px] px-6 py-20 md:px-10">
         <div className="grid grid-cols-2 gap-10 md:grid-cols-6">
           <div className="col-span-2">
-            <div className="text-display text-3xl">
-              gatekeepr<span className="text-accent">.</span>
-            </div>
+            <img src={logo} alt="Gatekeepr" className="h-7 w-auto" />
+          </div>
+          <div className="hidden">
+            <div>
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
               A modern business house — creative, technical and operational
               power for ambitious companies.
