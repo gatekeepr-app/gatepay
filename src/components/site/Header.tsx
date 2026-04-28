@@ -40,7 +40,7 @@ export function Header() {
             <a
               key={n.label}
               href={n.href}
-              className="neon-underline text-sm text-foreground/80 hover:text-foreground"
+              className="neon-underline text-[15px] font-medium text-foreground/80 hover:text-foreground"
             >
               {n.label}
             </a>
@@ -50,7 +50,7 @@ export function Header() {
         <div className="flex items-center gap-3">
           <a
             href="#contact"
-            className="hidden rounded-full bg-foreground px-5 py-2.5 text-sm font-medium text-background transition hover:bg-foreground/85 md:inline-flex"
+            className="hidden rounded-full bg-foreground px-5 py-2.5 text-[15px] font-medium text-background transition hover:bg-foreground/85 md:inline-flex"
           >
             Contact Us
           </a>

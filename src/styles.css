@@ -91,6 +91,8 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
+    font-size: 16px;
+    line-height: 1.6;
   }
   ::selection {
     background: var(--neon);
@@ -112,8 +114,8 @@
   }
   .text-eyebrow {
     text-transform: uppercase;
-    letter-spacing: 0.18em;
-    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    font-size: 0.8rem;
     font-weight: 500;
   }
   .marble-bg {

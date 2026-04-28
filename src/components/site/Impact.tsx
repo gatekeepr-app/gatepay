@@ -53,9 +53,9 @@ export function Impact() {
                 <div className="h-px flex-1 bg-border" />
               </div>
               <h3 className="text-display mt-4 text-2xl">{c.title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{c.desc}</p>
-              <a href="#contact" className="neon-underline mt-6 inline-block text-sm font-medium">
-                Learn more →
+              <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">{c.desc}</p>
+              <a href="#contact" className="neon-underline mt-6 inline-block text-[15px] font-medium">
+                Contact Us →
               </a>
             </article>
           ))}
