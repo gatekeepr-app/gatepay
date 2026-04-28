@@ -1,4 +1,6 @@
 import logo from "@/assets/gatekeepr-logo.png";
+import marble from "@/assets/marble.jpg";
+import statue from "@/assets/statue-bust.jpg";
 
 const cols = [
   {
@@ -28,8 +30,31 @@ const cols = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-background">
-      <div className="mx-auto max-w-[1400px] px-6 py-20 md:px-10">
+    <footer className="relative overflow-hidden border-t border-border bg-background">
+      {/* Marble texture wash */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.05]"
+        style={{
+          backgroundImage: `url(${marble})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          mixBlendMode: "multiply",
+        }}
+      />
+      {/* Statue bust motif */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -left-20 bottom-0 hidden h-[110%] w-[40%] opacity-[0.06] md:block"
+        style={{
+          backgroundImage: `url(${statue})`,
+          backgroundSize: "contain",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "left bottom",
+          filter: "grayscale(1) contrast(1.1)",
+        }}
+      />
+      <div className="relative mx-auto max-w-[1400px] px-6 py-20 md:px-10">
         <div className="grid grid-cols-2 gap-10 md:grid-cols-6">
           <div className="col-span-2">
             <img src={logo} alt="Gatekeepr" className="h-7 w-auto" />
