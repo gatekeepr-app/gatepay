@@ -31,10 +31,12 @@ export function Services() {
           {services.map((s, i) => (
             <article
               key={s.title}
-              className="group relative flex flex-col gap-6 bg-background p-8 transition hover:bg-card md:p-10"
+              className="group relative flex flex-col gap-6 bg-background p-8 transition-colors duration-300 hover:bg-card md:p-10"
             >
               <div className="flex items-center justify-between">
-                <Glyph i={i} />
+                <span className="inline-block transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-110">
+                  <Glyph i={i} />
+                </span>
                 <span className="text-eyebrow text-foreground/40">{s.n}</span>
               </div>
               <h3 className="text-display text-2xl md:text-3xl">{s.title}</h3>
