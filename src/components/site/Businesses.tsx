@@ -10,66 +10,121 @@ type Biz = {
   services: string[];
   focus: string[];
   accent: string;
+  motif: "studio" | "grid" | "stage" | "document";
 };
 
 const businesses: Biz[] = [
   {
     name: "Timeline Studios",
     label: "A Gatekeepr company",
-    tagline: "Brands that move, speak, and sell.",
+    tagline: "Creative and marketing for sharper brands.",
     description:
-      "Timeline Studios is Gatekeepr's creative and marketing arm — branding, graphic design, motion graphics, video, websites and social media execution for businesses that need a sharper digital presence.",
-    services: ["Branding", "Graphic Design", "Motion", "Video", "Websites", "Social"],
+      "Branding, websites, motion, video, and campaign assets for businesses that need to look serious online.",
+    services: ["Branding", "Websites", "Motion"],
     focus: [
       "Brand identity systems for founders and challenger brands",
       "Performance creative and content engines for social",
       "Editorial websites that double as sales tools",
     ],
     accent: "TS",
+    motif: "studio",
   },
   {
     name: "Darviz Labs",
     label: "A Gatekeepr company",
     tagline: "Technology built with business intent.",
     description:
-      "Darviz Labs is Gatekeepr's technology and product arm — websites, web apps, internal tools, automations and digital systems for businesses that need stronger technical infrastructure.",
-    services: ["Websites", "Web Apps", "Products", "Tools", "Automation", "AI Systems"],
+      "Websites, web apps, internal tools, automations, and product systems for businesses that need stronger technical infrastructure.",
+    services: ["Web Apps", "Tools", "Automation"],
     focus: [
       "Custom web apps and internal tools for operating teams",
       "AI-powered workflows and automation systems",
       "Product engineering for early-stage and scaling companies",
     ],
     accent: "DL",
+    motif: "grid",
   },
   {
     name: "Gatekeepr Experiences",
     label: "A Gatekeepr service vertical",
-    tagline: "Events, activations and experiences with taste.",
+    tagline: "Events and activations with taste.",
     description:
-      "Event management, brand activations, launch experiences, campus campaigns and business gatherings — with strong creative direction and operational control.",
-    services: ["Events", "Activations", "Launches", "Campus", "Corporate", "Experience"],
+      "Launches, activations, campus campaigns, corporate events, and branded experiences executed with creative and operational control.",
+    services: ["Events", "Activations", "Launches"],
     focus: [
       "Brand launches and product reveals end-to-end",
       "Campus and community activation campaigns",
       "Corporate gatherings with creative direction",
     ],
     accent: "GE",
+    motif: "stage",
   },
   {
     name: "Gatekeepr Advisory",
     label: "A Gatekeepr service vertical",
     tagline: "Strategy before execution.",
     description:
-      "Helping founders clarify positioning, sharpen offers, plan digital operations and build execution systems before scaling campaigns, products or websites.",
-    services: ["Strategy", "Positioning", "Growth", "Operations", "Launch Planning", "Offers"],
+      "Positioning, launch planning, offer design, and digital operations for founders and businesses before they scale.",
+    services: ["Strategy", "Positioning", "Operations"],
     focus: [
       "Positioning and offer design for founders",
       "Go-to-market and launch planning",
       "Operating systems for marketing and sales",
     ],
     accent: "GA",
+    motif: "document",
   },
 ];
+
+function Motif({ kind }: { kind: Biz["motif"] }) {
+  // Subtle, distinct background motif for each business — kept low-opacity & monochrome
+  if (kind === "studio") {
+    // Brand board / creative tiles
+    return (
+      <div className="pointer-events-none absolute inset-x-6 bottom-6 grid grid-cols-4 gap-2 opacity-[0.10]">
+        <div className="aspect-square rounded-md bg-background" />
+        <div className="aspect-square rounded-md border border-background/40" />
+        <div className="aspect-square rounded-md bg-background/60" />
+        <div className="aspect-square rounded-full border border-background/40" />
+      </div>
+    );
+  }
+  if (kind === "grid") {
+    // UI grid / column lines (technical + classical)
+    return (
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.08]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)",
+          backgroundSize: "44px 44px",
+          color: "var(--background)",
+        }}
+      />
+    );
+  }
+  if (kind === "stage") {
+    // Stage / spotlight rays
+    return (
+      <div className="pointer-events-none absolute -bottom-20 left-1/2 h-72 w-[140%] -translate-x-1/2 opacity-[0.10]"
+        style={{
+          backgroundImage:
+            "conic-gradient(from 200deg at 50% 100%, transparent 0deg, var(--background) 8deg, transparent 16deg, var(--background) 28deg, transparent 36deg, var(--background) 52deg, transparent 60deg)",
+        }}
+      />
+    );
+  }
+  // document — ruled lines like a planning page
+  return (
+    <div
+      className="pointer-events-none absolute inset-x-8 bottom-8 h-40 opacity-[0.10]"
+      style={{
+        backgroundImage:
+          "repeating-linear-gradient(to bottom, var(--background) 0 1px, transparent 1px 14px)",
+      }}
+    />
+  );
+}
 
 export function Businesses() {
   const scroller = useRef<HTMLDivElement>(null);
