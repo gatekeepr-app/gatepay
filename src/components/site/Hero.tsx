@@ -19,7 +19,7 @@ export function Hero() {
       {/* Background statue silhouette */}
       <div
         aria-hidden
-        className="float-slow pointer-events-none absolute -right-24 top-10 hidden h-[72%] w-[33%] opacity-[0.07] md:block"
+        className="float-slow pointer-events-none absolute -right-24 top-10 hidden h-[120%] w-[55%] opacity-[0.07] md:block"
         style={{
           backgroundImage: `url(${statue})`,
           backgroundSize: "contain",
