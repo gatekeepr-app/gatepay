@@ -1,17 +1,25 @@
-import statue from "@/assets/statue-bust.jpg";
+import business from "@/assets/impact-business.jpg";
+import talent from "@/assets/impact-talent.jpg";
+import premium from "@/assets/impact-premium.jpg";
 
 const cards = [
   {
     title: "Raising the standard of local business execution",
-    desc: "Gatekeepr helps businesses move beyond average branding, weak websites, scattered marketing and unstructured operations.",
+    desc: "Gatekeepr helps businesses move beyond average branding, weak websites, scattered marketing, and unstructured operations.",
+    image: business,
+    alt: "Small business storefront with a refreshed brand identity and brand board on a marble counter",
   },
   {
     title: "Building ambitious creative and technical talent",
-    desc: "Through Timeline Studios and Darviz Labs, Gatekeepr is designed to become a training ground for designers, developers, marketers, operators and builders.",
+    desc: "Through Timeline Studios and Darviz Labs, Gatekeepr is designed to become a training ground for designers, developers, marketers, operators, and builders.",
+    image: talent,
+    alt: "Studio team of designers and developers collaborating around a marble desk",
   },
   {
     title: "Making digital presence feel premium",
-    desc: "We help businesses present themselves with the confidence, clarity and polish usually reserved for larger companies.",
+    desc: "We help businesses present themselves with the confidence, clarity, and polish usually reserved for larger companies.",
+    image: premium,
+    alt: "Premium website mockup on a laptop and phone next to a classical bust on marble",
   },
 ];
 
@@ -25,9 +33,9 @@ export function Impact() {
             <h2 className="text-display text-5xl md:text-6xl lg:text-7xl">
               Our impact<br />beyond business
             </h2>
-            <p className="mt-6 max-w-xl text-muted-foreground md:text-lg">
-              We are building for the businesses, creators and operators who
-              deserve better design, better systems and better execution.
+            <p className="mt-6 max-w-xl text-[17px] leading-relaxed text-muted-foreground md:text-lg">
+              We are building for the businesses, creators, and operators who
+              deserve better design, better systems, and better execution.
             </p>
           </div>
         </div>
@@ -40,8 +48,8 @@ export function Impact() {
             >
               <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-secondary">
                 <img
-                  src={statue}
-                  alt=""
+                  src={c.image}
+                  alt={c.alt}
                   width={800}
                   height={600}
                   loading="lazy"
@@ -52,10 +60,10 @@ export function Impact() {
                 <span className="text-eyebrow text-foreground/40">0{i + 1}</span>
                 <div className="h-px flex-1 bg-border" />
               </div>
-              <h3 className="text-display mt-4 text-2xl">{c.title}</h3>
-              <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">{c.desc}</p>
+              <h3 className="text-display mt-4 text-2xl md:text-[26px] leading-tight">{c.title}</h3>
+              <p className="mt-3 text-[16px] leading-relaxed text-muted-foreground">{c.desc}</p>
               <a href="#contact" className="neon-underline mt-6 inline-block text-[15px] font-medium">
-                Contact Us →
+                Learn more →
               </a>
             </article>
           ))}
