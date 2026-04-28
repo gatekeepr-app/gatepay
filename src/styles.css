@@ -50,7 +50,7 @@
   --ink: oklch(0.12 0 0);
   --marble: oklch(0.955 0.003 90);         /* soft marble gray */
   --beige: oklch(0.955 0.013 80);          /* warm beige */
-  --neon: oklch(0.92 0.27 142);            /* #7DFF6A neon green */
+  --neon: oklch(0.45 0.31 264);            /* #1F1FEB electric blue */
 
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.16 0 0);
@@ -62,8 +62,8 @@
   --secondary-foreground: oklch(0.16 0 0);
   --muted: oklch(0.965 0.003 90);
   --muted-foreground: oklch(0.45 0 0);
-  --accent: oklch(0.92 0.27 142);
-  --accent-foreground: oklch(0.16 0 0);
+  --accent: oklch(0.45 0.31 264);
+  --accent-foreground: oklch(0.99 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.99 0 0);
   --border: oklch(0.9 0.005 90);
@@ -94,7 +94,7 @@
   }
   ::selection {
     background: var(--neon);
-    color: var(--ink);
+    color: oklch(0.99 0 0);
   }
 }
 
