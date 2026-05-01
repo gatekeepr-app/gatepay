@@ -140,7 +140,7 @@ export function Businesses() {
     <section id="businesses" className="relative border-t border-border bg-background py-24 md:py-32">
       <div className="mx-auto max-w-[1400px] px-6 md:px-10">
         <div className="flex flex-col gap-10 md:flex-row md:items-end md:justify-between">
-          <div className="max-w-2xl">
+          <div className="reveal max-w-2xl">
             <div className="text-eyebrow mb-4 text-muted-foreground">01 — Portfolio</div>
             <h2 className="text-display text-5xl md:text-6xl lg:text-7xl">
               Our businesses
@@ -152,7 +152,7 @@ export function Businesses() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="reveal reveal-delay-1 flex items-center gap-2">
             <button
               aria-label="Previous"
               onClick={() => scroll(-1)}

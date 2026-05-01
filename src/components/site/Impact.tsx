@@ -28,7 +28,7 @@ export function Impact() {
     <section id="blog" className="relative border-t border-border bg-secondary py-24 md:py-32">
       <div className="mx-auto max-w-[1400px] px-6 md:px-10">
         <div className="flex flex-col gap-10 md:flex-row md:items-end md:justify-between">
-          <div className="max-w-2xl">
+          <div className="reveal max-w-2xl">
             <div className="text-eyebrow mb-4 text-muted-foreground">06 — Beyond</div>
             <h2 className="text-display text-5xl md:text-6xl lg:text-7xl">
               Our impact<br />beyond business
@@ -44,7 +44,7 @@ export function Impact() {
           {cards.map((c, i) => (
             <article
               key={c.title}
-              className="card-hover group relative overflow-hidden rounded-3xl border border-border bg-background p-8"
+              className={`reveal reveal-delay-${i + 1} card-hover group relative overflow-hidden rounded-3xl border border-border bg-background p-8`}
             >
               <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-secondary">
                 <img

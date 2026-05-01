@@ -163,7 +163,7 @@ export function Work() {
     <section id="work" className="relative border-t border-border bg-background py-24 md:py-32">
       <div className="mx-auto max-w-[1400px] px-6 md:px-10">
         <div className="grid grid-cols-1 gap-14 lg:grid-cols-12">
-          <div className="lg:col-span-5">
+          <div className="reveal lg:col-span-5">
             <div className="text-eyebrow mb-4 text-muted-foreground">05 — Output</div>
             <h2 className="text-display text-5xl md:text-6xl lg:text-7xl">
               Our work<br />at a glance
@@ -198,7 +198,7 @@ export function Work() {
             </div>
           </div>
 
-          <div className="lg:col-span-7">
+          <div className="reveal reveal-delay-1 lg:col-span-7">
             <div
               ref={scroller}
               className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
