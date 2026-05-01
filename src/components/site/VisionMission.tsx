@@ -56,7 +56,7 @@ export function VisionMission() {
       <div className="relative mx-auto max-w-[1400px] px-6 md:px-10">
         {/* Header */}
         <div className="grid grid-cols-1 gap-10 md:grid-cols-12 md:items-end">
-          <div className="md:col-span-7">
+          <div className="reveal md:col-span-7">
             <div className="text-eyebrow mb-4 text-muted-foreground">
               02 — Principles
             </div>
@@ -67,7 +67,7 @@ export function VisionMission() {
               </span>
             </h2>
           </div>
-          <div className="md:col-span-5">
+          <div className="reveal reveal-delay-1 md:col-span-5">
             <p className="text-base leading-relaxed text-muted-foreground md:text-lg">
               Vision and mission, written plainly. No corporate fog. These are
               the two sentences every Gatekeepr decision is measured against.

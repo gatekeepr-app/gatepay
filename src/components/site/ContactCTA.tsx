@@ -24,17 +24,17 @@ export function ContactCTA() {
         }}
       />
       <div className="relative mx-auto max-w-[1400px] px-6 py-28 md:px-10 md:py-40">
-        <div className="text-eyebrow mb-6 text-background/50">07 — Build with us</div>
-        <h2 className="text-display max-w-5xl text-[10vw] leading-[0.95] sm:text-6xl md:text-7xl lg:text-[6.4vw]">
+        <div className="reveal text-eyebrow mb-6 text-background/50">07 — Build with us</div>
+        <h2 className="reveal reveal-delay-1 text-display max-w-5xl text-[10vw] leading-[0.95] sm:text-6xl md:text-7xl lg:text-[6.4vw]">
           Build something that looks serious, works properly, and
           <span className="italic font-light text-background/60"> moves people.</span>
         </h2>
-        <p className="mt-10 max-w-2xl text-[17px] leading-relaxed text-background/75 md:text-lg">
+        <p className="reveal reveal-delay-2 mt-10 max-w-2xl text-[17px] leading-relaxed text-background/75 md:text-lg">
           Whether you need a brand, website, campaign, event, or digital system
           — Gatekeepr brings the creative, technical, and operational team to
           execute it properly.
         </p>
-        <div className="mt-12 flex flex-wrap items-center gap-3">
+        <div className="reveal reveal-delay-3 mt-12 flex flex-wrap items-center gap-3">
           <a
             href="mailto:hello@gatekeepr.com"
             className="inline-flex items-center gap-2 rounded-full bg-background px-7 py-4 text-[15px] font-medium text-foreground hover:bg-background/90"

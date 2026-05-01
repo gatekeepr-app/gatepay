@@ -41,11 +41,11 @@ export function Services() {
     <section id="services" className="relative border-t border-border bg-secondary py-24 md:py-32">
       <div className="mx-auto max-w-[1400px] px-6 md:px-10">
         <div className="flex flex-col gap-10 md:flex-row md:items-end md:justify-between">
-          <div>
+          <div className="reveal">
             <div className="text-eyebrow mb-4 text-muted-foreground">03 — Capabilities</div>
             <h2 className="text-display text-5xl md:text-6xl lg:text-7xl">What we build</h2>
           </div>
-          <p className="max-w-md text-[15px] leading-relaxed text-muted-foreground md:text-base">
+          <p className="reveal reveal-delay-1 max-w-md text-[15px] leading-relaxed text-muted-foreground md:text-base">
             Six disciplines under one roof — engineered to work together,
             available individually when you need them.
           </p>
@@ -55,7 +55,7 @@ export function Services() {
           {services.map((s, i) => (
             <article
               key={s.title}
-              className="group relative flex flex-col gap-7 bg-background p-10 transition-colors duration-300 hover:bg-card md:p-12"
+              className={`reveal reveal-delay-${Math.min(i + 1, 6)} group relative flex flex-col gap-7 bg-background p-10 transition-colors duration-300 hover:bg-card md:p-12`}
             >
               <div className="flex items-center justify-between">
                 <span className="inline-block text-foreground/60 transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-110">

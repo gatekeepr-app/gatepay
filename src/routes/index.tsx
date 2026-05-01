@@ -9,6 +9,7 @@ import { Work } from "@/components/site/Work";
 import { Impact } from "@/components/site/Impact";
 import { ContactCTA } from "@/components/site/ContactCTA";
 import { Footer } from "@/components/site/Footer";
+import { RevealOnScroll } from "@/components/RevealOnScroll";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <main className="bg-background text-foreground">
+      <RevealOnScroll />
       <Header />
       <Hero />
       <Businesses />

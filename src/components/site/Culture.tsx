@@ -14,7 +14,7 @@ export function Culture() {
     <section id="culture" className="relative border-t border-border py-24 md:py-32">
       <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-14 px-6 md:px-10 lg:grid-cols-12 lg:gap-20">
         {/* Left visual — editorial atelier composition */}
-        <div className="lg:col-span-6">
+        <div className="reveal lg:col-span-6">
           <div className="relative">
             {/* Marble plate behind image */}
             <div
@@ -51,7 +51,7 @@ export function Culture() {
         </div>
 
         {/* Right content */}
-        <div className="lg:col-span-6 lg:pt-8">
+        <div className="reveal reveal-delay-1 lg:col-span-6 lg:pt-8">
           <div className="text-eyebrow mb-4 text-muted-foreground">04 — Inside</div>
           <h2 className="text-display text-5xl md:text-6xl">Working at Gatekeepr</h2>
           <p className="mt-8 max-w-xl text-[17px] leading-relaxed text-muted-foreground md:text-lg">
