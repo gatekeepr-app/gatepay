@@ -75,11 +75,31 @@ function AdminPage() {
     e.preventDefault();
     setSubmitting(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setSubmitting(false);
     if (error) {
-      toast.error(error.message);
+      // First-time provisioning: try sign-up, then sign-in.
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: `${window.location.origin}/admin` },
+      });
+      if (signUpError) {
+        setSubmitting(false);
+        toast.error(signUpError.message);
+        return;
+      }
+      const { error: retryError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      setSubmitting(false);
+      if (retryError) {
+        toast.error(retryError.message);
+        return;
+      }
+      toast.success("Account created and signed in");
       return;
     }
+    setSubmitting(false);
     toast.success("Signed in");
   };
 
