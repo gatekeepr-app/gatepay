@@ -1,12 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/admin")({
+export const Route = createFileRoute("/_admin/admin")({
   head: () => ({
     meta: [
       { title: "Admin — Gatekeepr" },
@@ -27,35 +25,16 @@ type Lead = {
 };
 
 function AdminPage() {
-  const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
   const [leads, setLeads] = useState<Lead[]>([]);
-
-  const checkAccess = async () => {
-    const { data: sess } = await supabase.auth.getSession();
-    if (!sess.session) {
-      setIsAdmin(false);
-      setLoading(false);
-      return;
-    }
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", sess.session.user.id);
-    const admin = (roles ?? []).some((r) => r.role === "admin");
-    setIsAdmin(admin);
-    if (admin) await loadLeads();
-    setLoading(false);
-  };
+  const [loading, setLoading] = useState(true);
 
   const loadLeads = async () => {
     const { data, error } = await supabase
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
+    setLoading(false);
     if (error) {
       toast.error(error.message);
       return;
@@ -64,49 +43,12 @@ function AdminPage() {
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      checkAccess();
-    });
-    checkAccess();
-    return () => subscription.unsubscribe();
+    loadLeads();
   }, []);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      // First-time provisioning: try sign-up, then sign-in.
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: `${window.location.origin}/admin` },
-      });
-      if (signUpError) {
-        setSubmitting(false);
-        toast.error(signUpError.message);
-        return;
-      }
-      const { error: retryError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      setSubmitting(false);
-      if (retryError) {
-        toast.error(retryError.message);
-        return;
-      }
-      toast.success("Account created and signed in");
-      return;
-    }
-    setSubmitting(false);
-    toast.success("Signed in");
-  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    setLeads([]);
-    setIsAdmin(false);
+    navigate({ to: "/login", replace: true });
   };
 
   const updateStatus = async (id: string, status: string) => {
@@ -121,55 +63,6 @@ function AdminPage() {
     setLeads((cur) => cur.filter((l) => l.id !== id));
   };
 
-  if (loading) {
-    return (
-      <main className="grid min-h-screen place-items-center bg-background text-foreground">
-        <p className="text-sm text-muted-foreground">Loading…</p>
-      </main>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <main className="grid min-h-screen place-items-center bg-background px-6 text-foreground">
-        <form
-          onSubmit={handleLogin}
-          className="w-full max-w-sm space-y-5 rounded-2xl border border-border bg-card p-8"
-        >
-          <div>
-            <h1 className="text-2xl font-semibold">Admin sign in</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Restricted access.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <Button type="submit" disabled={submitting} className="w-full">
-            {submitting ? "Signing in…" : "Sign in"}
-          </Button>
-        </form>
-      </main>
-    );
-  }
-
   return (
     <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-[1200px] px-6 py-12 md:px-10">
@@ -178,7 +71,7 @@ function AdminPage() {
             <div className="text-eyebrow text-foreground/50">Admin</div>
             <h1 className="mt-2 text-3xl font-semibold md:text-4xl">Leads inbox</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              {leads.length} {leads.length === 1 ? "lead" : "leads"} total
+              {loading ? "Loading…" : `${leads.length} ${leads.length === 1 ? "lead" : "leads"} total`}
             </p>
           </div>
           <Button variant="outline" onClick={handleLogout}>
@@ -187,7 +80,7 @@ function AdminPage() {
         </div>
 
         <div className="mt-10 space-y-4">
-          {leads.length === 0 && (
+          {!loading && leads.length === 0 && (
             <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
               No leads yet.
             </div>
