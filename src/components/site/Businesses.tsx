@@ -15,21 +15,6 @@ type Biz = {
 
 const businesses: Biz[] = [
   {
-    name: "Timeline Studios",
-    label: "A Gatekeepr company",
-    tagline: "Creative and marketing for sharper brands.",
-    description:
-      "Branding, websites, motion, video, and campaign assets for businesses that need to look serious online.",
-    services: ["Branding", "Websites", "Motion"],
-    focus: [
-      "Brand identity systems for founders and challenger brands",
-      "Performance creative and content engines for social",
-      "Editorial websites that double as sales tools",
-    ],
-    accent: "TS",
-    motif: "studio",
-  },
-  {
     name: "Darviz Labs",
     label: "A Gatekeepr company",
     tagline: "Technology built with business intent.",
@@ -43,6 +28,21 @@ const businesses: Biz[] = [
     ],
     accent: "DL",
     motif: "grid",
+  },
+  {
+    name: "Timeline Studios",
+    label: "A Gatekeepr company",
+    tagline: "Creative and marketing for sharper brands.",
+    description:
+      "Branding, websites, motion, video, and campaign assets for businesses that need to look serious online.",
+    services: ["Branding", "Websites", "Motion"],
+    focus: [
+      "Brand identity systems for founders and challenger brands",
+      "Performance creative and content engines for social",
+      "Editorial websites that double as sales tools",
+    ],
+    accent: "TS",
+    motif: "studio",
   },
   {
     name: "Gatekeepr Experiences",
