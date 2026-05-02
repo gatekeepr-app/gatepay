@@ -73,11 +73,11 @@ function AdminLayout() {
           <button
             onClick={async () => {
               await supabase.auth.signOut();
-              navigate({ to: "/login", replace: true });
+              navigate({ to: "/", replace: true });
             }}
             className="mt-6 rounded-full border border-border px-5 py-2 text-sm hover:bg-muted"
           >
-            Sign out
+            Log out
           </button>
         </div>
       </main>
