@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { LogOut } from "lucide-react";
 
 export const Route = createFileRoute("/_admin/admin")({
   head: () => ({
@@ -47,8 +48,13 @@ function AdminPage() {
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate({ to: "/login", replace: true });
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Signed out");
+    navigate({ to: "/", replace: true });
   };
 
   const updateStatus = async (id: string, status: string) => {
@@ -74,8 +80,9 @@ function AdminPage() {
               {loading ? "Loading…" : `${leads.length} ${leads.length === 1 ? "lead" : "leads"} total`}
             </p>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            Sign out
+          <Button variant="outline" onClick={handleLogout} className="gap-2">
+            <LogOut className="h-4 w-4" />
+            Log out
           </Button>
         </div>
 
