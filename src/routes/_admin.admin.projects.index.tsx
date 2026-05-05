@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Plus, Search } from "lucide-react";
 import { formatDate } from "@/lib/admin/format";
 
-export const Route = createFileRoute("/_admin/admin/projects")({
+export const Route = createFileRoute("/_admin/admin/projects/")({
   head: () => ({ meta: [{ title: "Projects — Gatekeepr" }, { name: "robots", content: "noindex, nofollow" }] }),
   component: ProjectsPage,
 });
