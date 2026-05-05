@@ -1,161 +1,89 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { LogOut } from "lucide-react";
+import { Briefcase, Users, FileText, Inbox, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/_admin/admin")({
   head: () => ({
     meta: [
-      { title: "Admin — Gatekeepr" },
+      { title: "Workspace — Gatekeepr" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
-  component: AdminPage,
+  component: DashboardPage,
 });
 
-type Lead = {
-  id: string;
-  name: string;
-  email: string;
-  company: string | null;
-  message: string;
-  status: string;
-  created_at: string;
-};
-
-function AdminPage() {
-  const navigate = useNavigate();
-  const [leads, setLeads] = useState<Lead[]>([]);
+function DashboardPage() {
+  const [stats, setStats] = useState({ clients: 0, projects: 0, invoices: 0, leads: 0 });
   const [loading, setLoading] = useState(true);
 
-  const loadLeads = async () => {
-    const { data, error } = await supabase
-      .from("leads")
-      .select("*")
-      .order("created_at", { ascending: false });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    setLeads((data ?? []) as Lead[]);
-  };
-
   useEffect(() => {
-    loadLeads();
+    (async () => {
+      const [c, p, i, l] = await Promise.all([
+        supabase.from("clients").select("id", { count: "exact", head: true }),
+        supabase.from("projects").select("id", { count: "exact", head: true }),
+        supabase.from("invoices").select("id", { count: "exact", head: true }),
+        supabase.from("leads").select("id", { count: "exact", head: true }),
+      ]);
+      setStats({
+        clients: c.count ?? 0,
+        projects: p.count ?? 0,
+        invoices: i.count ?? 0,
+        leads: l.count ?? 0,
+      });
+      setLoading(false);
+    })();
   }, []);
 
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Signed out");
-    navigate({ to: "/", replace: true });
-  };
-
-  const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase.from("leads").update({ status }).eq("id", id);
-    if (error) return toast.error(error.message);
-    setLeads((cur) => cur.map((l) => (l.id === id ? { ...l, status } : l)));
-  };
-
-  const remove = async (id: string) => {
-    const { error } = await supabase.from("leads").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    setLeads((cur) => cur.filter((l) => l.id !== id));
-  };
+  const cards = [
+    { label: "Clients", value: stats.clients, icon: Users, to: "/admin/clients" },
+    { label: "Projects", value: stats.projects, icon: Briefcase, to: "/admin/projects" },
+    { label: "Invoices", value: stats.invoices, icon: FileText, to: "/admin/invoices" },
+    { label: "Leads", value: stats.leads, icon: Inbox, to: "/admin/leads" },
+  ];
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-[1200px] px-6 py-12 md:px-10">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-eyebrow text-foreground/50">Admin</div>
-            <h1 className="mt-2 text-3xl font-semibold md:text-4xl">Leads inbox</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {loading ? "Loading…" : `${leads.length} ${leads.length === 1 ? "lead" : "leads"} total`}
-            </p>
-          </div>
-          <Button variant="outline" onClick={handleLogout} className="gap-2">
-            <LogOut className="h-4 w-4" />
-            Log out
-          </Button>
+    <main className="px-6 py-10 md:px-10">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div className="text-eyebrow text-foreground/50">Workspace</div>
+          <h1 className="mt-2 text-3xl font-semibold md:text-4xl">Dashboard</h1>
         </div>
+        <div className="flex gap-2">
+          <Link
+            to="/admin/clients/new"
+            className="inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" /> New client
+          </Link>
+          <Link
+            to="/admin/projects/new"
+            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm hover:bg-muted"
+          >
+            <Plus className="h-4 w-4" /> New project
+          </Link>
+        </div>
+      </div>
 
-        <div className="mt-10 space-y-4">
-          {!loading && leads.length === 0 && (
-            <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-              No leads yet.
-            </div>
-          )}
-          {leads.map((l) => (
-            <article
-              key={l.id}
-              className="rounded-xl border border-border bg-card p-6"
+      <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+        {cards.map((c) => {
+          const Icon = c.icon;
+          return (
+            <Link
+              key={c.label}
+              to={c.to}
+              className="rounded-xl border border-border bg-card p-5 transition-colors hover:bg-muted"
             >
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="text-lg font-semibold">{l.name}</h3>
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs ${
-                        l.status === "new"
-                          ? "bg-foreground text-background"
-                          : "bg-muted text-foreground/70"
-                      }`}
-                    >
-                      {l.status}
-                    </span>
-                  </div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    <a href={`mailto:${l.email}`} className="hover:underline">
-                      {l.email}
-                    </a>
-                    {l.company ? ` · ${l.company}` : ""}
-                  </div>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {new Date(l.created_at).toLocaleString()}
-                </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">{c.label}</span>
+                <Icon className="h-4 w-4 text-foreground/40" />
               </div>
-              <p className="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed">
-                {l.message}
-              </p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {l.status !== "contacted" && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => updateStatus(l.id, "contacted")}
-                  >
-                    Mark contacted
-                  </Button>
-                )}
-                {l.status !== "archived" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => updateStatus(l.id, "archived")}
-                  >
-                    Archive
-                  </Button>
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => remove(l.id)}
-                >
-                  Delete
-                </Button>
+              <div className="mt-3 text-3xl font-semibold tabular-nums">
+                {loading ? "—" : c.value}
               </div>
-            </article>
-          ))}
-        </div>
+            </Link>
+          );
+        })}
       </div>
     </main>
   );

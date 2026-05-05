@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Sidebar } from "@/components/admin/Sidebar";
 
 export const Route = createFileRoute("/_admin")({
   component: AdminLayout,
@@ -38,8 +39,9 @@ function AdminLayout() {
           setState("denied");
           return;
         }
-        const isAdmin = (roles ?? []).some((r) => r.role === "admin");
-        setState(isAdmin ? "ok" : "denied");
+        const allowed = ["super_admin", "admin", "member"];
+        const hasAccess = (roles ?? []).some((r) => allowed.includes(r.role));
+        setState(hasAccess ? "ok" : "denied");
       } catch (e) {
         console.error("[admin] auth check error", e);
         if (!cancelled) redirectToLogin();
@@ -80,7 +82,7 @@ function AdminLayout() {
         <div className="max-w-md text-center">
           <h1 className="text-2xl font-semibold">Access denied</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            You're signed in but don't have admin permission.
+            You're signed in but don't have workspace access.
           </p>
           <button
             onClick={async () => {
@@ -96,5 +98,12 @@ function AdminLayout() {
     );
   }
 
-  return <Outlet />;
+  return (
+    <div className="flex min-h-screen bg-background text-foreground">
+      <Sidebar />
+      <div className="flex-1 overflow-x-hidden">
+        <Outlet />
+      </div>
+    </div>
+  );
 }
