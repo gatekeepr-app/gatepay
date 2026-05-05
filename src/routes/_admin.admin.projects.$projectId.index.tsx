@@ -5,7 +5,7 @@ import { ArrowLeft, FileText, Settings2 } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/admin/format";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_admin/admin/projects/$projectId")({
+export const Route = createFileRoute("/_admin/admin/projects/$projectId/")({
   head: () => ({ meta: [{ title: "Project — Gatekeepr" }, { name: "robots", content: "noindex, nofollow" }] }),
   component: ProjectDetailPage,
 });
