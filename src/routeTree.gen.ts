@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AdminAdminRouteImport } from './routes/_admin.admin'
+import { Route as AdminAdminUsersRouteImport } from './routes/_admin.admin.users'
 import { Route as AdminAdminLeadsRouteImport } from './routes/_admin.admin.leads'
 import { Route as AdminAdminProjectsIndexRouteImport } from './routes/_admin.admin.projects.index'
 import { Route as AdminAdminInvoicesIndexRouteImport } from './routes/_admin.admin.invoices.index'
@@ -39,10 +41,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminAdminRoute = AdminAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => AdminRoute,
+} as any)
+const AdminAdminUsersRoute = AdminAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminAdminRoute,
 } as any)
 const AdminAdminLeadsRoute = AdminAdminLeadsRouteImport.update({
   id: '/leads',
@@ -108,7 +120,9 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/admin': typeof AdminAdminRouteWithChildren
+  '/invite/$token': typeof InviteTokenRoute
   '/admin/leads': typeof AdminAdminLeadsRoute
+  '/admin/users': typeof AdminAdminUsersRoute
   '/admin/clients/$clientId': typeof AdminAdminClientsClientIdRoute
   '/admin/clients/new': typeof AdminAdminClientsNewRoute
   '/admin/invoices/$invoiceId': typeof AdminAdminInvoicesInvoiceIdRoute
@@ -124,7 +138,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/admin': typeof AdminAdminRouteWithChildren
+  '/invite/$token': typeof InviteTokenRoute
   '/admin/leads': typeof AdminAdminLeadsRoute
+  '/admin/users': typeof AdminAdminUsersRoute
   '/admin/clients/$clientId': typeof AdminAdminClientsClientIdRoute
   '/admin/clients/new': typeof AdminAdminClientsNewRoute
   '/admin/invoices/$invoiceId': typeof AdminAdminInvoicesInvoiceIdRoute
@@ -142,7 +158,9 @@ export interface FileRoutesById {
   '/_admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/_admin/admin': typeof AdminAdminRouteWithChildren
+  '/invite/$token': typeof InviteTokenRoute
   '/_admin/admin/leads': typeof AdminAdminLeadsRoute
+  '/_admin/admin/users': typeof AdminAdminUsersRoute
   '/_admin/admin/clients/$clientId': typeof AdminAdminClientsClientIdRoute
   '/_admin/admin/clients/new': typeof AdminAdminClientsNewRoute
   '/_admin/admin/invoices/$invoiceId': typeof AdminAdminInvoicesInvoiceIdRoute
@@ -160,7 +178,9 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/admin'
+    | '/invite/$token'
     | '/admin/leads'
+    | '/admin/users'
     | '/admin/clients/$clientId'
     | '/admin/clients/new'
     | '/admin/invoices/$invoiceId'
@@ -176,7 +196,9 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/admin'
+    | '/invite/$token'
     | '/admin/leads'
+    | '/admin/users'
     | '/admin/clients/$clientId'
     | '/admin/clients/new'
     | '/admin/invoices/$invoiceId'
@@ -193,7 +215,9 @@ export interface FileRouteTypes {
     | '/_admin'
     | '/login'
     | '/_admin/admin'
+    | '/invite/$token'
     | '/_admin/admin/leads'
+    | '/_admin/admin/users'
     | '/_admin/admin/clients/$clientId'
     | '/_admin/admin/clients/new'
     | '/_admin/admin/invoices/$invoiceId'
@@ -210,6 +234,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   LoginRoute: typeof LoginRoute
+  InviteTokenRoute: typeof InviteTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -235,12 +260,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_admin/admin': {
       id: '/_admin/admin'
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminAdminRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/users': {
+      id: '/_admin/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminAdminUsersRouteImport
+      parentRoute: typeof AdminAdminRoute
     }
     '/_admin/admin/leads': {
       id: '/_admin/admin/leads'
@@ -324,6 +363,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminAdminRouteChildren {
   AdminAdminLeadsRoute: typeof AdminAdminLeadsRoute
+  AdminAdminUsersRoute: typeof AdminAdminUsersRoute
   AdminAdminClientsClientIdRoute: typeof AdminAdminClientsClientIdRoute
   AdminAdminClientsNewRoute: typeof AdminAdminClientsNewRoute
   AdminAdminInvoicesInvoiceIdRoute: typeof AdminAdminInvoicesInvoiceIdRoute
@@ -338,6 +378,7 @@ interface AdminAdminRouteChildren {
 
 const AdminAdminRouteChildren: AdminAdminRouteChildren = {
   AdminAdminLeadsRoute: AdminAdminLeadsRoute,
+  AdminAdminUsersRoute: AdminAdminUsersRoute,
   AdminAdminClientsClientIdRoute: AdminAdminClientsClientIdRoute,
   AdminAdminClientsNewRoute: AdminAdminClientsNewRoute,
   AdminAdminInvoicesInvoiceIdRoute: AdminAdminInvoicesInvoiceIdRoute,
@@ -369,6 +410,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   LoginRoute: LoginRoute,
+  InviteTokenRoute: InviteTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
