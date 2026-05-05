@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDate, formatMoney } from "@/lib/admin/format";
 
-export const Route = createFileRoute("/_admin/admin/invoices")({
+export const Route = createFileRoute("/_admin/admin/invoices/")({
   head: () => ({ meta: [{ title: "Invoices — Gatekeepr" }, { name: "robots", content: "noindex, nofollow" }] }),
   component: InvoicesPage,
 });

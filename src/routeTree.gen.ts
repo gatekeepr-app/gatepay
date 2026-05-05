@@ -15,8 +15,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminAdminRouteImport } from './routes/_admin.admin'
 import { Route as AdminAdminLeadsRouteImport } from './routes/_admin.admin.leads'
 import { Route as AdminAdminProjectsIndexRouteImport } from './routes/_admin.admin.projects.index'
+import { Route as AdminAdminInvoicesIndexRouteImport } from './routes/_admin.admin.invoices.index'
 import { Route as AdminAdminClientsIndexRouteImport } from './routes/_admin.admin.clients.index'
 import { Route as AdminAdminProjectsNewRouteImport } from './routes/_admin.admin.projects.new'
+import { Route as AdminAdminInvoicesNewRouteImport } from './routes/_admin.admin.invoices.new'
+import { Route as AdminAdminInvoicesInvoiceIdRouteImport } from './routes/_admin.admin.invoices.$invoiceId'
 import { Route as AdminAdminClientsNewRouteImport } from './routes/_admin.admin.clients.new'
 import { Route as AdminAdminClientsClientIdRouteImport } from './routes/_admin.admin.clients.$clientId'
 import { Route as AdminAdminProjectsProjectIdIndexRouteImport } from './routes/_admin.admin.projects.$projectId.index'
@@ -51,6 +54,11 @@ const AdminAdminProjectsIndexRoute = AdminAdminProjectsIndexRouteImport.update({
   path: '/projects/',
   getParentRoute: () => AdminAdminRoute,
 } as any)
+const AdminAdminInvoicesIndexRoute = AdminAdminInvoicesIndexRouteImport.update({
+  id: '/invoices/',
+  path: '/invoices/',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
 const AdminAdminClientsIndexRoute = AdminAdminClientsIndexRouteImport.update({
   id: '/clients/',
   path: '/clients/',
@@ -61,6 +69,17 @@ const AdminAdminProjectsNewRoute = AdminAdminProjectsNewRouteImport.update({
   path: '/projects/new',
   getParentRoute: () => AdminAdminRoute,
 } as any)
+const AdminAdminInvoicesNewRoute = AdminAdminInvoicesNewRouteImport.update({
+  id: '/invoices/new',
+  path: '/invoices/new',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
+const AdminAdminInvoicesInvoiceIdRoute =
+  AdminAdminInvoicesInvoiceIdRouteImport.update({
+    id: '/invoices/$invoiceId',
+    path: '/invoices/$invoiceId',
+    getParentRoute: () => AdminAdminRoute,
+  } as any)
 const AdminAdminClientsNewRoute = AdminAdminClientsNewRouteImport.update({
   id: '/clients/new',
   path: '/clients/new',
@@ -92,8 +111,11 @@ export interface FileRoutesByFullPath {
   '/admin/leads': typeof AdminAdminLeadsRoute
   '/admin/clients/$clientId': typeof AdminAdminClientsClientIdRoute
   '/admin/clients/new': typeof AdminAdminClientsNewRoute
+  '/admin/invoices/$invoiceId': typeof AdminAdminInvoicesInvoiceIdRoute
+  '/admin/invoices/new': typeof AdminAdminInvoicesNewRoute
   '/admin/projects/new': typeof AdminAdminProjectsNewRoute
   '/admin/clients/': typeof AdminAdminClientsIndexRoute
+  '/admin/invoices/': typeof AdminAdminInvoicesIndexRoute
   '/admin/projects/': typeof AdminAdminProjectsIndexRoute
   '/admin/projects/$projectId/billing': typeof AdminAdminProjectsProjectIdBillingRoute
   '/admin/projects/$projectId/': typeof AdminAdminProjectsProjectIdIndexRoute
@@ -105,8 +127,11 @@ export interface FileRoutesByTo {
   '/admin/leads': typeof AdminAdminLeadsRoute
   '/admin/clients/$clientId': typeof AdminAdminClientsClientIdRoute
   '/admin/clients/new': typeof AdminAdminClientsNewRoute
+  '/admin/invoices/$invoiceId': typeof AdminAdminInvoicesInvoiceIdRoute
+  '/admin/invoices/new': typeof AdminAdminInvoicesNewRoute
   '/admin/projects/new': typeof AdminAdminProjectsNewRoute
   '/admin/clients': typeof AdminAdminClientsIndexRoute
+  '/admin/invoices': typeof AdminAdminInvoicesIndexRoute
   '/admin/projects': typeof AdminAdminProjectsIndexRoute
   '/admin/projects/$projectId/billing': typeof AdminAdminProjectsProjectIdBillingRoute
   '/admin/projects/$projectId': typeof AdminAdminProjectsProjectIdIndexRoute
@@ -120,8 +145,11 @@ export interface FileRoutesById {
   '/_admin/admin/leads': typeof AdminAdminLeadsRoute
   '/_admin/admin/clients/$clientId': typeof AdminAdminClientsClientIdRoute
   '/_admin/admin/clients/new': typeof AdminAdminClientsNewRoute
+  '/_admin/admin/invoices/$invoiceId': typeof AdminAdminInvoicesInvoiceIdRoute
+  '/_admin/admin/invoices/new': typeof AdminAdminInvoicesNewRoute
   '/_admin/admin/projects/new': typeof AdminAdminProjectsNewRoute
   '/_admin/admin/clients/': typeof AdminAdminClientsIndexRoute
+  '/_admin/admin/invoices/': typeof AdminAdminInvoicesIndexRoute
   '/_admin/admin/projects/': typeof AdminAdminProjectsIndexRoute
   '/_admin/admin/projects/$projectId/billing': typeof AdminAdminProjectsProjectIdBillingRoute
   '/_admin/admin/projects/$projectId/': typeof AdminAdminProjectsProjectIdIndexRoute
@@ -135,8 +163,11 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/admin/clients/$clientId'
     | '/admin/clients/new'
+    | '/admin/invoices/$invoiceId'
+    | '/admin/invoices/new'
     | '/admin/projects/new'
     | '/admin/clients/'
+    | '/admin/invoices/'
     | '/admin/projects/'
     | '/admin/projects/$projectId/billing'
     | '/admin/projects/$projectId/'
@@ -148,8 +179,11 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/admin/clients/$clientId'
     | '/admin/clients/new'
+    | '/admin/invoices/$invoiceId'
+    | '/admin/invoices/new'
     | '/admin/projects/new'
     | '/admin/clients'
+    | '/admin/invoices'
     | '/admin/projects'
     | '/admin/projects/$projectId/billing'
     | '/admin/projects/$projectId'
@@ -162,8 +196,11 @@ export interface FileRouteTypes {
     | '/_admin/admin/leads'
     | '/_admin/admin/clients/$clientId'
     | '/_admin/admin/clients/new'
+    | '/_admin/admin/invoices/$invoiceId'
+    | '/_admin/admin/invoices/new'
     | '/_admin/admin/projects/new'
     | '/_admin/admin/clients/'
+    | '/_admin/admin/invoices/'
     | '/_admin/admin/projects/'
     | '/_admin/admin/projects/$projectId/billing'
     | '/_admin/admin/projects/$projectId/'
@@ -219,6 +256,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminProjectsIndexRouteImport
       parentRoute: typeof AdminAdminRoute
     }
+    '/_admin/admin/invoices/': {
+      id: '/_admin/admin/invoices/'
+      path: '/invoices'
+      fullPath: '/admin/invoices/'
+      preLoaderRoute: typeof AdminAdminInvoicesIndexRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
     '/_admin/admin/clients/': {
       id: '/_admin/admin/clients/'
       path: '/clients'
@@ -231,6 +275,20 @@ declare module '@tanstack/react-router' {
       path: '/projects/new'
       fullPath: '/admin/projects/new'
       preLoaderRoute: typeof AdminAdminProjectsNewRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
+    '/_admin/admin/invoices/new': {
+      id: '/_admin/admin/invoices/new'
+      path: '/invoices/new'
+      fullPath: '/admin/invoices/new'
+      preLoaderRoute: typeof AdminAdminInvoicesNewRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
+    '/_admin/admin/invoices/$invoiceId': {
+      id: '/_admin/admin/invoices/$invoiceId'
+      path: '/invoices/$invoiceId'
+      fullPath: '/admin/invoices/$invoiceId'
+      preLoaderRoute: typeof AdminAdminInvoicesInvoiceIdRouteImport
       parentRoute: typeof AdminAdminRoute
     }
     '/_admin/admin/clients/new': {
@@ -268,8 +326,11 @@ interface AdminAdminRouteChildren {
   AdminAdminLeadsRoute: typeof AdminAdminLeadsRoute
   AdminAdminClientsClientIdRoute: typeof AdminAdminClientsClientIdRoute
   AdminAdminClientsNewRoute: typeof AdminAdminClientsNewRoute
+  AdminAdminInvoicesInvoiceIdRoute: typeof AdminAdminInvoicesInvoiceIdRoute
+  AdminAdminInvoicesNewRoute: typeof AdminAdminInvoicesNewRoute
   AdminAdminProjectsNewRoute: typeof AdminAdminProjectsNewRoute
   AdminAdminClientsIndexRoute: typeof AdminAdminClientsIndexRoute
+  AdminAdminInvoicesIndexRoute: typeof AdminAdminInvoicesIndexRoute
   AdminAdminProjectsIndexRoute: typeof AdminAdminProjectsIndexRoute
   AdminAdminProjectsProjectIdBillingRoute: typeof AdminAdminProjectsProjectIdBillingRoute
   AdminAdminProjectsProjectIdIndexRoute: typeof AdminAdminProjectsProjectIdIndexRoute
@@ -279,8 +340,11 @@ const AdminAdminRouteChildren: AdminAdminRouteChildren = {
   AdminAdminLeadsRoute: AdminAdminLeadsRoute,
   AdminAdminClientsClientIdRoute: AdminAdminClientsClientIdRoute,
   AdminAdminClientsNewRoute: AdminAdminClientsNewRoute,
+  AdminAdminInvoicesInvoiceIdRoute: AdminAdminInvoicesInvoiceIdRoute,
+  AdminAdminInvoicesNewRoute: AdminAdminInvoicesNewRoute,
   AdminAdminProjectsNewRoute: AdminAdminProjectsNewRoute,
   AdminAdminClientsIndexRoute: AdminAdminClientsIndexRoute,
+  AdminAdminInvoicesIndexRoute: AdminAdminInvoicesIndexRoute,
   AdminAdminProjectsIndexRoute: AdminAdminProjectsIndexRoute,
   AdminAdminProjectsProjectIdBillingRoute:
     AdminAdminProjectsProjectIdBillingRoute,
