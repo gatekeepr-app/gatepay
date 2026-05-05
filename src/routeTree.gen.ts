@@ -14,6 +14,9 @@ import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminAdminRouteImport } from './routes/_admin.admin'
 import { Route as AdminAdminLeadsRouteImport } from './routes/_admin.admin.leads'
+import { Route as AdminAdminClientsIndexRouteImport } from './routes/_admin.admin.clients.index'
+import { Route as AdminAdminClientsNewRouteImport } from './routes/_admin.admin.clients.new'
+import { Route as AdminAdminClientsClientIdRouteImport } from './routes/_admin.admin.clients.$clientId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -39,18 +42,40 @@ const AdminAdminLeadsRoute = AdminAdminLeadsRouteImport.update({
   path: '/leads',
   getParentRoute: () => AdminAdminRoute,
 } as any)
+const AdminAdminClientsIndexRoute = AdminAdminClientsIndexRouteImport.update({
+  id: '/clients/',
+  path: '/clients/',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
+const AdminAdminClientsNewRoute = AdminAdminClientsNewRouteImport.update({
+  id: '/clients/new',
+  path: '/clients/new',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
+const AdminAdminClientsClientIdRoute =
+  AdminAdminClientsClientIdRouteImport.update({
+    id: '/clients/$clientId',
+    path: '/clients/$clientId',
+    getParentRoute: () => AdminAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/admin': typeof AdminAdminRouteWithChildren
   '/admin/leads': typeof AdminAdminLeadsRoute
+  '/admin/clients/$clientId': typeof AdminAdminClientsClientIdRoute
+  '/admin/clients/new': typeof AdminAdminClientsNewRoute
+  '/admin/clients/': typeof AdminAdminClientsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/admin': typeof AdminAdminRouteWithChildren
   '/admin/leads': typeof AdminAdminLeadsRoute
+  '/admin/clients/$clientId': typeof AdminAdminClientsClientIdRoute
+  '/admin/clients/new': typeof AdminAdminClientsNewRoute
+  '/admin/clients': typeof AdminAdminClientsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -59,12 +84,29 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_admin/admin': typeof AdminAdminRouteWithChildren
   '/_admin/admin/leads': typeof AdminAdminLeadsRoute
+  '/_admin/admin/clients/$clientId': typeof AdminAdminClientsClientIdRoute
+  '/_admin/admin/clients/new': typeof AdminAdminClientsNewRoute
+  '/_admin/admin/clients/': typeof AdminAdminClientsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/admin' | '/admin/leads'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/admin'
+    | '/admin/leads'
+    | '/admin/clients/$clientId'
+    | '/admin/clients/new'
+    | '/admin/clients/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/admin' | '/admin/leads'
+  to:
+    | '/'
+    | '/login'
+    | '/admin'
+    | '/admin/leads'
+    | '/admin/clients/$clientId'
+    | '/admin/clients/new'
+    | '/admin/clients'
   id:
     | '__root__'
     | '/'
@@ -72,6 +114,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/_admin/admin'
     | '/_admin/admin/leads'
+    | '/_admin/admin/clients/$clientId'
+    | '/_admin/admin/clients/new'
+    | '/_admin/admin/clients/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -117,15 +162,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminLeadsRouteImport
       parentRoute: typeof AdminAdminRoute
     }
+    '/_admin/admin/clients/': {
+      id: '/_admin/admin/clients/'
+      path: '/clients'
+      fullPath: '/admin/clients/'
+      preLoaderRoute: typeof AdminAdminClientsIndexRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
+    '/_admin/admin/clients/new': {
+      id: '/_admin/admin/clients/new'
+      path: '/clients/new'
+      fullPath: '/admin/clients/new'
+      preLoaderRoute: typeof AdminAdminClientsNewRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
+    '/_admin/admin/clients/$clientId': {
+      id: '/_admin/admin/clients/$clientId'
+      path: '/clients/$clientId'
+      fullPath: '/admin/clients/$clientId'
+      preLoaderRoute: typeof AdminAdminClientsClientIdRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
   }
 }
 
 interface AdminAdminRouteChildren {
   AdminAdminLeadsRoute: typeof AdminAdminLeadsRoute
+  AdminAdminClientsClientIdRoute: typeof AdminAdminClientsClientIdRoute
+  AdminAdminClientsNewRoute: typeof AdminAdminClientsNewRoute
+  AdminAdminClientsIndexRoute: typeof AdminAdminClientsIndexRoute
 }
 
 const AdminAdminRouteChildren: AdminAdminRouteChildren = {
   AdminAdminLeadsRoute: AdminAdminLeadsRoute,
+  AdminAdminClientsClientIdRoute: AdminAdminClientsClientIdRoute,
+  AdminAdminClientsNewRoute: AdminAdminClientsNewRoute,
+  AdminAdminClientsIndexRoute: AdminAdminClientsIndexRoute,
 }
 
 const AdminAdminRouteWithChildren = AdminAdminRoute._addFileChildren(
