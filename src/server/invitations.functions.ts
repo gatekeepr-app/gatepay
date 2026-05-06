@@ -45,8 +45,7 @@ export const sendInvitation = createServerFn({ method: "POST" })
         .single();
       if (insErr) throw new Error(insErr.message);
       invite = created;
-    } else if (existing.role !== data.role) {
-      // Update the role on the existing invite to match the latest request
+    } else if (existing && existing.role !== data.role) {
       const { data: updated, error: updErr } = await supabase
         .from("invitations")
         .update({ role: data.role })
