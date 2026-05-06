@@ -54,7 +54,7 @@ export function Sidebar() {
             </Link>
           );
         })}
-        {isSuperAdmin && (
+        {isAdmin && (
           <Link
             to="/admin/users"
             className={cn(
