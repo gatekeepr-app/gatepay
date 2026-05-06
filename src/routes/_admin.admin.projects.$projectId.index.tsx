@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, FileText, Link2, Settings2 } from "lucide-react";
+import { ArrowLeft, Copy, FileText, Settings2 } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/admin/format";
 import { toast } from "sonner";
 
@@ -13,6 +13,7 @@ export const Route = createFileRoute("/_admin/admin/projects/$projectId/")({
 type Project = {
   id: string; project_code: string; name: string; description: string | null;
   status: string; tags: string[] | null; created_at: string; created_by: string;
+  pay_code: string | null;
   client: { id: string; name: string } | null;
 };
 type Billing = {
@@ -98,11 +99,11 @@ function ProjectDetailPage() {
             <Settings2 className="h-4 w-4" /> Billing
           </Link>
           <Link
-            to="/admin/projects/$projectId/payment-links"
+            to="/admin/projects/$projectId/billing"
             params={{ projectId }}
             className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm hover:bg-muted"
           >
-            <Link2 className="h-4 w-4" /> Payment links
+            <Settings2 className="h-4 w-4" /> Billing
           </Link>
           <Link
             to="/admin/invoices/new"
