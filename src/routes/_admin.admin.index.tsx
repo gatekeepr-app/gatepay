@@ -62,6 +62,12 @@ function DashboardPage() {
           >
             <Plus className="h-4 w-4" /> New project
           </Link>
+          <Link
+            to="/admin/transactions/new"
+            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm hover:bg-muted"
+          >
+            <Wallet className="h-4 w-4" /> New transaction
+          </Link>
         </div>
       </div>
 
