@@ -6,6 +6,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/admin/format";
 import { Copy, Trash2 } from "lucide-react";
+import { sendInvitation } from "@/server/invitations.functions";
 
 export const Route = createFileRoute("/_admin/admin/users")({
   head: () => ({ meta: [{ title: "Users — Gatekeepr" }, { name: "robots", content: "noindex, nofollow" }] }),
