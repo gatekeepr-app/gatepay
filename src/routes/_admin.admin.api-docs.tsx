@@ -53,6 +53,7 @@ function Section({ title, children, id }: { title: string; children: React.React
 
 const curlExample = `curl -X POST ${ENDPOINT} \\
   -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
   -d '{
     "transaction_ref": "TXN-2026-00482",
     "business_name": "Nerdy",
@@ -66,7 +67,10 @@ const jsExample = `const res = await fetch(
   "${ENDPOINT}",
   {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: \`Bearer \${process.env.GATEKEEPR_API_KEY}\`,
+    },
     body: JSON.stringify({
       transaction_ref: "TXN-2026-00482",
       business_name: "Nerdy",
@@ -85,10 +89,11 @@ if (data.verified) {
   // handle data.reason: "not_found" | "amount_mismatch" | ...
 }`;
 
-const pythonExample = `import requests
+const pythonExample = `import os, requests
 
 res = requests.post(
     "${ENDPOINT}",
+    headers={"Authorization": f"Bearer {os.environ['GATEKEEPR_API_KEY']}"},
     json={
         "transaction_ref": "TXN-2026-00482",
         "business_name": "Nerdy",
