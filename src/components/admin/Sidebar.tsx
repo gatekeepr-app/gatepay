@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Briefcase, FileText, Inbox, UserCog, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, FileText, Inbox, UserCog, LogOut, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePermissions } from "@/lib/admin/usePermissions";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ const items = [
   { to: "/admin/clients", label: "Clients", icon: Users },
   { to: "/admin/projects", label: "Projects", icon: Briefcase },
   { to: "/admin/invoices", label: "Invoices", icon: FileText },
+  { to: "/admin/transactions", label: "Transactions", icon: Wallet },
   { to: "/admin/leads", label: "Leads", icon: Inbox },
 ];
 

@@ -315,6 +315,8 @@ export type Database = {
           created_by: string
           description: string | null
           id: string
+          last_payment_at: string | null
+          last_transaction_ref: string | null
           name: string
           project_code: string
           status: string
@@ -327,6 +329,8 @@ export type Database = {
           created_by: string
           description?: string | null
           id?: string
+          last_payment_at?: string | null
+          last_transaction_ref?: string | null
           name: string
           project_code?: string
           status?: string
@@ -339,6 +343,8 @@ export type Database = {
           created_by?: string
           description?: string | null
           id?: string
+          last_payment_at?: string | null
+          last_transaction_ref?: string | null
           name?: string
           project_code?: string
           status?: string
@@ -351,6 +357,88 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          amount: number
+          client_id: string | null
+          created_at: string
+          created_by: string
+          currency: string
+          id: string
+          invoice_id: string | null
+          method: string | null
+          notes: string | null
+          occurred_at: string
+          project_id: string | null
+          transaction_ref: string
+          updated_at: string
+          verified_at: string | null
+          verified_external_name: string | null
+          verified_external_user_id: string | null
+          verified_source: string | null
+        }
+        Insert: {
+          amount: number
+          client_id?: string | null
+          created_at?: string
+          created_by: string
+          currency?: string
+          id?: string
+          invoice_id?: string | null
+          method?: string | null
+          notes?: string | null
+          occurred_at?: string
+          project_id?: string | null
+          transaction_ref: string
+          updated_at?: string
+          verified_at?: string | null
+          verified_external_name?: string | null
+          verified_external_user_id?: string | null
+          verified_source?: string | null
+        }
+        Update: {
+          amount?: number
+          client_id?: string | null
+          created_at?: string
+          created_by?: string
+          currency?: string
+          id?: string
+          invoice_id?: string | null
+          method?: string | null
+          notes?: string | null
+          occurred_at?: string
+          project_id?: string | null
+          transaction_ref?: string
+          updated_at?: string
+          verified_at?: string | null
+          verified_external_name?: string | null
+          verified_external_user_id?: string | null
+          verified_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
