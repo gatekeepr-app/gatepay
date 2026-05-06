@@ -3,12 +3,27 @@ import { useEffect, useState } from "react";
 import { Copy, Check, KeyRound, Trash2, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { createApiKey } from "@/server/api-keys.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_admin/admin/api-keys")({
   component: ApiKeysPage,
 });
+
+async function generateToken(): Promise<{ token: string; hash: string; prefix: string }> {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  // base64url
+  const b64 = btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+  const token = `gk_${b64}`;
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
+  const hash = Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return { token, hash, prefix: token.slice(0, 10) };
+}
 
 type Row = {
   id: string;
@@ -48,8 +63,18 @@ function ApiKeysPage() {
     if (!name.trim()) return;
     setCreating(true);
     try {
-      const res = await createApiKey({ data: { name: name.trim() } });
-      setNewToken(res.token);
+      const { data: sess } = await supabase.auth.getUser();
+      const userId = sess.user?.id;
+      if (!userId) throw new Error("Not signed in");
+      const { token, hash, prefix } = await generateToken();
+      const { error } = await supabase.from("api_keys").insert({
+        name: name.trim(),
+        key_hash: hash,
+        key_prefix: prefix,
+        created_by: userId,
+      });
+      if (error) throw new Error(error.message);
+      setNewToken(token);
       setName("");
       setShowForm(false);
       await load();
