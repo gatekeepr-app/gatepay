@@ -38,7 +38,7 @@ function UsersPage() {
     setRoles((r.data ?? []) as RoleRow[]);
   };
 
-  useEffect(() => { if (isSuperAdmin) reload(); }, [isSuperAdmin]);
+  useEffect(() => { if (isAdmin) reload(); }, [isAdmin]);
 
   const invite = async () => {
     const parsed = z.object({ email: z.string().trim().email(), role: z.enum(["admin", "member"]) }).safeParse({ email, role });
@@ -76,7 +76,7 @@ function UsersPage() {
     toast.success("Invite link copied");
   };
 
-  if (loading || !isSuperAdmin) return <main className="px-6 py-10">Loading…</main>;
+  if (loading || !isAdmin) return <main className="px-6 py-10">Loading…</main>;
 
   return (
     <main className="px-6 py-10 md:px-10">
