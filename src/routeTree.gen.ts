@@ -18,6 +18,7 @@ import { Route as AdminAdminRouteImport } from './routes/_admin.admin'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin.admin.index'
 import { Route as AdminAdminUsersRouteImport } from './routes/_admin.admin.users'
 import { Route as AdminAdminLeadsRouteImport } from './routes/_admin.admin.leads'
+import { Route as AdminAdminApiKeysRouteImport } from './routes/_admin.admin.api-keys'
 import { Route as AdminAdminApiDocsRouteImport } from './routes/_admin.admin.api-docs'
 import { Route as AdminAdminTransactionsIndexRouteImport } from './routes/_admin.admin.transactions.index'
 import { Route as AdminAdminProjectsIndexRouteImport } from './routes/_admin.admin.projects.index'
@@ -76,6 +77,11 @@ const AdminAdminUsersRoute = AdminAdminUsersRouteImport.update({
 const AdminAdminLeadsRoute = AdminAdminLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
+const AdminAdminApiKeysRoute = AdminAdminApiKeysRouteImport.update({
+  id: '/api-keys',
+  path: '/api-keys',
   getParentRoute: () => AdminAdminRoute,
 } as any)
 const AdminAdminApiDocsRoute = AdminAdminApiDocsRouteImport.update({
@@ -169,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/docs/payments-api': typeof DocsPaymentsApiRoute
   '/invite/$token': typeof InviteTokenRoute
   '/admin/api-docs': typeof AdminAdminApiDocsRoute
+  '/admin/api-keys': typeof AdminAdminApiKeysRoute
   '/admin/leads': typeof AdminAdminLeadsRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/admin/': typeof AdminAdminIndexRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/docs/payments-api': typeof DocsPaymentsApiRoute
   '/invite/$token': typeof InviteTokenRoute
   '/admin/api-docs': typeof AdminAdminApiDocsRoute
+  '/admin/api-keys': typeof AdminAdminApiKeysRoute
   '/admin/leads': typeof AdminAdminLeadsRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/admin': typeof AdminAdminIndexRoute
@@ -220,6 +228,7 @@ export interface FileRoutesById {
   '/docs/payments-api': typeof DocsPaymentsApiRoute
   '/invite/$token': typeof InviteTokenRoute
   '/_admin/admin/api-docs': typeof AdminAdminApiDocsRoute
+  '/_admin/admin/api-keys': typeof AdminAdminApiKeysRoute
   '/_admin/admin/leads': typeof AdminAdminLeadsRoute
   '/_admin/admin/users': typeof AdminAdminUsersRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
@@ -247,6 +256,7 @@ export interface FileRouteTypes {
     | '/docs/payments-api'
     | '/invite/$token'
     | '/admin/api-docs'
+    | '/admin/api-keys'
     | '/admin/leads'
     | '/admin/users'
     | '/admin/'
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/docs/payments-api'
     | '/invite/$token'
     | '/admin/api-docs'
+    | '/admin/api-keys'
     | '/admin/leads'
     | '/admin/users'
     | '/admin'
@@ -297,6 +308,7 @@ export interface FileRouteTypes {
     | '/docs/payments-api'
     | '/invite/$token'
     | '/_admin/admin/api-docs'
+    | '/_admin/admin/api-keys'
     | '/_admin/admin/leads'
     | '/_admin/admin/users'
     | '/_admin/admin/'
@@ -388,6 +400,13 @@ declare module '@tanstack/react-router' {
       path: '/leads'
       fullPath: '/admin/leads'
       preLoaderRoute: typeof AdminAdminLeadsRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
+    '/_admin/admin/api-keys': {
+      id: '/_admin/admin/api-keys'
+      path: '/api-keys'
+      fullPath: '/admin/api-keys'
+      preLoaderRoute: typeof AdminAdminApiKeysRouteImport
       parentRoute: typeof AdminAdminRoute
     }
     '/_admin/admin/api-docs': {
@@ -500,6 +519,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminAdminRouteChildren {
   AdminAdminApiDocsRoute: typeof AdminAdminApiDocsRoute
+  AdminAdminApiKeysRoute: typeof AdminAdminApiKeysRoute
   AdminAdminLeadsRoute: typeof AdminAdminLeadsRoute
   AdminAdminUsersRoute: typeof AdminAdminUsersRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
@@ -520,6 +540,7 @@ interface AdminAdminRouteChildren {
 
 const AdminAdminRouteChildren: AdminAdminRouteChildren = {
   AdminAdminApiDocsRoute: AdminAdminApiDocsRoute,
+  AdminAdminApiKeysRoute: AdminAdminApiKeysRoute,
   AdminAdminLeadsRoute: AdminAdminLeadsRoute,
   AdminAdminUsersRoute: AdminAdminUsersRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,
