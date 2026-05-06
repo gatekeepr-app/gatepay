@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Briefcase, Users, FileText, Inbox, Plus } from "lucide-react";
+import { Briefcase, Users, FileText, Inbox, Plus, Wallet } from "lucide-react";
 
 export const Route = createFileRoute("/_admin/admin/")({
   head: () => ({
@@ -61,6 +61,12 @@ function DashboardPage() {
             className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm hover:bg-muted"
           >
             <Plus className="h-4 w-4" /> New project
+          </Link>
+          <Link
+            to="/admin/transactions/new"
+            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm hover:bg-muted"
+          >
+            <Wallet className="h-4 w-4" /> New transaction
           </Link>
         </div>
       </div>
