@@ -169,8 +169,13 @@ function ApiDocsPage() {
         <CopyBlock code={`POST ${ENDPOINT}`} language="http" />
         <p>Also accepts <Inline>OPTIONS</Inline> for CORS preflight. CORS is open (<Inline>*</Inline>).</p>
         <p>
-          <strong>Auth:</strong> none. Identity is asserted via <Inline>business_name</Inline> in
-          the body — treat it as audit metadata, not access control.
+          <strong>Auth:</strong> required. Send a Gatekeepr-issued bearer token in the{" "}
+          <Inline>Authorization</Inline> header:
+        </p>
+        <CopyBlock code={`Authorization: Bearer YOUR_API_KEY`} language="http" />
+        <p>
+          Manage tokens in <Inline>Admin → API Keys</Inline>. The full token is shown only
+          once at creation; revoking takes effect immediately.
         </p>
         <p>
           <strong>Rate limit:</strong> 30 requests / minute / IP. Exceeding returns{" "}
