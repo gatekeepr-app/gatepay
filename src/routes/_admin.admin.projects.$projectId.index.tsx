@@ -99,13 +99,6 @@ function ProjectDetailPage() {
             <Settings2 className="h-4 w-4" /> Billing
           </Link>
           <Link
-            to="/admin/projects/$projectId/billing"
-            params={{ projectId }}
-            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm hover:bg-muted"
-          >
-            <Settings2 className="h-4 w-4" /> Billing
-          </Link>
-          <Link
             to="/admin/invoices/new"
             search={{ project: projectId }}
             className="inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
