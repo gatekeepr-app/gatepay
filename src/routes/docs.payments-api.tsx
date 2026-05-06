@@ -296,6 +296,13 @@ function PublicApiDocsPage() {
           <h3 className="mt-4 text-sm font-medium">Errors</h3>
           <ul className="ml-5 list-disc space-y-1">
             <li>
+              <Inline>401 {`{"error":"missing_api_key"}`}</Inline> — no{" "}
+              <Inline>Authorization: Bearer …</Inline> header was sent.
+            </li>
+            <li>
+              <Inline>401 {`{"error":"invalid_api_key"}`}</Inline> — token is unknown or revoked.
+            </li>
+            <li>
               <Inline>400 {`{"error":"invalid_json"}`}</Inline> — body isn't valid JSON.
             </li>
             <li>
