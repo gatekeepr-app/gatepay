@@ -265,6 +265,69 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_links: {
+        Row: {
+          amount: number
+          code: string
+          created_at: string
+          created_by: string
+          currency: string
+          description: string | null
+          expires_at: string | null
+          id: string
+          paid_at: string | null
+          paid_transaction_id: string | null
+          project_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          code: string
+          created_at?: string
+          created_by: string
+          currency?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          paid_at?: string | null
+          paid_transaction_id?: string | null
+          project_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          code?: string
+          created_at?: string
+          created_by?: string
+          currency?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          paid_at?: string | null
+          paid_transaction_id?: string | null
+          project_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_links_paid_transaction_id_fkey"
+            columns: ["paid_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_assignments: {
         Row: {
           assigned_at: string
