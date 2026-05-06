@@ -5,8 +5,8 @@ import { usePermissions, type Role } from "@/lib/admin/usePermissions";
 import { z } from "zod";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/admin/format";
-import { Copy, Trash2 } from "lucide-react";
-import { sendInvitation } from "@/server/invitations.functions";
+import { Copy, Send, Trash2 } from "lucide-react";
+import { sendInvitation, resendInvitation } from "@/server/invitations.functions";
 
 export const Route = createFileRoute("/_admin/admin/users")({
   head: () => ({ meta: [{ title: "Users — Gatekeepr" }, { name: "robots", content: "noindex, nofollow" }] }),
@@ -75,6 +75,16 @@ function UsersPage() {
     toast.success("Invite link copied");
   };
 
+  const resend = async (id: string) => {
+    try {
+      await resendInvitation({ data: { id } });
+      toast.success("Invitation email re-sent");
+      reload();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to resend");
+    }
+  };
+
   if (loading || !isAdmin) return <main className="px-6 py-10">Loading…</main>;
 
   return (
@@ -119,6 +129,9 @@ function UsersPage() {
                 <div className="flex gap-2">
                   {inv.status === "pending" && (
                     <>
+                      <button onClick={() => resend(inv.id)} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1 text-xs hover:bg-muted">
+                        <Send className="h-3 w-3" /> Resend
+                      </button>
                       <button onClick={() => copyLink(inv.token)} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1 text-xs hover:bg-muted">
                         <Copy className="h-3 w-3" /> Copy link
                       </button>

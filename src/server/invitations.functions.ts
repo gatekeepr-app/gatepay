@@ -56,31 +56,79 @@ export const sendInvitation = createServerFn({ method: "POST" })
       invite = updated;
     }
 
-    // Send Supabase auth invite email so user can set password
-    const origin =
-      process.env.SITE_URL ||
-      process.env.VITE_SITE_URL ||
-      "https://gatekeepr-foundations-build.lovable.app";
-    const redirectTo = `${origin}/invite/${invite.token}`;
-
-    const { error: mailErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-      data.email,
-      { redirectTo, data: { invited_role: data.role } },
-    );
-
-    // If user already exists, fall back to a password recovery email
-    if (mailErr) {
-      const msg = mailErr.message?.toLowerCase() ?? "";
-      if (msg.includes("already") || msg.includes("registered")) {
-        await supabaseAdmin.auth.admin.generateLink({
-          type: "recovery",
-          email: data.email,
-          options: { redirectTo },
-        });
-      } else {
-        throw new Error(mailErr.message);
-      }
-    }
-
+    if (!invite) throw new Error("Failed to create invitation");
+    await deliverInviteEmail(invite.email, invite.token, invite.role);
     return { ok: true, invite };
   });
+
+const ResendSchema = z.object({ id: z.string().uuid() });
+
+export const resendInvitation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => ResendSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: roles, error: rolesErr } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    if (rolesErr) throw new Error(rolesErr.message);
+    const isManager = (roles ?? []).some(
+      (r) => r.role === "admin" || r.role === "super_admin",
+    );
+    if (!isManager) throw new Error("Forbidden");
+
+    const { data: invite, error: invErr } = await supabase
+      .from("invitations")
+      .select("id, email, role, status, expires_at, token")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (invErr) throw new Error(invErr.message);
+    if (!invite) throw new Error("Invitation not found");
+    if (invite.status !== "pending") throw new Error("Invitation is not pending");
+
+    // Extend expiry if expired/near expiry
+    let token = invite.token;
+    if (new Date(invite.expires_at).getTime() < Date.now() + 60_000) {
+      const { data: refreshed, error: updErr } = await supabase
+        .from("invitations")
+        .update({ expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() })
+        .eq("id", invite.id)
+        .select("token")
+        .single();
+      if (updErr) throw new Error(updErr.message);
+      token = refreshed.token;
+    }
+
+    await deliverInviteEmail(invite.email, token, invite.role);
+    return { ok: true };
+  });
+
+async function deliverInviteEmail(email: string, token: string, role: string) {
+  const origin =
+    process.env.SITE_URL ||
+    process.env.VITE_SITE_URL ||
+    "https://gatekeepr-foundations-build.lovable.app";
+  const redirectTo = `${origin}/invite/${token}`;
+
+  const { error: mailErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+    email,
+    { redirectTo, data: { invited_role: role } },
+  );
+
+  if (mailErr) {
+    const msg = mailErr.message?.toLowerCase() ?? "";
+    if (msg.includes("already") || msg.includes("registered")) {
+      const { error: recErr } = await supabaseAdmin.auth.admin.generateLink({
+        type: "recovery",
+        email,
+        options: { redirectTo },
+      });
+      if (recErr) throw new Error(recErr.message);
+    } else {
+      throw new Error(mailErr.message);
+    }
+  }
+}
+
