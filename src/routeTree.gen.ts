@@ -34,7 +34,6 @@ import { Route as AdminAdminInvoicesInvoiceIdRouteImport } from './routes/_admin
 import { Route as AdminAdminClientsNewRouteImport } from './routes/_admin.admin.clients.new'
 import { Route as AdminAdminClientsClientIdRouteImport } from './routes/_admin.admin.clients.$clientId'
 import { Route as AdminAdminProjectsProjectIdIndexRouteImport } from './routes/_admin.admin.projects.$projectId.index'
-import { Route as AdminAdminProjectsProjectIdPaymentLinksRouteImport } from './routes/_admin.admin.projects.$projectId.payment-links'
 import { Route as AdminAdminProjectsProjectIdBillingRouteImport } from './routes/_admin.admin.projects.$projectId.billing'
 
 const LoginRoute = LoginRouteImport.update({
@@ -168,12 +167,6 @@ const AdminAdminProjectsProjectIdIndexRoute =
     path: '/projects/$projectId/',
     getParentRoute: () => AdminAdminRoute,
   } as any)
-const AdminAdminProjectsProjectIdPaymentLinksRoute =
-  AdminAdminProjectsProjectIdPaymentLinksRouteImport.update({
-    id: '/projects/$projectId/payment-links',
-    path: '/projects/$projectId/payment-links',
-    getParentRoute: () => AdminAdminRoute,
-  } as any)
 const AdminAdminProjectsProjectIdBillingRoute =
   AdminAdminProjectsProjectIdBillingRouteImport.update({
     id: '/projects/$projectId/billing',
@@ -206,7 +199,6 @@ export interface FileRoutesByFullPath {
   '/admin/projects/': typeof AdminAdminProjectsIndexRoute
   '/admin/transactions/': typeof AdminAdminTransactionsIndexRoute
   '/admin/projects/$projectId/billing': typeof AdminAdminProjectsProjectIdBillingRoute
-  '/admin/projects/$projectId/payment-links': typeof AdminAdminProjectsProjectIdPaymentLinksRoute
   '/admin/projects/$projectId/': typeof AdminAdminProjectsProjectIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -233,7 +225,6 @@ export interface FileRoutesByTo {
   '/admin/projects': typeof AdminAdminProjectsIndexRoute
   '/admin/transactions': typeof AdminAdminTransactionsIndexRoute
   '/admin/projects/$projectId/billing': typeof AdminAdminProjectsProjectIdBillingRoute
-  '/admin/projects/$projectId/payment-links': typeof AdminAdminProjectsProjectIdPaymentLinksRoute
   '/admin/projects/$projectId': typeof AdminAdminProjectsProjectIdIndexRoute
 }
 export interface FileRoutesById {
@@ -263,7 +254,6 @@ export interface FileRoutesById {
   '/_admin/admin/projects/': typeof AdminAdminProjectsIndexRoute
   '/_admin/admin/transactions/': typeof AdminAdminTransactionsIndexRoute
   '/_admin/admin/projects/$projectId/billing': typeof AdminAdminProjectsProjectIdBillingRoute
-  '/_admin/admin/projects/$projectId/payment-links': typeof AdminAdminProjectsProjectIdPaymentLinksRoute
   '/_admin/admin/projects/$projectId/': typeof AdminAdminProjectsProjectIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -293,7 +283,6 @@ export interface FileRouteTypes {
     | '/admin/projects/'
     | '/admin/transactions/'
     | '/admin/projects/$projectId/billing'
-    | '/admin/projects/$projectId/payment-links'
     | '/admin/projects/$projectId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -320,7 +309,6 @@ export interface FileRouteTypes {
     | '/admin/projects'
     | '/admin/transactions'
     | '/admin/projects/$projectId/billing'
-    | '/admin/projects/$projectId/payment-links'
     | '/admin/projects/$projectId'
   id:
     | '__root__'
@@ -349,7 +337,6 @@ export interface FileRouteTypes {
     | '/_admin/admin/projects/'
     | '/_admin/admin/transactions/'
     | '/_admin/admin/projects/$projectId/billing'
-    | '/_admin/admin/projects/$projectId/payment-links'
     | '/_admin/admin/projects/$projectId/'
   fileRoutesById: FileRoutesById
 }
@@ -540,13 +527,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminProjectsProjectIdIndexRouteImport
       parentRoute: typeof AdminAdminRoute
     }
-    '/_admin/admin/projects/$projectId/payment-links': {
-      id: '/_admin/admin/projects/$projectId/payment-links'
-      path: '/projects/$projectId/payment-links'
-      fullPath: '/admin/projects/$projectId/payment-links'
-      preLoaderRoute: typeof AdminAdminProjectsProjectIdPaymentLinksRouteImport
-      parentRoute: typeof AdminAdminRoute
-    }
     '/_admin/admin/projects/$projectId/billing': {
       id: '/_admin/admin/projects/$projectId/billing'
       path: '/projects/$projectId/billing'
@@ -575,7 +555,6 @@ interface AdminAdminRouteChildren {
   AdminAdminProjectsIndexRoute: typeof AdminAdminProjectsIndexRoute
   AdminAdminTransactionsIndexRoute: typeof AdminAdminTransactionsIndexRoute
   AdminAdminProjectsProjectIdBillingRoute: typeof AdminAdminProjectsProjectIdBillingRoute
-  AdminAdminProjectsProjectIdPaymentLinksRoute: typeof AdminAdminProjectsProjectIdPaymentLinksRoute
   AdminAdminProjectsProjectIdIndexRoute: typeof AdminAdminProjectsProjectIdIndexRoute
 }
 
@@ -598,8 +577,6 @@ const AdminAdminRouteChildren: AdminAdminRouteChildren = {
   AdminAdminTransactionsIndexRoute: AdminAdminTransactionsIndexRoute,
   AdminAdminProjectsProjectIdBillingRoute:
     AdminAdminProjectsProjectIdBillingRoute,
-  AdminAdminProjectsProjectIdPaymentLinksRoute:
-    AdminAdminProjectsProjectIdPaymentLinksRoute,
   AdminAdminProjectsProjectIdIndexRoute: AdminAdminProjectsProjectIdIndexRoute,
 }
 
@@ -629,3 +606,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
