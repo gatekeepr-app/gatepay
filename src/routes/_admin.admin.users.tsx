@@ -129,6 +129,9 @@ function UsersPage() {
                 <div className="flex gap-2">
                   {inv.status === "pending" && (
                     <>
+                      <button onClick={() => resend(inv.id)} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1 text-xs hover:bg-muted">
+                        <Send className="h-3 w-3" /> Resend
+                      </button>
                       <button onClick={() => copyLink(inv.token)} className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1 text-xs hover:bg-muted">
                         <Copy className="h-3 w-3" /> Copy link
                       </button>
