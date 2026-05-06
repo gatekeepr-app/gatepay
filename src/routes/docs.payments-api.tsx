@@ -192,8 +192,22 @@ function PublicApiDocsPage() {
             <Inline>*</Inline>).
           </p>
           <p>
-            <strong>Auth:</strong> none. Identity is asserted via <Inline>business_name</Inline> in
-            the body — treat it as audit metadata, not access control.
+            <strong>Auth:</strong> required. Send a Gatekeepr-issued bearer token in the{" "}
+            <Inline>Authorization</Inline> header:
+          </p>
+          <CopyBlock
+            code={`Authorization: Bearer YOUR_API_KEY`}
+            language="http"
+          />
+          <p>
+            Keys are created and revoked from the Gatekeepr admin dashboard
+            (<Inline>Admin → API Keys</Inline>). Tokens start with{" "}
+            <Inline>gk_</Inline> and are shown in full only once at creation — store them
+            in your secret manager. Revoking a key takes effect immediately.
+          </p>
+          <p>
+            <strong>business_name</strong> in the body is still required as audit
+            metadata, but the token is what authenticates the caller.
           </p>
           <p>
             <strong>Rate limit:</strong> 30 requests / minute / IP. Exceeding returns{" "}
