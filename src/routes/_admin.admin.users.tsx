@@ -75,6 +75,16 @@ function UsersPage() {
     toast.success("Invite link copied");
   };
 
+  const resend = async (id: string) => {
+    try {
+      await resendInvitation({ data: { id } });
+      toast.success("Invitation email re-sent");
+      reload();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to resend");
+    }
+  };
+
   if (loading || !isAdmin) return <main className="px-6 py-10">Loading…</main>;
 
   return (
