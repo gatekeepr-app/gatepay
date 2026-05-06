@@ -17,7 +17,7 @@ type Invite = { id: string; email: string; role: Role; status: string; token: st
 type RoleRow = { id: string; user_id: string; role: Role; created_at: string };
 
 function UsersPage() {
-  const { isSuperAdmin, loading } = usePermissions();
+  const { isAdmin, loading } = usePermissions();
   const navigate = useNavigate();
   const [invites, setInvites] = useState<Invite[]>([]);
   const [roles, setRoles] = useState<RoleRow[]>([]);
@@ -26,8 +26,8 @@ function UsersPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && !isSuperAdmin) navigate({ to: "/admin", replace: true });
-  }, [loading, isSuperAdmin, navigate]);
+    if (!loading && !isAdmin) navigate({ to: "/admin", replace: true });
+  }, [loading, isAdmin, navigate]);
 
   const reload = async () => {
     const [i, r] = await Promise.all([
