@@ -44,17 +44,16 @@ function UsersPage() {
     const parsed = z.object({ email: z.string().trim().email(), role: z.enum(["admin", "member"]) }).safeParse({ email, role });
     if (!parsed.success) return toast.error("Valid email + role required");
     setBusy(true);
-    const { data: sess } = await supabase.auth.getSession();
-    const { error } = await supabase.from("invitations").insert({
-      email: parsed.data.email,
-      role: parsed.data.role,
-      invited_by: sess.session!.user.id,
-    });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Invitation created");
-    setEmail("");
-    reload();
+    try {
+      await sendInvitation({ data: { email: parsed.data.email, role: parsed.data.role } });
+      toast.success("Invitation sent — password setup email delivered");
+      setEmail("");
+      reload();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to send invite");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const revoke = async (id: string) => {
