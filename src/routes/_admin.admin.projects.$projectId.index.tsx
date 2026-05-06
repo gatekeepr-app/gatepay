@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, FileText, Link2, Settings2 } from "lucide-react";
+import { ArrowLeft, Copy, FileText, Settings2 } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/admin/format";
 import { toast } from "sonner";
 
@@ -13,6 +13,7 @@ export const Route = createFileRoute("/_admin/admin/projects/$projectId/")({
 type Project = {
   id: string; project_code: string; name: string; description: string | null;
   status: string; tags: string[] | null; created_at: string; created_by: string;
+  pay_code: string | null;
   client: { id: string; name: string } | null;
 };
 type Billing = {
@@ -98,13 +99,6 @@ function ProjectDetailPage() {
             <Settings2 className="h-4 w-4" /> Billing
           </Link>
           <Link
-            to="/admin/projects/$projectId/payment-links"
-            params={{ projectId }}
-            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm hover:bg-muted"
-          >
-            <Link2 className="h-4 w-4" /> Payment links
-          </Link>
-          <Link
             to="/admin/invoices/new"
             search={{ project: projectId }}
             className="inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
@@ -113,6 +107,37 @@ function ProjectDetailPage() {
           </Link>
         </div>
       </div>
+
+      {project.pay_code && (
+        <section className="mt-6 rounded-xl border border-border bg-card p-6">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Client payment link</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Share this permanent link with the client. It always shows the next payment due based on this project's billing.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <code className="rounded-md bg-muted px-3 py-2 font-mono text-sm">
+              {typeof window !== "undefined" ? window.location.origin : ""}/pay/{project.pay_code}
+            </code>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/pay/${project.pay_code}`);
+                toast.success("Link copied");
+              }}
+              className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs hover:bg-muted"
+            >
+              <Copy className="h-3 w-3" /> Copy
+            </button>
+            <a
+              href={`/pay/${project.pay_code}`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-border px-3 py-1.5 text-xs hover:bg-muted"
+            >
+              Open
+            </a>
+          </div>
+        </section>
+      )}
 
       {project.description && (
         <p className="mt-6 max-w-3xl whitespace-pre-wrap text-sm text-muted-foreground">{project.description}</p>
