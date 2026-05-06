@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, FileText, Settings2 } from "lucide-react";
+import { ArrowLeft, FileText, Link2, Settings2 } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/admin/format";
 import { toast } from "sonner";
 
@@ -96,6 +96,13 @@ function ProjectDetailPage() {
             className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm hover:bg-muted"
           >
             <Settings2 className="h-4 w-4" /> Billing
+          </Link>
+          <Link
+            to="/admin/projects/$projectId/payment-links"
+            params={{ projectId }}
+            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm hover:bg-muted"
+          >
+            <Link2 className="h-4 w-4" /> Payment links
           </Link>
           <Link
             to="/admin/invoices/new"

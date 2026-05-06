@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PayCodeRouteImport } from './routes/pay.$code'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as DocsPaymentsApiRouteImport } from './routes/docs.payments-api'
 import { Route as AdminAdminRouteImport } from './routes/_admin.admin'
@@ -33,6 +34,7 @@ import { Route as AdminAdminInvoicesInvoiceIdRouteImport } from './routes/_admin
 import { Route as AdminAdminClientsNewRouteImport } from './routes/_admin.admin.clients.new'
 import { Route as AdminAdminClientsClientIdRouteImport } from './routes/_admin.admin.clients.$clientId'
 import { Route as AdminAdminProjectsProjectIdIndexRouteImport } from './routes/_admin.admin.projects.$projectId.index'
+import { Route as AdminAdminProjectsProjectIdPaymentLinksRouteImport } from './routes/_admin.admin.projects.$projectId.payment-links'
 import { Route as AdminAdminProjectsProjectIdBillingRouteImport } from './routes/_admin.admin.projects.$projectId.billing'
 
 const LoginRoute = LoginRouteImport.update({
@@ -47,6 +49,11 @@ const AdminRoute = AdminRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PayCodeRoute = PayCodeRouteImport.update({
+  id: '/pay/$code',
+  path: '/pay/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InviteTokenRoute = InviteTokenRouteImport.update({
@@ -161,6 +168,12 @@ const AdminAdminProjectsProjectIdIndexRoute =
     path: '/projects/$projectId/',
     getParentRoute: () => AdminAdminRoute,
   } as any)
+const AdminAdminProjectsProjectIdPaymentLinksRoute =
+  AdminAdminProjectsProjectIdPaymentLinksRouteImport.update({
+    id: '/projects/$projectId/payment-links',
+    path: '/projects/$projectId/payment-links',
+    getParentRoute: () => AdminAdminRoute,
+  } as any)
 const AdminAdminProjectsProjectIdBillingRoute =
   AdminAdminProjectsProjectIdBillingRouteImport.update({
     id: '/projects/$projectId/billing',
@@ -174,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminAdminRouteWithChildren
   '/docs/payments-api': typeof DocsPaymentsApiRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/pay/$code': typeof PayCodeRoute
   '/admin/api-docs': typeof AdminAdminApiDocsRoute
   '/admin/api-keys': typeof AdminAdminApiKeysRoute
   '/admin/leads': typeof AdminAdminLeadsRoute
@@ -192,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/admin/projects/': typeof AdminAdminProjectsIndexRoute
   '/admin/transactions/': typeof AdminAdminTransactionsIndexRoute
   '/admin/projects/$projectId/billing': typeof AdminAdminProjectsProjectIdBillingRoute
+  '/admin/projects/$projectId/payment-links': typeof AdminAdminProjectsProjectIdPaymentLinksRoute
   '/admin/projects/$projectId/': typeof AdminAdminProjectsProjectIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -199,6 +214,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/docs/payments-api': typeof DocsPaymentsApiRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/pay/$code': typeof PayCodeRoute
   '/admin/api-docs': typeof AdminAdminApiDocsRoute
   '/admin/api-keys': typeof AdminAdminApiKeysRoute
   '/admin/leads': typeof AdminAdminLeadsRoute
@@ -217,6 +233,7 @@ export interface FileRoutesByTo {
   '/admin/projects': typeof AdminAdminProjectsIndexRoute
   '/admin/transactions': typeof AdminAdminTransactionsIndexRoute
   '/admin/projects/$projectId/billing': typeof AdminAdminProjectsProjectIdBillingRoute
+  '/admin/projects/$projectId/payment-links': typeof AdminAdminProjectsProjectIdPaymentLinksRoute
   '/admin/projects/$projectId': typeof AdminAdminProjectsProjectIdIndexRoute
 }
 export interface FileRoutesById {
@@ -227,6 +244,7 @@ export interface FileRoutesById {
   '/_admin/admin': typeof AdminAdminRouteWithChildren
   '/docs/payments-api': typeof DocsPaymentsApiRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/pay/$code': typeof PayCodeRoute
   '/_admin/admin/api-docs': typeof AdminAdminApiDocsRoute
   '/_admin/admin/api-keys': typeof AdminAdminApiKeysRoute
   '/_admin/admin/leads': typeof AdminAdminLeadsRoute
@@ -245,6 +263,7 @@ export interface FileRoutesById {
   '/_admin/admin/projects/': typeof AdminAdminProjectsIndexRoute
   '/_admin/admin/transactions/': typeof AdminAdminTransactionsIndexRoute
   '/_admin/admin/projects/$projectId/billing': typeof AdminAdminProjectsProjectIdBillingRoute
+  '/_admin/admin/projects/$projectId/payment-links': typeof AdminAdminProjectsProjectIdPaymentLinksRoute
   '/_admin/admin/projects/$projectId/': typeof AdminAdminProjectsProjectIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -255,6 +274,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/docs/payments-api'
     | '/invite/$token'
+    | '/pay/$code'
     | '/admin/api-docs'
     | '/admin/api-keys'
     | '/admin/leads'
@@ -273,6 +293,7 @@ export interface FileRouteTypes {
     | '/admin/projects/'
     | '/admin/transactions/'
     | '/admin/projects/$projectId/billing'
+    | '/admin/projects/$projectId/payment-links'
     | '/admin/projects/$projectId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -280,6 +301,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/docs/payments-api'
     | '/invite/$token'
+    | '/pay/$code'
     | '/admin/api-docs'
     | '/admin/api-keys'
     | '/admin/leads'
@@ -298,6 +320,7 @@ export interface FileRouteTypes {
     | '/admin/projects'
     | '/admin/transactions'
     | '/admin/projects/$projectId/billing'
+    | '/admin/projects/$projectId/payment-links'
     | '/admin/projects/$projectId'
   id:
     | '__root__'
@@ -307,6 +330,7 @@ export interface FileRouteTypes {
     | '/_admin/admin'
     | '/docs/payments-api'
     | '/invite/$token'
+    | '/pay/$code'
     | '/_admin/admin/api-docs'
     | '/_admin/admin/api-keys'
     | '/_admin/admin/leads'
@@ -325,6 +349,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/projects/'
     | '/_admin/admin/transactions/'
     | '/_admin/admin/projects/$projectId/billing'
+    | '/_admin/admin/projects/$projectId/payment-links'
     | '/_admin/admin/projects/$projectId/'
   fileRoutesById: FileRoutesById
 }
@@ -334,6 +359,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   DocsPaymentsApiRoute: typeof DocsPaymentsApiRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  PayCodeRoute: typeof PayCodeRoute
   ApiPublicTransactionsVerifyRoute: typeof ApiPublicTransactionsVerifyRoute
 }
 
@@ -358,6 +384,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pay/$code': {
+      id: '/pay/$code'
+      path: '/pay/$code'
+      fullPath: '/pay/$code'
+      preLoaderRoute: typeof PayCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invite/$token': {
@@ -507,6 +540,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminProjectsProjectIdIndexRouteImport
       parentRoute: typeof AdminAdminRoute
     }
+    '/_admin/admin/projects/$projectId/payment-links': {
+      id: '/_admin/admin/projects/$projectId/payment-links'
+      path: '/projects/$projectId/payment-links'
+      fullPath: '/admin/projects/$projectId/payment-links'
+      preLoaderRoute: typeof AdminAdminProjectsProjectIdPaymentLinksRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
     '/_admin/admin/projects/$projectId/billing': {
       id: '/_admin/admin/projects/$projectId/billing'
       path: '/projects/$projectId/billing'
@@ -535,6 +575,7 @@ interface AdminAdminRouteChildren {
   AdminAdminProjectsIndexRoute: typeof AdminAdminProjectsIndexRoute
   AdminAdminTransactionsIndexRoute: typeof AdminAdminTransactionsIndexRoute
   AdminAdminProjectsProjectIdBillingRoute: typeof AdminAdminProjectsProjectIdBillingRoute
+  AdminAdminProjectsProjectIdPaymentLinksRoute: typeof AdminAdminProjectsProjectIdPaymentLinksRoute
   AdminAdminProjectsProjectIdIndexRoute: typeof AdminAdminProjectsProjectIdIndexRoute
 }
 
@@ -557,6 +598,8 @@ const AdminAdminRouteChildren: AdminAdminRouteChildren = {
   AdminAdminTransactionsIndexRoute: AdminAdminTransactionsIndexRoute,
   AdminAdminProjectsProjectIdBillingRoute:
     AdminAdminProjectsProjectIdBillingRoute,
+  AdminAdminProjectsProjectIdPaymentLinksRoute:
+    AdminAdminProjectsProjectIdPaymentLinksRoute,
   AdminAdminProjectsProjectIdIndexRoute: AdminAdminProjectsProjectIdIndexRoute,
 }
 
@@ -580,6 +623,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   DocsPaymentsApiRoute: DocsPaymentsApiRoute,
   InviteTokenRoute: InviteTokenRoute,
+  PayCodeRoute: PayCodeRoute,
   ApiPublicTransactionsVerifyRoute: ApiPublicTransactionsVerifyRoute,
 }
 export const routeTree = rootRouteImport
