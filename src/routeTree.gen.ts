@@ -17,6 +17,7 @@ import { Route as AdminAdminRouteImport } from './routes/_admin.admin'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin.admin.index'
 import { Route as AdminAdminUsersRouteImport } from './routes/_admin.admin.users'
 import { Route as AdminAdminLeadsRouteImport } from './routes/_admin.admin.leads'
+import { Route as AdminAdminApiDocsRouteImport } from './routes/_admin.admin.api-docs'
 import { Route as AdminAdminTransactionsIndexRouteImport } from './routes/_admin.admin.transactions.index'
 import { Route as AdminAdminProjectsIndexRouteImport } from './routes/_admin.admin.projects.index'
 import { Route as AdminAdminInvoicesIndexRouteImport } from './routes/_admin.admin.invoices.index'
@@ -69,6 +70,11 @@ const AdminAdminUsersRoute = AdminAdminUsersRouteImport.update({
 const AdminAdminLeadsRoute = AdminAdminLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
+  getParentRoute: () => AdminAdminRoute,
+} as any)
+const AdminAdminApiDocsRoute = AdminAdminApiDocsRouteImport.update({
+  id: '/api-docs',
+  path: '/api-docs',
   getParentRoute: () => AdminAdminRoute,
 } as any)
 const AdminAdminTransactionsIndexRoute =
@@ -155,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/admin': typeof AdminAdminRouteWithChildren
   '/invite/$token': typeof InviteTokenRoute
+  '/admin/api-docs': typeof AdminAdminApiDocsRoute
   '/admin/leads': typeof AdminAdminLeadsRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/admin/': typeof AdminAdminIndexRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/invite/$token': typeof InviteTokenRoute
+  '/admin/api-docs': typeof AdminAdminApiDocsRoute
   '/admin/leads': typeof AdminAdminLeadsRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/admin': typeof AdminAdminIndexRoute
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_admin/admin': typeof AdminAdminRouteWithChildren
   '/invite/$token': typeof InviteTokenRoute
+  '/_admin/admin/api-docs': typeof AdminAdminApiDocsRoute
   '/_admin/admin/leads': typeof AdminAdminLeadsRoute
   '/_admin/admin/users': typeof AdminAdminUsersRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin'
     | '/invite/$token'
+    | '/admin/api-docs'
     | '/admin/leads'
     | '/admin/users'
     | '/admin/'
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/invite/$token'
+    | '/admin/api-docs'
     | '/admin/leads'
     | '/admin/users'
     | '/admin'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_admin/admin'
     | '/invite/$token'
+    | '/_admin/admin/api-docs'
     | '/_admin/admin/leads'
     | '/_admin/admin/users'
     | '/_admin/admin/'
@@ -356,6 +368,13 @@ declare module '@tanstack/react-router' {
       path: '/leads'
       fullPath: '/admin/leads'
       preLoaderRoute: typeof AdminAdminLeadsRouteImport
+      parentRoute: typeof AdminAdminRoute
+    }
+    '/_admin/admin/api-docs': {
+      id: '/_admin/admin/api-docs'
+      path: '/api-docs'
+      fullPath: '/admin/api-docs'
+      preLoaderRoute: typeof AdminAdminApiDocsRouteImport
       parentRoute: typeof AdminAdminRoute
     }
     '/_admin/admin/transactions/': {
@@ -460,6 +479,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminAdminRouteChildren {
+  AdminAdminApiDocsRoute: typeof AdminAdminApiDocsRoute
   AdminAdminLeadsRoute: typeof AdminAdminLeadsRoute
   AdminAdminUsersRoute: typeof AdminAdminUsersRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
@@ -479,6 +499,7 @@ interface AdminAdminRouteChildren {
 }
 
 const AdminAdminRouteChildren: AdminAdminRouteChildren = {
+  AdminAdminApiDocsRoute: AdminAdminApiDocsRoute,
   AdminAdminLeadsRoute: AdminAdminLeadsRoute,
   AdminAdminUsersRoute: AdminAdminUsersRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,
