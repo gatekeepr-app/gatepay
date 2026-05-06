@@ -12,6 +12,7 @@ const items = [
   { to: "/admin/invoices", label: "Invoices", icon: FileText },
   { to: "/admin/transactions", label: "Transactions", icon: Wallet },
   { to: "/admin/leads", label: "Leads", icon: Inbox },
+  { to: "/admin/api-docs", label: "API Docs", icon: Code2 },
 ];
 
 export function Sidebar() {
