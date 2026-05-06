@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
+import { Route as DocsPaymentsApiRouteImport } from './routes/docs.payments-api'
 import { Route as AdminAdminRouteImport } from './routes/_admin.admin'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin.admin.index'
 import { Route as AdminAdminUsersRouteImport } from './routes/_admin.admin.users'
@@ -50,6 +51,11 @@ const IndexRoute = IndexRouteImport.update({
 const InviteTokenRoute = InviteTokenRouteImport.update({
   id: '/invite/$token',
   path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsPaymentsApiRoute = DocsPaymentsApiRouteImport.update({
+  id: '/docs/payments-api',
+  path: '/docs/payments-api',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminAdminRoute = AdminAdminRouteImport.update({
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/admin': typeof AdminAdminRouteWithChildren
+  '/docs/payments-api': typeof DocsPaymentsApiRoute
   '/invite/$token': typeof InviteTokenRoute
   '/admin/api-docs': typeof AdminAdminApiDocsRoute
   '/admin/leads': typeof AdminAdminLeadsRoute
@@ -183,6 +190,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/docs/payments-api': typeof DocsPaymentsApiRoute
   '/invite/$token': typeof InviteTokenRoute
   '/admin/api-docs': typeof AdminAdminApiDocsRoute
   '/admin/leads': typeof AdminAdminLeadsRoute
@@ -209,6 +217,7 @@ export interface FileRoutesById {
   '/_admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/_admin/admin': typeof AdminAdminRouteWithChildren
+  '/docs/payments-api': typeof DocsPaymentsApiRoute
   '/invite/$token': typeof InviteTokenRoute
   '/_admin/admin/api-docs': typeof AdminAdminApiDocsRoute
   '/_admin/admin/leads': typeof AdminAdminLeadsRoute
@@ -235,6 +244,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/admin'
+    | '/docs/payments-api'
     | '/invite/$token'
     | '/admin/api-docs'
     | '/admin/leads'
@@ -258,6 +268,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/docs/payments-api'
     | '/invite/$token'
     | '/admin/api-docs'
     | '/admin/leads'
@@ -283,6 +294,7 @@ export interface FileRouteTypes {
     | '/_admin'
     | '/login'
     | '/_admin/admin'
+    | '/docs/payments-api'
     | '/invite/$token'
     | '/_admin/admin/api-docs'
     | '/_admin/admin/leads'
@@ -308,6 +320,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   LoginRoute: typeof LoginRoute
+  DocsPaymentsApiRoute: typeof DocsPaymentsApiRoute
   InviteTokenRoute: typeof InviteTokenRoute
   ApiPublicTransactionsVerifyRoute: typeof ApiPublicTransactionsVerifyRoute
 }
@@ -340,6 +353,13 @@ declare module '@tanstack/react-router' {
       path: '/invite/$token'
       fullPath: '/invite/$token'
       preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/payments-api': {
+      id: '/docs/payments-api'
+      path: '/docs/payments-api'
+      fullPath: '/docs/payments-api'
+      preLoaderRoute: typeof DocsPaymentsApiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_admin/admin': {
@@ -537,6 +557,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   LoginRoute: LoginRoute,
+  DocsPaymentsApiRoute: DocsPaymentsApiRoute,
   InviteTokenRoute: InviteTokenRoute,
   ApiPublicTransactionsVerifyRoute: ApiPublicTransactionsVerifyRoute,
 }
