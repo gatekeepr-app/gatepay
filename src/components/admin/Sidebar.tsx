@@ -17,7 +17,7 @@ const items = [
 ];
 
 export function Sidebar() {
-  const { isSuperAdmin, email } = usePermissions();
+  const { isAdmin, email } = usePermissions();
   const path = useRouterState({ select: (s) => s.location.pathname });
 
   const logout = async () => {
@@ -54,7 +54,7 @@ export function Sidebar() {
             </Link>
           );
         })}
-        {isSuperAdmin && (
+        {isAdmin && (
           <Link
             to="/admin/users"
             className={cn(

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/admin/format";
 import { Copy, Trash2 } from "lucide-react";
+import { sendInvitation } from "@/server/invitations.functions";
 
 export const Route = createFileRoute("/_admin/admin/users")({
   head: () => ({ meta: [{ title: "Users — Gatekeepr" }, { name: "robots", content: "noindex, nofollow" }] }),
@@ -16,7 +17,7 @@ type Invite = { id: string; email: string; role: Role; status: string; token: st
 type RoleRow = { id: string; user_id: string; role: Role; created_at: string };
 
 function UsersPage() {
-  const { isSuperAdmin, loading } = usePermissions();
+  const { isAdmin, loading } = usePermissions();
   const navigate = useNavigate();
   const [invites, setInvites] = useState<Invite[]>([]);
   const [roles, setRoles] = useState<RoleRow[]>([]);
@@ -25,8 +26,8 @@ function UsersPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && !isSuperAdmin) navigate({ to: "/admin", replace: true });
-  }, [loading, isSuperAdmin, navigate]);
+    if (!loading && !isAdmin) navigate({ to: "/admin", replace: true });
+  }, [loading, isAdmin, navigate]);
 
   const reload = async () => {
     const [i, r] = await Promise.all([
@@ -37,23 +38,22 @@ function UsersPage() {
     setRoles((r.data ?? []) as RoleRow[]);
   };
 
-  useEffect(() => { if (isSuperAdmin) reload(); }, [isSuperAdmin]);
+  useEffect(() => { if (isAdmin) reload(); }, [isAdmin]);
 
   const invite = async () => {
     const parsed = z.object({ email: z.string().trim().email(), role: z.enum(["admin", "member"]) }).safeParse({ email, role });
     if (!parsed.success) return toast.error("Valid email + role required");
     setBusy(true);
-    const { data: sess } = await supabase.auth.getSession();
-    const { error } = await supabase.from("invitations").insert({
-      email: parsed.data.email,
-      role: parsed.data.role,
-      invited_by: sess.session!.user.id,
-    });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Invitation created");
-    setEmail("");
-    reload();
+    try {
+      await sendInvitation({ data: { email: parsed.data.email, role: parsed.data.role } });
+      toast.success("Invitation sent — password setup email delivered");
+      setEmail("");
+      reload();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to send invite");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const revoke = async (id: string) => {
@@ -75,7 +75,7 @@ function UsersPage() {
     toast.success("Invite link copied");
   };
 
-  if (loading || !isSuperAdmin) return <main className="px-6 py-10">Loading…</main>;
+  if (loading || !isAdmin) return <main className="px-6 py-10">Loading…</main>;
 
   return (
     <main className="px-6 py-10 md:px-10">
