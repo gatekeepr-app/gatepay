@@ -26,7 +26,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="hidden w-60 shrink-0 border-r border-border bg-card md:flex md:flex-col">
+    <aside className="hidden h-screen w-60 shrink-0 border-r border-border bg-card md:flex md:flex-col">
       <div className="border-b border-border px-5 py-5">
         <Link to="/admin" className="text-lg font-semibold tracking-tight">
           Gatekeepr

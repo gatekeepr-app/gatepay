@@ -99,11 +99,13 @@ function AdminLayout() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
-      <Sidebar />
-      <div className="flex-1 overflow-x-hidden">
-        <Outlet />
+    <div className="flex h-screen overflow-hidden bg-background text-foreground">
+      <div className="h-screen sticky top-0 shrink-0">
+        <Sidebar />
       </div>
+      <main className="flex-1 h-screen overflow-y-auto overflow-x-hidden">
+        <Outlet />
+      </main>
     </div>
   );
 }
