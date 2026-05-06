@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Briefcase, Users, FileText, Inbox, Plus } from "lucide-react";
+import { Briefcase, Users, FileText, Inbox, Plus, Wallet } from "lucide-react";
 
 export const Route = createFileRoute("/_admin/admin/")({
   head: () => ({
