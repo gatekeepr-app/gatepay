@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { createHash } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const corsHeaders = {
@@ -24,7 +25,6 @@ const Schema = z.object({
   source: z.string().trim().max(160).optional(),
 });
 
-// Naive in-memory rate limit (per-IP, per cold start)
 const hits = new Map<string, { count: number; reset: number }>();
 function rateLimited(ip: string, limit = 30, windowMs = 60_000) {
   const now = Date.now();
@@ -35,6 +35,17 @@ function rateLimited(ip: string, limit = 30, windowMs = 60_000) {
   }
   cur.count += 1;
   return cur.count > limit;
+}
+
+function extractBearer(request: Request): string | null {
+  const h = request.headers.get("authorization") || request.headers.get("Authorization");
+  if (!h) return null;
+  const m = h.match(/^Bearer\s+(.+)$/i);
+  return m ? m[1].trim() : null;
+}
+
+function hashKey(token: string) {
+  return createHash("sha256").update(token).digest("hex");
 }
 
 export const Route = createFileRoute("/api/public/transactions/verify")({
@@ -48,6 +59,23 @@ export const Route = createFileRoute("/api/public/transactions/verify")({
           request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
           "unknown";
         if (rateLimited(ip)) return json({ error: "rate_limited" }, 429);
+
+        const token = extractBearer(request);
+        if (!token) {
+          return json({ error: "missing_api_key" }, 401);
+        }
+
+        const tokenHash = hashKey(token);
+        const { data: keyRow, error: keyErr } = await supabaseAdmin
+          .from("api_keys")
+          .select("id, revoked_at")
+          .eq("key_hash", tokenHash)
+          .maybeSingle();
+
+        if (keyErr) return json({ error: "auth_lookup_error" }, 500);
+        if (!keyRow || keyRow.revoked_at) {
+          return json({ error: "invalid_api_key" }, 401);
+        }
 
         let body: unknown;
         try {
@@ -68,12 +96,14 @@ export const Route = createFileRoute("/api/public/transactions/verify")({
           .ilike("transaction_ref", input.transaction_ref)
           .maybeSingle();
 
-        if (error) {
-          return json({ verified: false, reason: "lookup_error" }, 500);
-        }
-        if (!tx) {
-          return json({ verified: false, reason: "not_found" });
-        }
+        // Stamp last_used regardless of match outcome (key was valid).
+        await supabaseAdmin
+          .from("api_keys")
+          .update({ last_used_at: new Date().toISOString() })
+          .eq("id", keyRow.id);
+
+        if (error) return json({ verified: false, reason: "lookup_error" }, 500);
+        if (!tx) return json({ verified: false, reason: "not_found" });
 
         if (input.date) {
           const provided = new Date(input.date);
@@ -91,7 +121,6 @@ export const Route = createFileRoute("/api/public/transactions/verify")({
           return json({ verified: false, reason: "amount_mismatch" });
         }
 
-        // Stamp verification (latest wins).
         await supabaseAdmin
           .from("transactions")
           .update({
@@ -102,7 +131,6 @@ export const Route = createFileRoute("/api/public/transactions/verify")({
           })
           .eq("id", tx.id);
 
-        // Stamp project shortcut fields.
         let projectCode: string | null = null;
         if (tx.project_id) {
           await supabaseAdmin

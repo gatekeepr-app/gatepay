@@ -68,6 +68,7 @@ function Section({ title, children, id }: { title: string; children: React.React
 
 const curlExample = `curl -X POST ${ENDPOINT} \\
   -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
   -d '{
     "transaction_ref": "TXN-2026-00482",
     "business_name": "Nerdy",
@@ -81,7 +82,10 @@ const jsExample = `const res = await fetch(
   "${ENDPOINT}",
   {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: \`Bearer \${process.env.GATEKEEPR_API_KEY}\`,
+    },
     body: JSON.stringify({
       transaction_ref: "TXN-2026-00482",
       business_name: "Nerdy",
@@ -100,10 +104,11 @@ if (data.verified) {
   // handle data.reason: "not_found" | "amount_mismatch" | ...
 }`;
 
-const pythonExample = `import requests
+const pythonExample = `import os, requests
 
 res = requests.post(
     "${ENDPOINT}",
+    headers={"Authorization": f"Bearer {os.environ['GATEKEEPR_API_KEY']}"},
     json={
         "transaction_ref": "TXN-2026-00482",
         "business_name": "Nerdy",
@@ -187,8 +192,22 @@ function PublicApiDocsPage() {
             <Inline>*</Inline>).
           </p>
           <p>
-            <strong>Auth:</strong> none. Identity is asserted via <Inline>business_name</Inline> in
-            the body — treat it as audit metadata, not access control.
+            <strong>Auth:</strong> required. Send a Gatekeepr-issued bearer token in the{" "}
+            <Inline>Authorization</Inline> header:
+          </p>
+          <CopyBlock
+            code={`Authorization: Bearer YOUR_API_KEY`}
+            language="http"
+          />
+          <p>
+            Keys are created and revoked from the Gatekeepr admin dashboard
+            (<Inline>Admin → API Keys</Inline>). Tokens start with{" "}
+            <Inline>gk_</Inline> and are shown in full only once at creation — store them
+            in your secret manager. Revoking a key takes effect immediately.
+          </p>
+          <p>
+            <strong>business_name</strong> in the body is still required as audit
+            metadata, but the token is what authenticates the caller.
           </p>
           <p>
             <strong>Rate limit:</strong> 30 requests / minute / IP. Exceeding returns{" "}
@@ -276,6 +295,13 @@ function PublicApiDocsPage() {
 
           <h3 className="mt-4 text-sm font-medium">Errors</h3>
           <ul className="ml-5 list-disc space-y-1">
+            <li>
+              <Inline>401 {`{"error":"missing_api_key"}`}</Inline> — no{" "}
+              <Inline>Authorization: Bearer …</Inline> header was sent.
+            </li>
+            <li>
+              <Inline>401 {`{"error":"invalid_api_key"}`}</Inline> — token is unknown or revoked.
+            </li>
             <li>
               <Inline>400 {`{"error":"invalid_json"}`}</Inline> — body isn't valid JSON.
             </li>

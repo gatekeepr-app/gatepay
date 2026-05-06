@@ -53,6 +53,7 @@ function Section({ title, children, id }: { title: string; children: React.React
 
 const curlExample = `curl -X POST ${ENDPOINT} \\
   -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
   -d '{
     "transaction_ref": "TXN-2026-00482",
     "business_name": "Nerdy",
@@ -66,7 +67,10 @@ const jsExample = `const res = await fetch(
   "${ENDPOINT}",
   {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: \`Bearer \${process.env.GATEKEEPR_API_KEY}\`,
+    },
     body: JSON.stringify({
       transaction_ref: "TXN-2026-00482",
       business_name: "Nerdy",
@@ -85,10 +89,11 @@ if (data.verified) {
   // handle data.reason: "not_found" | "amount_mismatch" | ...
 }`;
 
-const pythonExample = `import requests
+const pythonExample = `import os, requests
 
 res = requests.post(
     "${ENDPOINT}",
+    headers={"Authorization": f"Bearer {os.environ['GATEKEEPR_API_KEY']}"},
     json={
         "transaction_ref": "TXN-2026-00482",
         "business_name": "Nerdy",
@@ -164,8 +169,13 @@ function ApiDocsPage() {
         <CopyBlock code={`POST ${ENDPOINT}`} language="http" />
         <p>Also accepts <Inline>OPTIONS</Inline> for CORS preflight. CORS is open (<Inline>*</Inline>).</p>
         <p>
-          <strong>Auth:</strong> none. Identity is asserted via <Inline>business_name</Inline> in
-          the body — treat it as audit metadata, not access control.
+          <strong>Auth:</strong> required. Send a Gatekeepr-issued bearer token in the{" "}
+          <Inline>Authorization</Inline> header:
+        </p>
+        <CopyBlock code={`Authorization: Bearer YOUR_API_KEY`} language="http" />
+        <p>
+          Manage tokens in <Inline>Admin → API Keys</Inline>. The full token is shown only
+          once at creation; revoking takes effect immediately.
         </p>
         <p>
           <strong>Rate limit:</strong> 30 requests / minute / IP. Exceeding returns{" "}
@@ -232,6 +242,8 @@ function ApiDocsPage() {
 
         <h3 className="mt-4 text-sm font-medium">Errors</h3>
         <ul className="ml-5 list-disc space-y-1">
+          <li><Inline>401 {`{"error":"missing_api_key"}`}</Inline> — no <Inline>Authorization: Bearer …</Inline> header.</li>
+          <li><Inline>401 {`{"error":"invalid_api_key"}`}</Inline> — token is unknown or revoked.</li>
           <li><Inline>400 {`{"error":"invalid_json"}`}</Inline> — body isn't valid JSON.</li>
           <li><Inline>400 {`{"error":"invalid_body","issues":[...]}`}</Inline> — Zod validation failed.</li>
           <li><Inline>429 {`{"error":"rate_limited"}`}</Inline> — too many requests from this IP.</li>
