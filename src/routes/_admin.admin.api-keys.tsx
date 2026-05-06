@@ -63,8 +63,18 @@ function ApiKeysPage() {
     if (!name.trim()) return;
     setCreating(true);
     try {
-      const res = await createApiKey({ data: { name: name.trim() } });
-      setNewToken(res.token);
+      const { data: sess } = await supabase.auth.getUser();
+      const userId = sess.user?.id;
+      if (!userId) throw new Error("Not signed in");
+      const { token, hash, prefix } = await generateToken();
+      const { error } = await supabase.from("api_keys").insert({
+        name: name.trim(),
+        key_hash: hash,
+        key_prefix: prefix,
+        created_by: userId,
+      });
+      if (error) throw new Error(error.message);
+      setNewToken(token);
       setName("");
       setShowForm(false);
       await load();
