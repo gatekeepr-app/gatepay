@@ -198,3 +198,10 @@
     mix-blend-mode: multiply;
   }
 }
+
+@media (pointer: fine) {
+  html.has-blend-cursor,
+  html.has-blend-cursor * {
+    cursor: none !important;
+  }
+}
