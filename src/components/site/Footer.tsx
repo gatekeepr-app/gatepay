@@ -25,7 +25,7 @@ const learnMore = [
 ];
 
 const regions: { label: string; address: string[] }[] = [
-  { label: "Asia", address: ["Level 12, Vibgyor Towers, G-Block, BKC", "Mumbai 400098, India"] },
+  { label: "Asia", address: ["Kuala Lumpur, Malaysia", "Bukit Kiara, 60000, Wilayah Persekutuan,", "492 Bashundhara R/A Link Road", "Dhaka 1212, Bangladesh"] },
   { label: "Europe", address: ["10 Finsbury Square", "London EC2A 1AF, United Kingdom"] },
   {
     label: "Oceania",
