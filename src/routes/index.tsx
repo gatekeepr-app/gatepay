@@ -5,8 +5,7 @@ import { Businesses } from "@/components/site/Businesses";
 import { VisionMission } from "@/components/site/VisionMission";
 import { Services } from "@/components/site/Services";
 import { Culture } from "@/components/site/Culture";
-
-
+import { Faq } from "@/components/site/Faq";
 import { ContactCTA } from "@/components/site/ContactCTA";
 import { Footer } from "@/components/site/Footer";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
@@ -44,6 +43,7 @@ function Index() {
       <VisionMission />
       <Services />
       <Culture />
+      <Faq />
       <ContactCTA />
       <Footer />
     </main>
