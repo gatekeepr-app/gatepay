@@ -61,7 +61,7 @@ export function ContactCTA() {
       />
       <div className="relative mx-auto grid max-w-[1400px] gap-16 px-6 py-28 md:grid-cols-[1.1fr_1fr] md:px-10 md:py-40">
         <div>
-          <div className="reveal text-eyebrow mb-6 text-background/50">07 — Build with us</div>
+          <div className="reveal text-eyebrow mb-6 text-background/50">05 — Build with us</div>
           <h2 className="reveal reveal-delay-1 text-display max-w-2xl text-[10vw] leading-[0.95] sm:text-6xl md:text-6xl lg:text-[5.4vw]">
             Build something that looks serious, works properly, and
             <span className="italic font-light text-background/60"> moves people.</span>
