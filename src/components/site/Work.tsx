@@ -11,32 +11,18 @@ type Item = {
 
 const items: Item[] = [
   {
-    badge: "Creative",
-    title: "Timeline Studios Portfolio",
-    desc: "Branding, visuals, motion, campaign systems, and website assets for growing businesses.",
-    cta: "Open work",
-    visual: "brand",
-  },
-  {
-    badge: "Technology",
-    title: "Darviz Labs Builds",
-    desc: "Websites, internal tools, automations, and product systems built for real business workflows.",
-    cta: "Open work",
-    visual: "ui",
-  },
-  {
-    badge: "Events",
-    title: "Gatekeepr Experiences",
-    desc: "Launches, activations, campus campaigns, and managed brand experiences.",
+    badge: "Events · 2024",
+    title: "Global Spell Bee 2024",
+    desc: "End-to-end execution of the Global Spell Bee 2024 — branding, campaign, stage, and operations.",
     cta: "Open work",
     visual: "stage",
   },
   {
-    badge: "Thinking",
-    title: "Founder Notes",
-    desc: "Notes on business, execution, brand, systems, and building Gatekeepr.",
-    cta: "Read notes",
-    visual: "editorial",
+    badge: "Events · 2025",
+    title: "Global Spell Bee 2025",
+    desc: "Returning bigger in 2025 — creative direction, production, and live experience for the next edition.",
+    cta: "Open work",
+    visual: "stage",
   },
 ];
 
