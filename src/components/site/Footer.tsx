@@ -44,6 +44,8 @@ function XIcon({ className }: { className?: string }) {
 }
 
 export function Footer() {
+  const [openRegion, setOpenRegion] = useState<string | null>("Oceania");
+
   return (
     <footer className="relative overflow-hidden border-t border-border bg-foreground text-background">
       <div
@@ -67,15 +69,15 @@ export function Footer() {
         }}
       />
 
-      <div className="relative mx-auto max-w-[1400px] px-6 py-24 md:px-10">
-        <div className="grid grid-cols-1 gap-14 md:grid-cols-2 lg:grid-cols-4 lg:gap-12">
+      <div className="relative mx-auto max-w-[1400px] px-5 py-16 sm:px-6 sm:py-20 md:px-10 md:py-24">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 sm:gap-12 lg:grid-cols-4 lg:gap-12">
           {/* Sitemap */}
           <div>
-            <h3 className="mb-8 text-2xl font-medium text-background">Sitemap</h3>
-            <ul className="space-y-5">
+            <h3 className="mb-6 text-xl font-medium text-background sm:mb-8 sm:text-2xl">Sitemap</h3>
+            <ul className="space-y-4 sm:space-y-5">
               {sitemap.map((l) => (
                 <li key={l.label}>
-                  <a href={l.href} className="text-[17px] text-background/55 transition hover:text-background">
+                  <a href={l.href} className="text-base text-background/55 transition hover:text-background sm:text-[17px]">
                     {l.label}
                   </a>
                 </li>
@@ -85,11 +87,11 @@ export function Footer() {
 
           {/* Services */}
           <div>
-            <h3 className="mb-8 text-2xl font-medium text-background">Services</h3>
-            <ul className="space-y-5">
+            <h3 className="mb-6 text-xl font-medium text-background sm:mb-8 sm:text-2xl">Services</h3>
+            <ul className="space-y-4 sm:space-y-5">
               {services.map((l) => (
                 <li key={l.label}>
-                  <a href={l.href} className="text-[17px] text-background/55 transition hover:text-background">
+                  <a href={l.href} className="text-base text-background/55 transition hover:text-background sm:text-[17px]">
                     {l.label}
                   </a>
                 </li>
@@ -99,11 +101,11 @@ export function Footer() {
 
           {/* Learn More */}
           <div>
-            <h3 className="mb-8 text-2xl font-medium text-background">Learn More</h3>
-            <ul className="space-y-5">
+            <h3 className="mb-6 text-xl font-medium text-background sm:mb-8 sm:text-2xl">Learn More</h3>
+            <ul className="space-y-4 sm:space-y-5">
               {learnMore.map((l) => (
                 <li key={l.label}>
-                  <a href={l.href} className="text-[17px] text-background/55 transition hover:text-background">
+                  <a href={l.href} className="text-base text-background/55 transition hover:text-background sm:text-[17px]">
                     {l.label}
                   </a>
                 </li>
@@ -113,9 +115,9 @@ export function Footer() {
 
           {/* Get in touch */}
           <div>
-            <div className="mb-8 flex items-center justify-between gap-4">
-              <h3 className="text-2xl font-medium text-background">Get in touch</h3>
-              <div className="flex items-center gap-4 text-background/70">
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 sm:mb-8 sm:gap-4">
+              <h3 className="text-xl font-medium text-background sm:text-2xl">Get in touch</h3>
+              <div className="flex flex-wrap items-center gap-3 text-background/70 sm:gap-4">
                 <a href="mailto:hello@gatekeepr.com" aria-label="Email" className="transition hover:text-background">
                   <Mail className="h-5 w-5" />
                 </a>
@@ -137,32 +139,51 @@ export function Footer() {
               </div>
             </div>
 
-            <ul className="space-y-6">
-              {regions.map((r) => (
-                <li key={r.label} className="border-t border-background/15 pt-4">
-                  <div
-                    className={`text-[17px] ${
-                      r.address ? "text-background" : "text-background/55"
-                    }`}
+            <ul className="space-y-2">
+              {regions.map((r) => {
+                const isOpen = openRegion === r.label;
+                return (
+                  <li
+                    key={r.label}
+                    className="group border-t border-background/15 pt-3"
+                    onMouseEnter={() => setOpenRegion(r.label)}
                   >
-                    {r.label}
-                  </div>
-                  {r.address && (
-                    <div className="mt-2 space-y-1 text-[15px] text-background/70">
-                      {r.address.map((line) => (
-                        <div key={line}>{line}</div>
-                      ))}
+                    <button
+                      type="button"
+                      onClick={() => setOpenRegion(isOpen ? null : r.label)}
+                      aria-expanded={isOpen}
+                      className="flex w-full items-center justify-between gap-4 text-left text-[17px] text-background/70 transition hover:text-background"
+                    >
+                      <span className={isOpen ? "text-background" : ""}>{r.label}</span>
+                      <ChevronDown
+                        className={`h-4 w-4 shrink-0 transition-transform duration-300 ${
+                          isOpen ? "rotate-180 text-background" : "text-background/50"
+                        }`}
+                      />
+                    </button>
+                    <div
+                      className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                        isOpen ? "mt-2 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                      }`}
+                    >
+                      <div className="min-h-0">
+                        <div className="space-y-1 pb-1 text-[14px] leading-relaxed text-background/70 sm:text-[15px]">
+                          {r.address.map((line) => (
+                            <div key={line}>{line}</div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </div>
 
-        <div className="mt-20 flex flex-col gap-4 border-t border-background/15 pt-8 text-[14px] text-background/55 md:flex-row md:items-center md:justify-between">
+        <div className="mt-14 flex flex-col gap-4 border-t border-background/15 pt-6 text-[13px] text-background/55 sm:mt-20 sm:pt-8 sm:text-[14px] md:flex-row md:items-center md:justify-between">
           <div>© 2026 Gatekeepr. All rights reserved.</div>
-          <div className="flex gap-8">
+          <div className="flex flex-wrap gap-6 sm:gap-8">
             <a href="#" className="hover:text-background">Privacy Policy</a>
             <a href="#" className="hover:text-background">Terms</a>
           </div>
