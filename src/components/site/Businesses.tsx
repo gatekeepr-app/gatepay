@@ -20,7 +20,7 @@ const businesses: Biz[] = [
     tagline: "Technology built with business intent.",
     description:
       "Websites, web apps, internal tools, automations, and product systems for businesses that need stronger technical infrastructure and craft memorable brand experiences.",
-    services: ["Web Apps", "Tools", "Automation"],
+    services: ["Web Apps", "Tools", "Automation", "AI", "Branding"],
     focus: [
       "Custom web apps and internal tools for operating teams",
       "AI-powered workflows and automation systems",
