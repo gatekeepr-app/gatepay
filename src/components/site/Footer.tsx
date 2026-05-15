@@ -26,12 +26,12 @@ const learnMore = [
 
 const regions: { label: string; address: string[] }[] = [
   { label: "Asia", address: ["Kuala Lumpur, Malaysia", "Bukit Kiara, 60000, Wilayah Persekutuan,", "492 Bashundhara R/A Link Road", "Dhaka 1212, Bangladesh"] },
-  { label: "Europe", address: ["10 Finsbury Square", "London EC2A 1AF, United Kingdom"] },
+  { label: "Europe", address: ["Frankfurt, Germany", "Henriette Fürth Straße 2, Frankfurt am Main, 60529"] },
   {
     label: "Oceania",
-    address: ["1 Station Street W, Parramatta, West Sydney,", "New South Wales 2150, Australia"],
+    address: ["New South Wales 2150, Australia", "1 Station Street W, Parramatta, West Sydney"],
   },
-  { label: "North America", address: ["228 Park Ave S, PMB 39456", "New York, NY 10003, United States"] },
+  { label: "North America", address: ["ON M1N 2K2, Canada", "302 Aylesworth AVE, Toronto"] },
 ];
 
 // Custom X (Twitter) icon since lucide doesn't include the new logo
