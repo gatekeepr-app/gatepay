@@ -24,14 +24,14 @@ const learnMore = [
   { label: "Developer Documentation", href: "#" },
 ];
 
-const regions = [
-  { label: "Asia", address: null },
-  { label: "Europe", address: null },
+const regions: { label: string; address: string[] }[] = [
+  { label: "Asia", address: ["Level 12, Vibgyor Towers, G-Block, BKC", "Mumbai 400098, India"] },
+  { label: "Europe", address: ["10 Finsbury Square", "London EC2A 1AF, United Kingdom"] },
   {
     label: "Oceania",
-    address: ["New South Wales 2150, Australia", "1 Station Street W, Parramatta, West Sydney,"],
+    address: ["1 Station Street W, Parramatta, West Sydney,", "New South Wales 2150, Australia"],
   },
-  { label: "North America", address: null },
+  { label: "North America", address: ["228 Park Ave S, PMB 39456", "New York, NY 10003, United States"] },
 ];
 
 // Custom X (Twitter) icon since lucide doesn't include the new logo
