@@ -31,7 +31,7 @@ const businesses: Biz[] = [
     motif: "grid",
   },
   {
-    name: "AN EXPERIENCE VERTICAL",
+    name: "Gatestart Experiences",
     label: "AN EXPERIENCE VERTICAL",
     tagline: "Events and activations with taste.",
     description:
