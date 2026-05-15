@@ -25,7 +25,7 @@ const learnMore = [
 ];
 
 const regions: { label: string; address: string[] }[] = [
-  { label: "Asia", address: ["Kuala Lumpur, Malaysia", "Bukit Kiara, 60000, Wilayah Persekutuan,", "492 Bashundhara R/A Link Road", "Dhaka 1212, Bangladesh"] },
+  { label: "Asia", address: ["492 Bashundhara R/A Link Road", "Dhaka 1212, Bangladesh", "Kuala Lumpur, Malaysia", "Bukit Kiara, 60000, Wilayah Persekutuan,"] },
   { label: "Europe", address: ["Frankfurt, Germany", "Henriette Fürth Straße 2, Frankfurt am Main, 60529"] },
   {
     label: "Oceania",
