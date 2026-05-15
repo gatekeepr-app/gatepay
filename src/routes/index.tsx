@@ -14,7 +14,7 @@ import { CursorBlend } from "@/components/site/CursorBlend";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Gatekeepr — A standard for modern business execution" },
+      { title: "Gatekeepr" },
       {
         name: "description",
         content:
