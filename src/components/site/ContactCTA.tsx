@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { leadSchema } from "@/lib/validation";
 
 export function ContactCTA() {
   const [name, setName] = useState("");
@@ -15,12 +16,17 @@ export function ContactCTA() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const parsed = leadSchema.safeParse({ name, email, company: company || undefined, message });
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Please check your inputs.");
+      return;
+    }
     setSubmitting(true);
     const { error } = await supabase.from("leads").insert({
-      name: name.trim(),
-      email: email.trim(),
-      company: company.trim() || null,
-      message: message.trim(),
+      name: parsed.data.name,
+      email: parsed.data.email,
+      company: parsed.data.company ?? null,
+      message: parsed.data.message,
     });
     setSubmitting(false);
     if (error) {
@@ -88,6 +94,7 @@ export function ContactCTA() {
             <div className="space-y-4">
               <Input
                 required
+                maxLength={100}
                 placeholder="Your name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -96,12 +103,14 @@ export function ContactCTA() {
               <Input
                 required
                 type="email"
+                maxLength={254}
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-12 border-background/20 bg-transparent text-background placeholder:text-background/40 focus-visible:ring-background/40"
               />
               <Input
+                maxLength={150}
                 placeholder="Company (optional)"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
@@ -110,6 +119,7 @@ export function ContactCTA() {
               <textarea
                 required
                 rows={4}
+                maxLength={2000}
                 placeholder="Tell us what you're building"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}

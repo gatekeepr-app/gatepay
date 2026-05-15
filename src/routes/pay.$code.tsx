@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatMoney } from "@/lib/admin/format";
 import { toast } from "sonner";
 import { CheckCircle2, Lock } from "lucide-react";
+import { payCodeSchema, paymentSubmissionSchema } from "@/lib/validation";
 
 export const Route = createFileRoute("/pay/$code")({
   head: ({ params }) => ({
@@ -96,10 +97,15 @@ function PayPage() {
 
   useEffect(() => {
     (async () => {
+      const codeParsed = payCodeSchema.safeParse(code);
+      if (!codeParsed.success) {
+        setLoading(false);
+        return;
+      }
       const { data: p } = await supabase
         .from("projects")
         .select("id,name,project_code")
-        .eq("pay_code", code.toUpperCase())
+        .eq("pay_code", codeParsed.data)
         .maybeSingle();
       if (!p) {
         setLoading(false);
@@ -121,17 +127,20 @@ function PayPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!project || !computed || computed.due <= 0) return;
-    if (!form.transaction_ref.trim()) return toast.error("Transaction reference is required");
-    if (!form.payer_name.trim()) return toast.error("Your name is required");
+    const parsed = paymentSubmissionSchema.safeParse(form);
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Please check your inputs.");
+      return;
+    }
     setSubmitting(true);
     const { error } = await supabase.from("transactions").insert({
-      transaction_ref: form.transaction_ref.trim(),
+      transaction_ref: parsed.data.transaction_ref,
       amount: computed.due,
       currency: computed.currency,
       occurred_at: new Date().toISOString(),
-      method: form.method || null,
+      method: parsed.data.method,
       project_id: project.id,
-      notes: `Submitted via /pay/${code} for ${computed.period} by ${form.payer_name}${form.notes ? ` — ${form.notes}` : ""}`,
+      notes: `Submitted via /pay/${code.toUpperCase()} for ${computed.period} by ${parsed.data.payer_name}${parsed.data.notes ? ` — ${parsed.data.notes}` : ""}`,
       created_by: "00000000-0000-0000-0000-000000000000",
     } as never);
     setSubmitting(false);
@@ -217,6 +226,7 @@ function PayPage() {
                   <span className="mb-1 block text-xs font-medium text-muted-foreground">Your name *</span>
                   <input
                     value={form.payer_name}
+                    maxLength={100}
                     onChange={(e) => setForm({ ...form, payer_name: e.target.value })}
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/30"
                   />
@@ -240,6 +250,8 @@ function PayPage() {
                   <span className="mb-1 block text-xs font-medium text-muted-foreground">Transaction reference *</span>
                   <input
                     value={form.transaction_ref}
+                    maxLength={64}
+                    pattern="[A-Za-z0-9_\-]+"
                     onChange={(e) => setForm({ ...form, transaction_ref: e.target.value })}
                     placeholder="e.g. 8FA2K9JX"
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm outline-none focus:border-foreground/30"
@@ -249,6 +261,7 @@ function PayPage() {
                   <span className="mb-1 block text-xs font-medium text-muted-foreground">Notes (optional)</span>
                   <textarea
                     value={form.notes}
+                    maxLength={500}
                     onChange={(e) => setForm({ ...form, notes: e.target.value })}
                     rows={2}
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/30"

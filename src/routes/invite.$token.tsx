@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { inviteTokenSchema } from "@/lib/validation";
 
 export const Route = createFileRoute("/invite/$token")({
   head: () => ({ meta: [{ title: "Accept invitation — Gatekeepr" }, { name: "robots", content: "noindex, nofollow" }] }),
@@ -16,7 +17,13 @@ function InvitePage() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from("invitations").select("id,email,role,status,expires_at").eq("token", token).maybeSingle();
+      const tokenParsed = inviteTokenSchema.safeParse(token);
+      if (!tokenParsed.success) return setState("missing");
+      const { data } = await supabase
+        .from("invitations")
+        .select("id,email,role,status,expires_at")
+        .eq("token", tokenParsed.data)
+        .maybeSingle();
       if (!data) return setState("missing");
       if (data.status !== "pending") return setState("accepted");
       if (new Date(data.expires_at).getTime() < Date.now()) return setState("expired");
