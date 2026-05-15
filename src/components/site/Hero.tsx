@@ -51,10 +51,10 @@ export function Hero() {
 
         <div className="mt-10 flex flex-wrap items-center gap-3 fade-up" style={{ animationDelay: "0.5s" }}>
           <a
-            href="https://darvizlabs.com/career"
+            href="#businesses"
             className="group inline-flex items-center gap-2 rounded-full bg-foreground px-7 py-4 text-[15px] font-medium text-background transition hover:-translate-y-0.5 hover:bg-foreground/85 hover:shadow-lg"
           >
-            Contact Us
+            What we do
             <span className="transition-transform group-hover:translate-x-1">→</span>
           </a>
           <a
