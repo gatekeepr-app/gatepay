@@ -163,8 +163,8 @@ export function Businesses() {
                   <div className="text-eyebrow text-background/55">{b.label}</div>
                   {b.name === "Darviz Labs" ? (
                     <img src={darvizMark} alt="Darviz Labs" className="h-10 w-10 object-contain" />
-                  ) : b.name === "AN EXPERIENCE VERTICAL" ? (
-                    <img src={gtkrMark} alt="AN EXPERIENCE VERTICAL" className="h-10 w-10 object-contain rounded-md" />
+                  ) : b.name === "Gatestart Experiences" ? (
+                    <img src={gtkrMark} alt="Gatestart Experiences" className="h-10 w-10 object-contain rounded-md" />
                   ) : (
                     <div className="text-display text-3xl text-background/30">{b.accent}</div>
                   )}
@@ -222,7 +222,7 @@ export function Businesses() {
                   <div className="text-eyebrow text-muted-foreground">{active.label}</div>
                   {active.name === "Darviz Labs" ? (
                     <img src={darvizMark} alt="" className="h-9 w-9 object-contain" />
-                  ) : active.name === "AN EXPERIENCE VERTICAL" ? (
+                  ) : active.name === "Gatestart Experiences" ? (
                     <img src={gtkrMark} alt="" className="h-9 w-9 object-contain rounded-md" />
                   ) : (
                     <div className="text-display text-2xl text-muted-foreground/50">
