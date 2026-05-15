@@ -5,7 +5,7 @@ import statue from "@/assets/statue-bust.jpg";
 const cols = [
   {
     title: "Our businesses",
-    links: ["Timeline Studios", "Darviz Labs", "Gatekeepr Experiences", "Gatekeepr Advisory"],
+    links: ["Timeline Studios", "Darviz Labs", "AN EXPERIENCE VERTICAL", "Gatekeepr Advisory"],
   },
   {
     title: "Services",
