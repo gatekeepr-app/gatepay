@@ -84,7 +84,7 @@ const jsExample = `const res = await fetch(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: \`Bearer \${process.env.GATEKEEPR_API_KEY}\`,
+      Authorization: \`Bearer \${GATEKEEPR_API_KEY}\`,
     },
     body: JSON.stringify({
       transaction_ref: "TXN-2026-00482",
