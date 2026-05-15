@@ -6,7 +6,7 @@ const nav = [
   { label: "Businesses", href: "#businesses" },
   { label: "Services", href: "https://darvizlabs.com/projects/brand-identity" },
   { label: "Culture", href: "#culture" },
-  { label: "Contact", href: "https://darvizlabs.com/contact" },
+  { label: "Contact", href: "https://darvizlabs.com/career" },
 ];
 
 export function Header() {
@@ -47,7 +47,7 @@ export function Header() {
 
         <div className="flex items-center gap-3">
           <a
-            href="https://darvizlabs.com/contact"
+            href="https://darvizlabs.com/career"
             className="hidden rounded-full bg-foreground px-5 py-2.5 text-[15px] font-medium text-background transition hover:bg-foreground/85 md:inline-flex"
           >
             Contact Us
@@ -76,7 +76,7 @@ export function Header() {
               </a>
             ))}
             <a
-              href="https://darvizlabs.com/contact"
+              href="https://darvizlabs.com/career"
               onClick={() => setOpen(false)}
               className="mt-2 rounded-full bg-foreground px-5 py-3 text-center text-sm text-background"
             >

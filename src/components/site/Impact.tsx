@@ -62,7 +62,7 @@ export function Impact() {
               </div>
               <h3 className="text-display mt-4 text-2xl md:text-[26px] leading-tight">{c.title}</h3>
               <p className="mt-3 text-[16px] leading-relaxed text-muted-foreground">{c.desc}</p>
-              <a href="https://darvizlabs.com/contact" className="neon-underline mt-6 inline-block text-[15px] font-medium">
+              <a href="https://darvizlabs.com/career" className="neon-underline mt-6 inline-block text-[15px] font-medium">
                 Learn more →
               </a>
             </article>
