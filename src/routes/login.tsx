@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { loginSchema } from "@/lib/validation";
 
 type LoginSearch = { redirect?: string };
 
@@ -49,13 +50,18 @@ function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    const parsed = loginSchema.safeParse({ email, password });
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Invalid credentials");
+      return;
+    }
+    const creds = { email: parsed.data.email, password: parsed.data.password };
     setSubmitting(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword(creds);
     if (error) {
       // First-time provisioning fallback
       const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
+        ...creds,
         options: { emailRedirectTo: `${window.location.origin}${target}` },
       });
       if (signUpError) {
@@ -63,10 +69,7 @@ function LoginPage() {
         toast.error(signUpError.message);
         return;
       }
-      const { error: retryError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error: retryError } = await supabase.auth.signInWithPassword(creds);
       setSubmitting(false);
       if (retryError) {
         toast.error(retryError.message);
@@ -96,7 +99,9 @@ function LoginPage() {
           <Input
             id="email"
             type="email"
+            autoComplete="email"
             required
+            maxLength={254}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -106,7 +111,10 @@ function LoginPage() {
           <Input
             id="password"
             type="password"
+            autoComplete="current-password"
             required
+            minLength={8}
+            maxLength={128}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
