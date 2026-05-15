@@ -1,5 +1,3 @@
-import atelier from "@/assets/culture-atelier.jpg";
-import marble from "@/assets/marble.jpg";
 
 const principles = [
   "Taste over noise",
