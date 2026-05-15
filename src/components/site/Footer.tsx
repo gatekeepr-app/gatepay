@@ -7,7 +7,7 @@ const sitemap = [
   { label: "Home", href: "#home" },
   { label: "Work", href: "#work" },
   { label: "Career", href: "https://darvizlabs.com/career" },
-  { label: "Contact", href: "#contact" },
+  { label: "Contact", href: "https://darvizlabs.com/contact" },
 ];
 
 const services = [
@@ -20,7 +20,7 @@ const services = [
 const learnMore = [
   { label: "Terms of Service", href: "#" },
   { label: "Press Kit", href: "#" },
-  { label: "Enterprise Support", href: "#contact" },
+  { label: "Enterprise Support", href: "https://darvizlabs.com/contact" },
   { label: "Developer Documentation", href: "#" },
 ];
 
