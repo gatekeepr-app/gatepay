@@ -30,21 +30,6 @@ const businesses: Biz[] = [
     motif: "grid",
   },
   {
-    name: "Timeline Studios",
-    label: "A Gatekeepr company",
-    tagline: "Creative and marketing for sharper brands.",
-    description:
-      "Branding, websites, motion, video, and campaign assets for businesses that need to look serious online.",
-    services: ["Branding", "Websites", "Motion"],
-    focus: [
-      "Brand identity systems for founders and challenger brands",
-      "Performance creative and content engines for social",
-      "Editorial websites that double as sales tools",
-    ],
-    accent: "TS",
-    motif: "studio",
-  },
-  {
     name: "Gatekeepr Experiences",
     label: "A Gatekeepr service vertical",
     tagline: "Events and activations with taste.",
@@ -58,21 +43,6 @@ const businesses: Biz[] = [
     ],
     accent: "GE",
     motif: "stage",
-  },
-  {
-    name: "Gatekeepr Advisory",
-    label: "A Gatekeepr service vertical",
-    tagline: "Strategy before execution.",
-    description:
-      "Positioning, launch planning, offer design, and digital operations for founders and businesses before they scale.",
-    services: ["Strategy", "Positioning", "Operations"],
-    focus: [
-      "Positioning and offer design for founders",
-      "Go-to-market and launch planning",
-      "Operating systems for marketing and sales",
-    ],
-    accent: "GA",
-    motif: "document",
   },
 ];
 
@@ -214,14 +184,26 @@ export function Businesses() {
                     </span>
                   ))}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setActive(b)}
-                  className="mt-10 inline-flex items-center gap-2 text-[15px] font-medium text-background"
-                >
-                  <span className="neon-underline">Learn more</span>
-                  <span>→</span>
-                </button>
+                {b.name === "Darviz Labs" ? (
+                  <a
+                    href="https://darvizlabs.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-10 inline-flex items-center gap-2 text-[15px] font-medium text-background"
+                  >
+                    <span className="neon-underline">Visit Darviz Labs</span>
+                    <span>→</span>
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setActive(b)}
+                    className="mt-10 inline-flex items-center gap-2 text-[15px] font-medium text-background"
+                  >
+                    <span className="neon-underline">Learn more</span>
+                    <span>→</span>
+                  </button>
+                )}
               </div>
             </article>
           ))}

@@ -6,7 +6,7 @@ import { VisionMission } from "@/components/site/VisionMission";
 import { Services } from "@/components/site/Services";
 import { Culture } from "@/components/site/Culture";
 import { Work } from "@/components/site/Work";
-import { Impact } from "@/components/site/Impact";
+
 import { ContactCTA } from "@/components/site/ContactCTA";
 import { Footer } from "@/components/site/Footer";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
@@ -43,7 +43,6 @@ function Index() {
       <Services />
       <Culture />
       <Work />
-      <Impact />
       <ContactCTA />
       <Footer />
     </main>
