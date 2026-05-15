@@ -1,4 +1,5 @@
-import { Mail, Facebook, Linkedin, Instagram, Youtube } from "lucide-react";
+import { useState } from "react";
+import { Mail, Facebook, Linkedin, Instagram, Youtube, ChevronDown } from "lucide-react";
 import marble from "@/assets/marble.jpg";
 import statue from "@/assets/statue-bust.jpg";
 
