@@ -39,8 +39,8 @@ export const Route = createRootRoute({
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "Gatekeepr" },
       { name: "twitter:description", content: "A company for your success" },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e82c5178-20ad-401e-a30e-5eb33ae558c7/id-preview-c96fd428--d02b4d1f-afd9-4507-a12c-6c94dd675a64.lovable.app-1777383353319.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e82c5178-20ad-401e-a30e-5eb33ae558c7/id-preview-c96fd428--d02b4d1f-afd9-4507-a12c-6c94dd675a64.lovable.app-1777383353319.png" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/rp25NgSv8KTRX8ZVwwql5FI6T5l2/social-images/social-1778845225166-Gatekeepr_Facebook_cover.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/rp25NgSv8KTRX8ZVwwql5FI6T5l2/social-images/social-1778845225166-Gatekeepr_Facebook_cover.webp" },
     ],
     links: [
       {
