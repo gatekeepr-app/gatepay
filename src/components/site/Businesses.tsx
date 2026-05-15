@@ -270,7 +270,7 @@ export function Businesses() {
 
               <div className="mt-10 flex flex-wrap gap-3">
                 <a
-                  href="https://darvizlabs.com/contact"
+                  href="https://darvizlabs.com/career"
                   onClick={() => setActive(null)}
                   className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition hover:bg-foreground/85"
                 >

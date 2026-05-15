@@ -35,7 +35,7 @@ export function Culture() {
           </ul>
 
           <a
-            href="https://darvizlabs.com/contact"
+            href="https://darvizlabs.com/career"
             className="mt-10 inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-[15px] font-medium hover:border-foreground"
           >
             Learn more about our culture →

@@ -160,7 +160,7 @@ export function Work() {
             </p>
             <div className="mt-10 flex items-center gap-3">
               <a
-                href="https://darvizlabs.com/contact"
+                href="https://darvizlabs.com/career"
                 className="inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-[15px] font-medium text-background hover:bg-foreground/85"
               >
                 View our work →
