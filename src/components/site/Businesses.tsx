@@ -31,7 +31,7 @@ const businesses: Biz[] = [
   },
   {
     name: "Gatekeepr Experiences",
-    label: "A Gatekeepr service vertical",
+    label: "GATESTART Experiences",
     tagline: "Events and activations with taste.",
     description:
       "Launches, activations, campus campaigns, corporate events, and branded experiences executed with creative and operational control.",
