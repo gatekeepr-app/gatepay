@@ -20,7 +20,7 @@ export const Route = createFileRoute("/")({
         content:
           "Gatekeepr builds brands, websites, tools, campaigns and experiences for ambitious businesses. A modern business house with creative, technical and operational power.",
       },
-      { property: "og:title", content: "Gatekeepr — Modern business execution" },
+      { property: "og:title", content: "Gatekeepr" },
       {
         property: "og:description",
         content:
