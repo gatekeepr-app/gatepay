@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import darvizMark from "@/assets/darviz-logomark.png";
+import gtkrMark from "@/assets/gtkr-logomark.png";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 type Biz = {
@@ -162,6 +163,8 @@ export function Businesses() {
                   <div className="text-eyebrow text-background/55">{b.label}</div>
                   {b.name === "Darviz Labs" ? (
                     <img src={darvizMark} alt="Darviz Labs" className="h-10 w-10 object-contain" />
+                  ) : b.name === "Gatekeepr Experiences" ? (
+                    <img src={gtkrMark} alt="Gatekeepr Experiences" className="h-10 w-10 object-contain rounded-md" />
                   ) : (
                     <div className="text-display text-3xl text-background/30">{b.accent}</div>
                   )}
@@ -219,6 +222,8 @@ export function Businesses() {
                   <div className="text-eyebrow text-muted-foreground">{active.label}</div>
                   {active.name === "Darviz Labs" ? (
                     <img src={darvizMark} alt="" className="h-9 w-9 object-contain" />
+                  ) : active.name === "Gatekeepr Experiences" ? (
+                    <img src={gtkrMark} alt="" className="h-9 w-9 object-contain rounded-md" />
                   ) : (
                     <div className="text-display text-2xl text-muted-foreground/50">
                       {active.accent}
