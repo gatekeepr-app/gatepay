@@ -32,7 +32,7 @@ const businesses: Biz[] = [
   },
   {
     name: "AN EXPERIENCE VERTICAL",
-    label: "GATESTART Experiences",
+    label: "AN EXPERIENCE VERTICAL",
     tagline: "Events and activations with taste.",
     description:
       "Launches, activations, campus campaigns, corporate events, and branded experiences executed with creative and operational control.",
