@@ -16,7 +16,7 @@ type Biz = {
 const businesses: Biz[] = [
   {
     name: "Darviz Labs",
-    label: "Technology built to compound value.",
+    label: "DIGITAL SOLUTIONS FOR YOU",
     tagline: "Technology built with business intent.",
     description:
       "Websites, web apps, internal tools, automations, and product systems for businesses that need stronger technical infrastructure.",
