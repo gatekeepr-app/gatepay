@@ -1,13 +1,38 @@
 import { z } from "zod";
 
+/**
+ * sanitizeText — normalize and strip dangerous/invisible characters from
+ * any free-form text input before it is validated or stored.
+ *
+ * Note: Supabase JS uses parameterized queries, so this is NOT what protects
+ * against SQL injection — that's already handled. This focuses on:
+ *   - Unicode normalization (NFKC) so visually-similar chars become canonical
+ *   - Removing control chars, zero-width chars, BOM, and bidi overrides
+ *     (commonly abused for spoofing / homograph attacks)
+ *   - Stripping HTML tags so stored text is plain text
+ *   - Collapsing runs of whitespace
+ */
+export function sanitizeText(input: string): string {
+  return input
+    .normalize("NFKC")
+    // strip ASCII control chars (NUL, etc.) but keep \t \n \r
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+    // strip zero-width, BOM, bidi overrides, and other invisible formatting chars
+    .replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g, "")
+    // strip HTML tags so stored text stays plain text
+    .replace(/<\/?[a-zA-Z][^>]*>/g, "")
+    // collapse internal whitespace runs to a single space
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
 // Reusable primitives
 const safeText = (max: number) =>
   z
     .string()
-    .trim()
-    .max(max, { message: `Must be ${max} characters or fewer` })
-    // strip control chars (NUL, etc.) which can break inputs / cause weird storage
-    .transform((s) => s.replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, ""));
+    .transform(sanitizeText)
+    .pipe(z.string().max(max, { message: `Must be ${max} characters or fewer` }));
+
 
 export const emailSchema = z
   .string()
