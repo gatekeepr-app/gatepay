@@ -18,7 +18,7 @@ export function VisionMission() {
         <div className="mt-20 flex items-center justify-between border-t border-border pt-6 text-sm text-muted-foreground">
           <span className="text-eyebrow">Est. 2024</span>
           <span className="text-eyebrow hidden md:inline">Taste · Systems · Speed</span>
-          <span className="text-eyebrow">Mumbai · Remote</span>
+          <span className="text-eyebrow">BANGLADESH</span>
         </div>
       </div>
     </section>
