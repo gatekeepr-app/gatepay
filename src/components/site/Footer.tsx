@@ -11,10 +11,10 @@ const sitemap = [
 ];
 
 const services = [
-  { label: "Website Design & Development", href: "#services" },
-  { label: "Brand Identity & Strategy", href: "#services" },
-  { label: "AI Automation Systems", href: "#services" },
-  { label: "Software & Products", href: "#services" },
+  { label: "Website Design & Development", href: "https://darvizlabs.com/projects" },
+  { label: "Brand Identity & Strategy", href: "https://darvizlabs.com/projects" },
+  { label: "AI Automation Systems", href: "https://darvizlabs.com/projects" },
+  { label: "Software & Products", href: "https://darvizlabs.com/projects" },
 ];
 
 const learnMore = [

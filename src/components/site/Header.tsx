@@ -4,7 +4,7 @@ import logo from "@/assets/gatekeepr-logo.png";
 const nav = [
   { label: "Home", href: "#home" },
   { label: "Businesses", href: "#businesses" },
-  { label: "Services", href: "#services" },
+  { label: "Services", href: "https://darvizlabs.com/projects" },
   { label: "Culture", href: "#culture" },
   { label: "Contact", href: "#contact" },
 ];
