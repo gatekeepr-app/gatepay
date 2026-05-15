@@ -10,6 +10,7 @@ import { Culture } from "@/components/site/Culture";
 import { ContactCTA } from "@/components/site/ContactCTA";
 import { Footer } from "@/components/site/Footer";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
+import { CursorBlend } from "@/components/site/CursorBlend";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <main className="bg-background text-foreground">
+      <CursorBlend />
       <RevealOnScroll />
       <Header />
       <Hero />
