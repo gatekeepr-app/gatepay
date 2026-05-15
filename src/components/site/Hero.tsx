@@ -30,22 +30,27 @@ export function Hero() {
       />
 
       <div className="relative mx-auto max-w-[1400px] px-6 pb-28 pt-20 md:px-10 md:pb-40 md:pt-32">
-        <div className="text-eyebrow mb-8 flex items-center gap-3 text-muted-foreground fade-up" style={{ animationDelay: "0.05s" }}>
+        <div className="mb-8 fade-up" style={{ animationDelay: "0.05s" }}>
+          <span className="font-serif text-lg italic text-muted-foreground md:text-xl">
+            Experience moments that matter.
+          </span>
+        </div>
+
+        <div className="text-eyebrow mb-8 flex items-center gap-3 text-muted-foreground fade-up" style={{ animationDelay: "0.1s" }}>
           <span className="ticker inline-block h-1.5 w-1.5 rounded-full bg-accent" />
           Est. 2024 — A modern business house
         </div>
 
-        <h1 className="text-display text-[12vw] leading-[0.9] sm:text-[9vw] lg:text-[6.4vw] fade-up" style={{ animationDelay: "0.15s" }}>
-          Gatekeepr isn't<br />
-          just a company.<br />
-          <span className="italic font-light text-muted-foreground">It's a standard</span><br />
-          for modern business<br />
-          execution.
+        <h1 className="text-display text-[10vw] leading-[0.95] tracking-tight sm:text-[8vw] lg:text-[5.4vw] fade-up" style={{ animationDelay: "0.2s" }}>
+          Building the infrastructure<br />
+          behind ambitious<br />
+          <span className="italic font-light text-muted-foreground">modern businesses.</span>
         </h1>
 
         <p className="mt-10 max-w-2xl text-[17px] leading-relaxed text-muted-foreground md:text-lg fade-up" style={{ animationDelay: "0.35s" }}>
-          We build brands, websites, tools, campaigns, events, and digital
-          systems for businesses that refuse to look average.
+          A multidisciplinary house delivering brand identity, digital
+          platforms, internal systems, and growth infrastructure for companies
+          that hold themselves to a higher standard.
         </p>
 
         <div className="mt-10 flex flex-wrap items-center gap-3 fade-up" style={{ animationDelay: "0.5s" }}>
