@@ -36,10 +36,6 @@ export function Hero() {
           </span>
         </div>
 
-        <div className="text-eyebrow mb-8 flex items-center gap-3 text-muted-foreground fade-up" style={{ animationDelay: "0.1s" }}>
-          <span className="ticker inline-block h-1.5 w-1.5 rounded-full bg-accent" />
-          Est. 2024 — A modern business house
-        </div>
 
         <h1 className="text-display text-[10vw] leading-[0.95] tracking-tight sm:text-[8vw] lg:text-[5.4vw] fade-up" style={{ animationDelay: "0.2s" }}>
           Building the infrastructure<br />
