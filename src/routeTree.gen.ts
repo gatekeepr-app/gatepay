@@ -26,6 +26,7 @@ import { Route as AdminAdminProjectsIndexRouteImport } from './routes/_admin.adm
 import { Route as AdminAdminInvoicesIndexRouteImport } from './routes/_admin.admin.invoices.index'
 import { Route as AdminAdminClientsIndexRouteImport } from './routes/_admin.admin.clients.index'
 import { Route as ApiPublicTransactionsVerifyRouteImport } from './routes/api/public/transactions.verify'
+import { Route as ApiPublicTransactionsSubmitRouteImport } from './routes/api/public/transactions.submit'
 import { Route as AdminAdminTransactionsNewRouteImport } from './routes/_admin.admin.transactions.new'
 import { Route as AdminAdminTransactionsIdRouteImport } from './routes/_admin.admin.transactions.$id'
 import { Route as AdminAdminProjectsNewRouteImport } from './routes/_admin.admin.projects.new'
@@ -122,6 +123,12 @@ const ApiPublicTransactionsVerifyRoute =
     path: '/api/public/transactions/verify',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicTransactionsSubmitRoute =
+  ApiPublicTransactionsSubmitRouteImport.update({
+    id: '/api/public/transactions/submit',
+    path: '/api/public/transactions/submit',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminAdminTransactionsNewRoute =
   AdminAdminTransactionsNewRouteImport.update({
     id: '/transactions/new',
@@ -193,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/admin/projects/new': typeof AdminAdminProjectsNewRoute
   '/admin/transactions/$id': typeof AdminAdminTransactionsIdRoute
   '/admin/transactions/new': typeof AdminAdminTransactionsNewRoute
+  '/api/public/transactions/submit': typeof ApiPublicTransactionsSubmitRoute
   '/api/public/transactions/verify': typeof ApiPublicTransactionsVerifyRoute
   '/admin/clients/': typeof AdminAdminClientsIndexRoute
   '/admin/invoices/': typeof AdminAdminInvoicesIndexRoute
@@ -219,6 +227,7 @@ export interface FileRoutesByTo {
   '/admin/projects/new': typeof AdminAdminProjectsNewRoute
   '/admin/transactions/$id': typeof AdminAdminTransactionsIdRoute
   '/admin/transactions/new': typeof AdminAdminTransactionsNewRoute
+  '/api/public/transactions/submit': typeof ApiPublicTransactionsSubmitRoute
   '/api/public/transactions/verify': typeof ApiPublicTransactionsVerifyRoute
   '/admin/clients': typeof AdminAdminClientsIndexRoute
   '/admin/invoices': typeof AdminAdminInvoicesIndexRoute
@@ -248,6 +257,7 @@ export interface FileRoutesById {
   '/_admin/admin/projects/new': typeof AdminAdminProjectsNewRoute
   '/_admin/admin/transactions/$id': typeof AdminAdminTransactionsIdRoute
   '/_admin/admin/transactions/new': typeof AdminAdminTransactionsNewRoute
+  '/api/public/transactions/submit': typeof ApiPublicTransactionsSubmitRoute
   '/api/public/transactions/verify': typeof ApiPublicTransactionsVerifyRoute
   '/_admin/admin/clients/': typeof AdminAdminClientsIndexRoute
   '/_admin/admin/invoices/': typeof AdminAdminInvoicesIndexRoute
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
     | '/admin/projects/new'
     | '/admin/transactions/$id'
     | '/admin/transactions/new'
+    | '/api/public/transactions/submit'
     | '/api/public/transactions/verify'
     | '/admin/clients/'
     | '/admin/invoices/'
@@ -303,6 +314,7 @@ export interface FileRouteTypes {
     | '/admin/projects/new'
     | '/admin/transactions/$id'
     | '/admin/transactions/new'
+    | '/api/public/transactions/submit'
     | '/api/public/transactions/verify'
     | '/admin/clients'
     | '/admin/invoices'
@@ -331,6 +343,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/projects/new'
     | '/_admin/admin/transactions/$id'
     | '/_admin/admin/transactions/new'
+    | '/api/public/transactions/submit'
     | '/api/public/transactions/verify'
     | '/_admin/admin/clients/'
     | '/_admin/admin/invoices/'
@@ -347,6 +360,7 @@ export interface RootRouteChildren {
   DocsPaymentsApiRoute: typeof DocsPaymentsApiRoute
   InviteTokenRoute: typeof InviteTokenRoute
   PayCodeRoute: typeof PayCodeRoute
+  ApiPublicTransactionsSubmitRoute: typeof ApiPublicTransactionsSubmitRoute
   ApiPublicTransactionsVerifyRoute: typeof ApiPublicTransactionsVerifyRoute
 }
 
@@ -469,6 +483,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/transactions/verify'
       fullPath: '/api/public/transactions/verify'
       preLoaderRoute: typeof ApiPublicTransactionsVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/transactions/submit': {
+      id: '/api/public/transactions/submit'
+      path: '/api/public/transactions/submit'
+      fullPath: '/api/public/transactions/submit'
+      preLoaderRoute: typeof ApiPublicTransactionsSubmitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_admin/admin/transactions/new': {
@@ -601,6 +622,7 @@ const rootRouteChildren: RootRouteChildren = {
   DocsPaymentsApiRoute: DocsPaymentsApiRoute,
   InviteTokenRoute: InviteTokenRoute,
   PayCodeRoute: PayCodeRoute,
+  ApiPublicTransactionsSubmitRoute: ApiPublicTransactionsSubmitRoute,
   ApiPublicTransactionsVerifyRoute: ApiPublicTransactionsVerifyRoute,
 }
 export const routeTree = rootRouteImport

@@ -1,130 +1,102 @@
-# Transactions Module Plan
+## Goal
 
-Add a new "Transactions" area to the admin workspace for recording incoming payments, plus a public API that external apps/websites can call to verify a transaction by ID. Use an external supabase database. I will provide the credentials
+Let external sites (e.g. Nerdi) push transactions into Gatekeepr via API as "unverified", then let an admin click **Verify** to batch all unverified transactions for a given business and POST them back to that site for confirmation. The site then calls our existing `/api/public/transactions/verify` per ref to flip each one to verified.
 
-## 1. Database
+## 1. Schema change
 
-New table `public.transactions`:
+Migration on `api_keys`:
 
+- Add `callback_url text` — the URL we POST verify batches to for this key's website.
+- Add `business_name text` — default business label stamped on inbound transactions when the body doesn't override it. Used as the grouping key.
 
-| column                    | type                               | notes                                          |
-| ------------------------- | ---------------------------------- | ---------------------------------------------- |
-| id                        | uuid PK                            | default gen_random_uuid()                      |
-| transaction_ref           | text NOT NULL                      | the external transaction ID (bKash/bank/etc.)  |
-| amount                    | numeric(14,2) NOT NULL             | amount we received (incoming only)             |
-| currency                  | text NOT NULL default 'BDT'        | &nbsp;                                         |
-| occurred_at               | timestamptz NOT NULL default now() | editable date/time                             |
-| method                    | text NULL                          | optional: bkash, bank, card, other             |
-| client_id                 | uuid NULL                          | optional link to a client                      |
-| project_id                | uuid NULL                          | optional link to a project                     |
-| invoice_id                | uuid NULL                          | optional link to an invoice                    |
-| verified_external_name    | text NULL                          | business/app name set by the public API caller |
-| verified_external_user_id | text NULL                          | the calling app's user/customer id             |
-| verified_source           | text NULL                          | which external app/site verified               |
-| verified_at               | timestamptz NULL                   | when public API matched it                     |
-| notes                     | text NULL                          | &nbsp;                                         |
-| created_by                | uuid NOT NULL                      | admin who entered it                           |
-| created_at, updated_at    | timestamptz                        | &nbsp;                                         |
+No new tables. Existing `transactions` already has `verified_at`, `verified_external_name`, `verified_external_user_id`, `verified_source` — we'll reuse them.
 
+## 2. New inbound endpoint — `POST /api/public/transactions/submit`
 
-Indexes:
+External site posts a transaction; we store it as unverified.
 
-- unique `(lower(transaction_ref))` to prevent duplicates and make lookups fast.
-- index on `occurred_at`, `client_id`, `project_id`.
+**Auth**: `Authorization: Bearer <api_key>` (same scheme as `/verify`).
 
-RLS:
+**Body** (proposed, JSON):
 
-- `members read transactions` — `is_workspace_member(auth.uid())`
-- `members insert transactions` — `is_workspace_member(...) AND created_by = auth.uid()`
-- `owner or manager update/delete transactions` — same pattern as other tables.
-
-Trigger: `touch_updated_at` on update.
-
-Also: add a `last_transaction_ref` and `last_payment_at` column on `projects` (nullable) so the verification API can stamp the project quickly. (Alternative is a join — keeping a denormalized field for cheap dashboard reads.)
-
-## 2. Admin UI
-
-New routes:
-
-- `/_admin/admin/transactions` (index) — list with columns: Date, Ref, Amount, Method, Client/Project, Verified by, Actions. Filters: date range, method, verified/unverified, search by ref.
-- `/_admin/admin/transactions/new` — minimal form: amount, currency, transaction_ref, date/time (defaults to now, editable), optional method, optional client/project/invoice picker, optional notes. Single page, no wizard. Uses the same stable `useState` flat form pattern we fixed in clients/new to avoid the input lag bug.
-- `/_admin/admin/transactions/$id` — detail view: all fields, verification info (who matched it via API and when), edit & delete (manager/owner only).
-
-Sidebar: add a "Transactions" item between Invoices and Leads with a `Receipt`/`Wallet` icon.
-
-Dashboard: add a "Money received" tile (sum of `amount` this month) next to existing stats.
-
-## 3. Public verification API
-
-New server route: `src/routes/api/public/transactions.verify.ts`
-
-Methods:
-
-- `OPTIONS` — CORS preflight.
-- `POST` — verify a transaction.
-
-Request body (JSON):
-
-```
+```json
 {
-  "transaction_ref": "TX123ABC",     // required
-  "date": "2026-05-06",              // optional (YYYY-MM-DD or ISO); if present must match occurred_at's date
-  "amount": 1500.00,                 // optional; if present must match
-  "business_name": "Nerdy",          // required — caller identifies itself
-  "external_user_id": "user_42",     // optional — caller's user id
-  "source": "nerdy.app"              // optional — domain/app id
+  "transaction_ref": "TRWQREWF126",     // required, unique-ish ref from their side
+  "amount": 18000,                       // required, number
+  "currency": "BDT",                     // optional, defaults to "BDT"
+  "occurred_at": "2026-05-20T15:50:00Z", // optional, defaults to now()
+  "method": "bkash",                     // optional
+  "business_name": "Nardi",              // optional, falls back to api_key.business_name
+  "external_user_id": "user_42",         // optional, who paid on their side
+  "source": "nardi-checkout",            // optional, free-form tag
+  "notes": "Order #1234"                 // optional
 }
 ```
 
-Response:
+**Behavior**:
 
-- `200 { "verified": true, "transaction": { ref, amount, currency, occurred_at, project_code? } }` when found and (if provided) date/amount match.
-- `200 { "verified": false, "reason": "not_found" | "date_mismatch" | "amount_mismatch" }` otherwise.
-- `400` for invalid body, `429` for rate limit.
+- Validate with zod (lengths, types).
+- Rate-limit per IP (reuse pattern in `transactions.verify.ts`).
+- Insert into `transactions` with `verified_at = NULL`, `project_id = NULL`, `client_id = NULL`, `created_by = api_key.created_by`, `verified_external_name = business_name`, `verified_external_user_id`, `verified_source`. **Do NOT stamp `verified_at`.**
+- Reject duplicates: if a row with the same `transaction_ref` (case-insensitive) already exists, return `409 { error: "duplicate_ref" }`.
+- Stamp `api_keys.last_used_at`.
+- Return `201 { received: true, id, transaction_ref }`.
+- Standard CORS + OPTIONS handler.
 
-Side effects on success:
+## 3. Verify-batch button on the Transactions page
 
-- Set `verified_external_name`, `verified_external_user_id`, `verified_source`, `verified_at = now()` on the matched transaction (only if not already verified, or append to a small history — see "Decision needed" below).
-- If the transaction is linked to a project, update `projects.last_transaction_ref` and `last_payment_at`.
+In `src/routes/_admin.admin.transactions.index.tsx`, beside the existing "New transaction" button, add a **Trigger verify** button.
 
-Implementation:
+Click flow:
 
-- Uses `supabaseAdmin` (server-only, bypasses RLS) inside the verified handler.
-- Validates body with Zod (string lengths, number ranges, ISO date).
-- CORS headers on every response (including errors), per server-route CORS guidance.
-- Lookup: `select ... from transactions where lower(transaction_ref) = lower($1) limit 1`.
-- Lightweight in-memory rate limit by IP (best-effort) to slow brute-forcing of refs.
+1. Fetch all `transactions` where `verified_at IS NULL` AND `verified_external_name IS NOT NULL` (inbound, not yet verified).
+2. Group them by `verified_external_name` (= business_name).
+3. For each group: find the `api_keys` row whose `business_name` matches and has a non-null `callback_url`. If none, skip and warn in the toast.
+4. POST to that `callback_url`:
+  ```json
+   {
+     "business_name": "Nerdi",
+     "transactions": [
+       { "transaction_ref": "...", "amount": 18000, "currency": "BDT", "occurred_at": "..." },
+       ...
+     ]
+   }
+  ```
+   with header `X-Gatekeepr-Signature: sha256=<hmac>` where the HMAC uses a per-key signing secret (we'll generate it at api_key creation and surface it once, reusing the existing key flow — see open question below) OR no signature for v1 if user prefers (see Q1).
+5. We do NOT stamp `verified_at` ourselves — the external site responds, then calls back our existing `POST /api/public/transactions/verify` with each ref. That endpoint already flips `verified_at`.
+6. Show toast: "Sent N transactions to M businesses for verification".
 
-Auth model for the public API: open POST, no API key required (per request). Security relies on:
+This work happens through a `createServerFn` (`triggerVerifyBatch`) protected by `requireSupabaseAuth` so we don't expose `callback_url` or signing secrets to the browser.
 
-- Transaction refs being non-guessable (we don't generate them — they're bank/bKash IDs).
-- Caller must supply `business_name` to record who claimed verification.
-- Optional date/amount checks reduce false positives.
+## 4. Admin UI tweaks
 
-If you later want stricter security we can add per-caller API keys; flagged in "Decision needed".
+- `src/routes/_admin.admin.api-keys.tsx`: add `business_name` and `callback_url` inputs to the create form and show them in the list (callback URL truncated). Allow inline edit of `callback_url` (optional polish — can be a follow-up).
+- Transactions list: add a small "Unverified" badge for rows with `verified_at IS NULL AND verified_external_name IS NOT NULL` so admins can see the inbound queue.
 
-A second `GET /api/public/transactions.verify?ref=...&date=...` is **not** added — POST keeps the body structured and avoids logs leaking refs in URLs.
+## 5. Docs page update
 
-## 4. Files to add / edit
+Update `src/routes/docs.payments-api.tsx` (and `src/routes/_admin.admin.api-docs.tsx` if used) with:
 
-Add:
+- The new `POST /submit` endpoint: auth, body schema, sample curl, response codes.
+- The existing `POST /verify` endpoint (already documented — leave intact).
+- A section "Receiving verify callbacks": what we POST to their `callback_url`, the signature header, and the expected behavior (loop the list and call `/verify` per ref).
 
-- `supabase/migrations/<ts>_transactions.sql` — table, indexes, RLS, trigger, projects columns.
-- `src/routes/_admin.admin.transactions.index.tsx`
-- `src/routes/_admin.admin.transactions.new.tsx`
-- `src/routes/_admin.admin.transactions.$id.tsx`
-- `src/routes/api/public/transactions.verify.ts`
-- `src/lib/admin/transactions.ts` — small helpers (zod schemas, fetchers).
+## 6. Integration prompt for the Nardi-side dev
 
-Edit:
+At the end of the chat reply I'll provide a ready-to-paste prompt their developer/AI can use to wire up:
 
-- `src/components/admin/Sidebar.tsx` — add Transactions link.
-- `src/routes/_admin.admin.index.tsx` — add "Money received" stat tile.
+- their outbound call to `POST /api/public/transactions/submit` when an order is placed,
+- a public endpoint on their side at `callback_url` that receives the batch and loops `POST /api/public/transactions/verify` per ref.
 
-## 5. Decision needed (please confirm before build)
+## Open question (one)
 
-1. **Multiple verifications per transaction**: should the same transaction_ref be verifiable by only one external caller (first-wins, lock after) OR allow multiple verifications (we'd add a `transaction_verifications` child table to keep history)?
-2. **API auth**: open endpoint as described, OR require each external app to register and send an `x-api-key` header (means adding an `api_clients` table + key management UI under Super Admin)?
-3. **Strict matching**: if `amount` is provided in the API call and doesn't match, return `verified: false` — confirm that's the desired behavior (vs. ignoring amount and only using ref+date).
+**Signing the outbound batch**: Do you want us to HMAC-sign the batch payload with a per-key secret (more secure, slightly more work on Nardi's side), or skip signing in v1 and rely on Bearer-only auth on the callback URL (simpler)? I'll default to **HMAC with a per-key `signing_secret` column on `api_keys**` unless you say otherwise — it's a small addition and avoids a security-debt round-trip later.
 
-Defaults if you don't answer: (1) allow multiple, append history; (2) open endpoint with business_name required; (3) strict — mismatched amount returns false.
+## Files touched
+
+- migration: `api_keys` + (likely) `signing_secret`
+- new: `src/routes/api/public/transactions.submit.ts`
+- new: `src/lib/transactions.functions.ts` (`triggerVerifyBatch` serverFn)
+- edited: `src/routes/_admin.admin.transactions.index.tsx` (Trigger verify button + badge)
+- edited: `src/routes/_admin.admin.api-keys.tsx` (callback_url + business_name + signing_secret reveal)
+- edited: `src/routes/docs.payments-api.tsx` (new sections)

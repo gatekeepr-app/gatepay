@@ -24,6 +24,7 @@ export const Route = createFileRoute("/docs/payments-api")({
 
 const BASE_URL = "https://gatekeepr-foundations-build.lovable.app";
 const ENDPOINT = `${BASE_URL}/api/public/transactions/verify`;
+const SUBMIT_ENDPOINT = `${BASE_URL}/api/public/transactions/submit`;
 
 function CopyBlock({ code, language = "bash" }: { code: string; language?: string }) {
   const [copied, setCopied] = useState(false);
@@ -159,10 +160,12 @@ function PublicApiDocsPage() {
           <ul className="grid grid-cols-2 gap-y-1">
             {[
               ["overview", "Overview"],
-              ["endpoint", "Endpoint"],
-              ["body", "Request body"],
-              ["examples", "Examples"],
-              ["responses", "Responses"],
+              ["submit", "Submit transaction"],
+              ["callback", "Verify callback"],
+              ["endpoint", "Verify endpoint"],
+              ["body", "Verify request body"],
+              ["examples", "Verify examples"],
+              ["responses", "Verify responses"],
               ["effects", "Side effects"],
               ["matching", "Matching rules"],
               ["security", "Security notes"],
@@ -178,40 +181,183 @@ function PublicApiDocsPage() {
 
         <Section id="overview" title="Overview">
           <p>
-            Partner applications (e.g. Nerdy) call this endpoint with a transaction reference they
-            received from an end user. If Gatekeepr has a matching record, the API returns{" "}
-            <Inline>verified: true</Inline>, stamps the transaction with the partner's business
-            name, and updates the linked project's last-payment fields.
+            Gatekeepr exposes three flows for partner sites:
           </p>
+          <ol className="ml-5 list-decimal space-y-1">
+            <li>
+              <strong>Submit</strong> — partner posts a transaction when an order is placed. It
+              lands in Gatekeepr as <Inline>unverified</Inline>.
+            </li>
+            <li>
+              <strong>Verify callback</strong> — admin clicks "Trigger verify". Gatekeepr POSTs
+              the batch of unverified transactions back to the partner's <Inline>callback_url</Inline>.
+            </li>
+            <li>
+              <strong>Verify</strong> — partner loops the batch and calls{" "}
+              <Inline>POST /transactions/verify</Inline> per ref to confirm. Confirmed
+              transactions get <Inline>verified_at</Inline> stamped.
+            </li>
+          </ol>
         </Section>
 
-        <Section id="endpoint" title="Endpoint">
+        <Section id="submit" title="Submit transaction">
+          <p>
+            Called by the partner site when an order is placed. Creates an unverified transaction
+            in Gatekeepr.
+          </p>
+          <CopyBlock code={`POST ${SUBMIT_ENDPOINT}`} language="http" />
+          <CopyBlock code={`Authorization: Bearer YOUR_API_KEY`} language="http" />
+          <h3 className="mt-2 text-sm font-medium">Body (JSON)</h3>
+          <div className="overflow-x-auto rounded-lg border border-border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2">Field</th>
+                  <th className="px-3 py-2">Type</th>
+                  <th className="px-3 py-2">Required</th>
+                  <th className="px-3 py-2">Notes</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {[
+                  ["transaction_ref", "string (1–120)", "Yes", "Your unique transaction ID."],
+                  ["amount", "number ≥ 0", "Yes", "Payment amount."],
+                  ["currency", "string (≤8)", "No", "Defaults to 'BDT'."],
+                  ["occurred_at", "ISO 8601 datetime", "No", "Defaults to now()."],
+                  ["method", "string (≤40)", "No", "e.g. 'bkash', 'card'."],
+                  ["business_name", "string (1–160)", "No*", "Falls back to the API key's business_name."],
+                  ["external_user_id", "string (≤160)", "No", "Your end-user ID."],
+                  ["source", "string (≤160)", "No", "Free-form tag."],
+                  ["notes", "string (≤2000)", "No", "Free-form notes."],
+                ].map(([f, t, r, n]) => (
+                  <tr key={f}>
+                    <td className="px-3 py-2"><Inline>{f}</Inline></td>
+                    <td className="px-3 py-2 text-muted-foreground">{t}</td>
+                    <td className="px-3 py-2">
+                      <span className={cn("rounded px-1.5 py-0.5 text-xs", r === "Yes" ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground")}>
+                        {r}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">{n}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            * Either set <Inline>business_name</Inline> in the body or configure one on the API key.
+          </p>
+          <h3 className="mt-4 text-sm font-medium">Example</h3>
+          <CopyBlock
+            code={`curl -X POST ${SUBMIT_ENDPOINT} \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -d '{
+    "transaction_ref": "TRWQREWF126",
+    "amount": 18000,
+    "currency": "BDT",
+    "occurred_at": "2026-05-20T15:50:00Z",
+    "method": "bkash",
+    "external_user_id": "user_42",
+    "source": "nerdy-checkout"
+  }'`}
+            language="bash"
+          />
+          <h3 className="mt-4 text-sm font-medium">Responses</h3>
+          <ul className="ml-5 list-disc space-y-1">
+            <li><Inline>201 {`{"received":true,"id":"…","transaction_ref":"…","status":"unverified"}`}</Inline></li>
+            <li><Inline>409 {`{"error":"duplicate_ref",…}`}</Inline> — ref already exists.</li>
+            <li><Inline>400 {`{"error":"invalid_body","issues":[…]}`}</Inline></li>
+            <li><Inline>400 {`{"error":"missing_business_name"}`}</Inline></li>
+            <li><Inline>401 {`{"error":"missing_api_key"}`}</Inline> or <Inline>invalid_api_key</Inline></li>
+            <li><Inline>429 {`{"error":"rate_limited"}`}</Inline> — 60 req/min/IP</li>
+          </ul>
+        </Section>
+
+        <Section id="callback" title="Verify callback (Gatekeepr → your site)">
+          <p>
+            When a Gatekeepr admin clicks <strong>Trigger verify</strong>, we group all unverified
+            inbound transactions by <Inline>business_name</Inline>, find the matching API key,
+            and POST the batch to that key's <Inline>callback_url</Inline>.
+          </p>
+          <h3 className="mt-2 text-sm font-medium">Request we send</h3>
+          <CopyBlock
+            code={`POST <your callback_url>
+Content-Type: application/json
+X-Gatekeepr-Signature: sha256=<hex hmac>
+User-Agent: Gatekeepr-Verify/1.0
+
+{
+  "business_name": "Nerdy",
+  "sent_at": "2026-05-20T16:30:00.000Z",
+  "transactions": [
+    {
+      "transaction_ref": "TRWQREWF126",
+      "amount": 18000,
+      "currency": "BDT",
+      "occurred_at": "2026-05-20T15:50:00.000Z",
+      "method": "bkash",
+      "external_user_id": "user_42",
+      "source": "nerdy-checkout"
+    }
+  ]
+}`}
+            language="http"
+          />
+          <h3 className="mt-4 text-sm font-medium">Signature verification</h3>
+          <p>
+            The <Inline>X-Gatekeepr-Signature</Inline> header is{" "}
+            <Inline>sha256=&lt;hex&gt;</Inline> where the hex is the HMAC-SHA256 of the raw
+            request body using your API key's <Inline>signing_secret</Inline> (shown once at
+            key creation). Reject requests with a missing or non-matching signature.
+          </p>
+          <CopyBlock
+            code={`import { createHmac, timingSafeEqual } from "crypto";
+
+function verify(rawBody: string, header: string | null, secret: string) {
+  if (!header?.startsWith("sha256=")) return false;
+  const got = Buffer.from(header.slice(7), "hex");
+  const expected = Buffer.from(
+    createHmac("sha256", secret).update(rawBody).digest("hex"),
+    "hex",
+  );
+  return got.length === expected.length && timingSafeEqual(got, expected);
+}`}
+            language="ts"
+          />
+          <h3 className="mt-4 text-sm font-medium">Expected behavior</h3>
+          <ol className="ml-5 list-decimal space-y-1">
+            <li>Verify the HMAC signature.</li>
+            <li>For each item in <Inline>transactions[]</Inline>, look it up in your own DB.</li>
+            <li>
+              If it's a real order on your side, call{" "}
+              <Inline>POST /api/public/transactions/verify</Inline> with the same{" "}
+              <Inline>transaction_ref</Inline>. That flips Gatekeepr's record to verified.
+            </li>
+            <li>Return <Inline>200 OK</Inline> once the loop is done.</li>
+          </ol>
+        </Section>
+
+        <Section id="endpoint" title="Verify endpoint">
+          <p>
+            Called by your site (typically from inside the callback handler above) to confirm a
+            single transaction.
+          </p>
           <CopyBlock code={`POST ${ENDPOINT}`} language="http" />
           <p>
-            Also accepts <Inline>OPTIONS</Inline> for CORS preflight. CORS is open (
-            <Inline>*</Inline>).
+            Also accepts <Inline>OPTIONS</Inline> for CORS preflight. CORS is open (<Inline>*</Inline>).
           </p>
           <p>
             <strong>Auth:</strong> required. Send a Gatekeepr-issued bearer token in the{" "}
             <Inline>Authorization</Inline> header:
           </p>
-          <CopyBlock
-            code={`Authorization: Bearer YOUR_API_KEY`}
-            language="http"
-          />
+          <CopyBlock code={`Authorization: Bearer YOUR_API_KEY`} language="http" />
           <p>
-            Keys are created and revoked from the Gatekeepr admin dashboard
-            (<Inline>Admin → API Keys</Inline>). Tokens start with{" "}
-            <Inline>gk_</Inline> and are shown in full only once at creation — store them
-            in your secret manager. Revoking a key takes effect immediately.
+            Keys are created and revoked from <Inline>Admin → API Keys</Inline>. Tokens start with{" "}
+            <Inline>gk_</Inline> and are shown in full only once.
           </p>
           <p>
-            <strong>business_name</strong> in the body is still required as audit
-            metadata, but the token is what authenticates the caller.
-          </p>
-          <p>
-            <strong>Rate limit:</strong> 30 requests / minute / IP. Exceeding returns{" "}
-            <Inline>429 {`{"error":"rate_limited"}`}</Inline>.
+            <strong>Rate limit:</strong> 30 requests / minute / IP.
           </p>
         </Section>
 
