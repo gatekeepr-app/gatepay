@@ -180,24 +180,27 @@ function PublicApiDocsPage() {
         </nav>
 
         <Section id="overview" title="Overview">
-          <p>
-            Gatekeepr exposes three flows for partner sites:
-          </p>
+          <p>Gatekeepr exposes two flows for partner sites:</p>
           <ol className="ml-5 list-decimal space-y-1">
             <li>
               <strong>Submit</strong> — partner posts a transaction when an order is placed. It
               lands in Gatekeepr as <Inline>unverified</Inline>.
             </li>
             <li>
-              <strong>Verify callback</strong> — admin clicks "Trigger verify". Gatekeepr POSTs
-              the batch of unverified transactions back to the partner's <Inline>callback_url</Inline>.
-            </li>
-            <li>
-              <strong>Verify</strong> — partner loops the batch and calls{" "}
-              <Inline>POST /transactions/verify</Inline> per ref to confirm. Confirmed
-              transactions get <Inline>verified_at</Inline> stamped.
+              <strong>Verify callback</strong> — a Gatekeepr admin selects one or more unverified
+              transactions (green radio toggle in the Transactions table) and clicks{" "}
+              <strong>Trigger verify</strong>. Gatekeepr groups the selection by{" "}
+              <Inline>business_name</Inline>, POSTs each group to the matching API key's{" "}
+              <Inline>callback_url</Inline>, and — on a <Inline>2xx</Inline> response — marks the
+              bundled transactions as verified automatically. No further call from the partner is
+              required.
             </li>
           </ol>
+          <p>
+            The standalone <Inline>POST /transactions/verify</Inline> endpoint (documented below)
+            remains available for partners that want to verify a single ref on demand, but it is
+            not part of the standard submit → callback flow.
+          </p>
         </Section>
 
         <Section id="submit" title="Submit transaction">
