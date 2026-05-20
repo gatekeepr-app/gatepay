@@ -251,11 +251,11 @@ function ApiKeysPage() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 text-sm font-medium">
-                <KeyRound className="h-4 w-4" /> Copy these now — shown only once
+                <KeyRound className="h-4 w-4" /> Credentials created
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                Store both in your secret manager. Gatekeepr only keeps a hash of the token; the
-                signing secret is shown once and cannot be retrieved later.
+                Copy these into your secret manager. You can also re-view them anytime from the
+                table below.
               </p>
             </div>
             <button
