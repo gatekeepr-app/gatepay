@@ -204,11 +204,39 @@ function TransactionsPage() {
                       {t.verified_external_name || "—"}
                     </td>
                     <td className="px-4 py-3">
-                      {t.verified_at ? (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                      ) : (
-                        <Circle className="h-4 w-4 text-muted-foreground/40" />
-                      )}
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (t.verified_at) {
+                            if (!confirm("Mark this transaction as unverified?")) return;
+                            const { error } = await supabase
+                              .from("transactions")
+                              .update({ verified_at: null, verified_source: null })
+                              .eq("id", t.id);
+                            if (error) return toast.error(error.message);
+                            toast.success("Marked unverified");
+                          } else {
+                            const { error } = await supabase
+                              .from("transactions")
+                              .update({
+                                verified_at: new Date().toISOString(),
+                                verified_source: t.verified_external_name ? "manual_override" : "manual",
+                              })
+                              .eq("id", t.id);
+                            if (error) return toast.error(error.message);
+                            toast.success("Marked verified");
+                          }
+                          await load();
+                        }}
+                        title={t.verified_at ? "Click to mark unverified" : "Click to mark verified"}
+                        className="rounded-full p-1 transition-colors hover:bg-muted"
+                      >
+                        {t.verified_at ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                        ) : (
+                          <Circle className="h-4 w-4 text-muted-foreground/40 hover:text-emerald-500" />
+                        )}
+                      </button>
                     </td>
                   </tr>
                 );
