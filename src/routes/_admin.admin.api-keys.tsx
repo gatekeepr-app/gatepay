@@ -91,6 +91,7 @@ function ApiKeysPage() {
         name: name.trim(),
         key_hash: hash,
         key_prefix: prefix,
+        key_token: token,
         created_by: userId,
         business_name: businessName.trim() || null,
         callback_url: callbackUrl.trim() || null,
