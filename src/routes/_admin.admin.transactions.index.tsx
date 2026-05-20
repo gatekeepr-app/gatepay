@@ -226,10 +226,10 @@ function TransactionsPage() {
                       {t.verified_external_name || "—"}
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          if (t.verified_at) {
+                      {t.verified_at ? (
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
                             if (!confirm("Mark this transaction as unverified?")) return;
                             const { error } = await supabase
                               .from("transactions")
@@ -237,28 +237,35 @@ function TransactionsPage() {
                               .eq("id", t.id);
                             if (error) return toast.error(error.message);
                             toast.success("Marked unverified");
-                          } else {
-                            const { error } = await supabase
-                              .from("transactions")
-                              .update({
-                                verified_at: new Date().toISOString(),
-                                verified_source: t.verified_external_name ? "manual_override" : "manual",
-                              })
-                              .eq("id", t.id);
-                            if (error) return toast.error(error.message);
-                            toast.success("Marked verified");
-                          }
-                          await load();
-                        }}
-                        title={t.verified_at ? "Click to mark unverified" : "Click to mark verified"}
-                        className="rounded-full p-1 transition-colors hover:bg-muted"
-                      >
-                        {t.verified_at ? (
+                            await load();
+                          }}
+                          title="Click to mark unverified"
+                          className="rounded-full p-1 transition-colors hover:bg-muted"
+                        >
                           <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                        ) : (
-                          <Circle className="h-4 w-4 text-muted-foreground/40 hover:text-emerald-500" />
-                        )}
-                      </button>
+                        </button>
+                      ) : inboundPending ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleSelect(t.id);
+                          }}
+                          title={
+                            selected.has(t.id)
+                              ? "Selected — click to deselect"
+                              : "Select for verify"
+                          }
+                          className="rounded-full p-1 transition-colors hover:bg-muted"
+                        >
+                          {selected.has(t.id) ? (
+                            <CheckCircle2 className="h-4 w-4 text-amber-500" />
+                          ) : (
+                            <Circle className="h-4 w-4 text-muted-foreground/40 hover:text-amber-500" />
+                          )}
+                        </button>
+                      ) : (
+                        <Circle className="h-4 w-4 text-muted-foreground/40" />
+                      )}
                     </td>
                   </tr>
                 );
