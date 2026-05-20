@@ -434,6 +434,81 @@ function ApiKeysPage() {
           </tbody>
         </table>
       </div>
+
+      {viewing && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setViewing(null)}
+        >
+          <div
+            className="w-full max-w-lg rounded-lg border border-border bg-card p-5 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <KeyRound className="h-4 w-4" /> {viewing.name}
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  These values grant full API access — share carefully.
+                </p>
+              </div>
+              <button
+                onClick={() => setViewing(null)}
+                className="rounded p-1 text-muted-foreground hover:bg-muted"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-4 space-y-3">
+              <div>
+                <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  API token (Authorization: Bearer …)
+                </div>
+                {viewing.key_token ? (
+                  <div className="mt-1 flex items-center gap-2 rounded-md border border-border bg-background p-2">
+                    <code className="flex-1 break-all font-mono text-xs">{viewing.key_token}</code>
+                    <button
+                      onClick={() => copyTo("token", viewing.key_token!)}
+                      className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs hover:bg-muted"
+                    >
+                      {copied === "token" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      {copied === "token" ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="mt-1 rounded-md border border-dashed border-border bg-background px-3 py-2 text-xs text-muted-foreground">
+                    Not recoverable — this key was created before plaintext storage. Rotate by
+                    creating a new key.
+                  </p>
+                )}
+              </div>
+              <div>
+                <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Signing secret
+                </div>
+                {viewing.signing_secret ? (
+                  <div className="mt-1 flex items-center gap-2 rounded-md border border-border bg-background p-2">
+                    <code className="flex-1 break-all font-mono text-xs">{viewing.signing_secret}</code>
+                    <button
+                      onClick={() => copyTo("secret", viewing.signing_secret!)}
+                      className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs hover:bg-muted"
+                    >
+                      {copied === "secret" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      {copied === "secret" ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="mt-1 rounded-md border border-dashed border-border bg-background px-3 py-2 text-xs text-muted-foreground">
+                    Not set for this key.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
