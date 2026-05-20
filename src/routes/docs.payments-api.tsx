@@ -279,9 +279,18 @@ function PublicApiDocsPage() {
 
         <Section id="callback" title="Verify callback (Gatekeepr → your site)">
           <p>
-            When a Gatekeepr admin clicks <strong>Trigger verify</strong>, we group all unverified
-            inbound transactions by <Inline>business_name</Inline>, find the matching API key,
-            and POST the batch to that key's <Inline>callback_url</Inline>.
+            When a Gatekeepr admin selects unverified inbound transactions and clicks{" "}
+            <strong>Trigger verify</strong>, we group the selection by{" "}
+            <Inline>business_name</Inline>, find the matching active API key, and POST each
+            group to that key's <Inline>callback_url</Inline>.
+          </p>
+          <p>
+            <strong>The HTTP response is the verification.</strong> If your endpoint returns a{" "}
+            <Inline>2xx</Inline> status, Gatekeepr stamps every transaction in that batch as
+            verified (<Inline>verified_source = "callback"</Inline>) and records the response
+            body. Any non-2xx response — or a network/connection error — leaves the batch
+            unverified and the admin sees the returned status code and response body as the
+            failure reason.
           </p>
           <h3 className="mt-2 text-sm font-medium">Request we send</h3>
           <CopyBlock
@@ -331,15 +340,31 @@ function verify(rawBody: string, header: string | null, secret: string) {
           />
           <h3 className="mt-4 text-sm font-medium">Expected behavior</h3>
           <ol className="ml-5 list-decimal space-y-1">
-            <li>Verify the HMAC signature.</li>
-            <li>For each item in <Inline>transactions[]</Inline>, look it up in your own DB.</li>
+            <li>Verify the HMAC signature. Reject with <Inline>401</Inline> if invalid.</li>
             <li>
-              If it's a real order on your side, call{" "}
-              <Inline>POST /api/public/transactions/verify</Inline> with the same{" "}
-              <Inline>transaction_ref</Inline>. That flips Gatekeepr's record to verified.
+              For each item in <Inline>transactions[]</Inline>, look it up in your own DB and
+              confirm it matches a real order on your side (amount, user, etc.).
             </li>
-            <li>Return <Inline>200 OK</Inline> once the loop is done.</li>
+            <li>
+              If every transaction in the batch checks out, respond <Inline>2xx</Inline> —
+              Gatekeepr marks them all verified. If any fail, respond with a non-2xx status and
+              a JSON body describing what went wrong; that body is surfaced to the admin and
+              nothing in the batch is marked verified.
+            </li>
+            <li>
+              You do <strong>not</strong> need to call{" "}
+              <Inline>POST /transactions/verify</Inline> from inside the callback — the 2xx
+              response is the confirmation.
+            </li>
           </ol>
+          <h3 className="mt-4 text-sm font-medium">Admin-side result</h3>
+          <p>
+            For each business group the admin sees one of: <Inline>delivered</Inline> (2xx, all
+            marked verified), <Inline>failed</Inline> (with HTTP status + response body or the
+            network error), <Inline>skipped_no_callback</Inline> (the matched API key has no{" "}
+            <Inline>callback_url</Inline>), or <Inline>skipped_no_key</Inline> (no active API
+            key found whose <Inline>business_name</Inline> matches the transaction).
+          </p>
         </Section>
 
         <Section id="endpoint" title="Verify endpoint">
