@@ -66,7 +66,7 @@ function ApiKeysPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("api_keys")
-      .select("id, name, key_prefix, created_at, last_used_at, revoked_at, business_name, callback_url")
+      .select("id, name, key_prefix, created_at, last_used_at, revoked_at, business_name, callback_url, key_token, signing_secret")
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
     setRows((data as Row[]) ?? []);
