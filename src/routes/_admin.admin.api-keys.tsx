@@ -60,6 +60,7 @@ function ApiKeysPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCallback, setEditCallback] = useState("");
   const [editBusiness, setEditBusiness] = useState("");
+  const [viewing, setViewing] = useState<Row | null>(null);
 
   const load = async () => {
     setLoading(true);
