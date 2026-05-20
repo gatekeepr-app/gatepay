@@ -24,6 +24,7 @@ export const Route = createFileRoute("/docs/payments-api")({
 
 const BASE_URL = "https://gatekeepr-foundations-build.lovable.app";
 const ENDPOINT = `${BASE_URL}/api/public/transactions/verify`;
+const SUBMIT_ENDPOINT = `${BASE_URL}/api/public/transactions/submit`;
 
 function CopyBlock({ code, language = "bash" }: { code: string; language?: string }) {
   const [copied, setCopied] = useState(false);
@@ -159,10 +160,12 @@ function PublicApiDocsPage() {
           <ul className="grid grid-cols-2 gap-y-1">
             {[
               ["overview", "Overview"],
-              ["endpoint", "Endpoint"],
-              ["body", "Request body"],
-              ["examples", "Examples"],
-              ["responses", "Responses"],
+              ["submit", "Submit transaction"],
+              ["callback", "Verify callback"],
+              ["endpoint", "Verify endpoint"],
+              ["body", "Verify request body"],
+              ["examples", "Verify examples"],
+              ["responses", "Verify responses"],
               ["effects", "Side effects"],
               ["matching", "Matching rules"],
               ["security", "Security notes"],
