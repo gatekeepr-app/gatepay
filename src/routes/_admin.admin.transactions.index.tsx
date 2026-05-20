@@ -51,28 +51,49 @@ function TransactionsPage() {
     load();
   }, []);
 
-  const unverifiedInboundCount = rows.filter(
-    (t) => !t.verified_at && t.verified_external_name,
-  ).length;
+  const unverifiedInboundIds = rows
+    .filter((t) => !t.verified_at && t.verified_external_name)
+    .map((t) => t.id);
+
+  const toggleSelect = (id: string) => {
+    setSelected((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const runVerify = async () => {
+    const ids = Array.from(selected).filter((id) => unverifiedInboundIds.includes(id));
+    if (ids.length === 0) {
+      toast.info("Select at least one unverified inbound transaction");
+      return;
+    }
     setVerifying(true);
     try {
-      const res = await verifyFn();
+      const res = await verifyFn({ data: { ids } });
       if (res.total === 0) {
         toast.info("Nothing to verify");
       } else {
-        const delivered = res.groups.filter((g) => g.status === "delivered");
-        const skipped = res.groups.filter((g) => g.status !== "delivered");
-        if (delivered.length > 0) {
-          toast.success(
-            `Sent ${delivered.reduce((n, g) => n + g.sent, 0)} transaction(s) to ${delivered.length} business(es)`,
-          );
-        }
-        for (const g of skipped) {
-          toast.warning(`${g.business_name}: ${g.error ?? g.status}`);
+        for (const g of res.groups) {
+          if (g.status === "delivered") {
+            toast.success(
+              `${g.business_name}: delivered ${g.sent} (HTTP ${g.http_status}) → marked verified`,
+            );
+          } else if (g.status === "failed") {
+            toast.error(
+              `${g.business_name}: ${g.error ?? "failed"}${
+                g.response_body ? ` — ${g.response_body}` : ""
+              }`,
+              { duration: 10000 },
+            );
+          } else {
+            toast.warning(`${g.business_name}: ${g.error ?? g.status}`);
+          }
         }
       }
+      setSelected(new Set());
       await load();
     } catch (e: any) {
       toast.error(e?.message ?? "Verify failed");
