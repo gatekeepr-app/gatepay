@@ -131,12 +131,12 @@ function TransactionsPage() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={runVerify}
-            disabled={verifying || unverifiedInboundCount === 0}
+            disabled={verifying || selected.size === 0}
             className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm hover:bg-muted disabled:opacity-50"
             title={
-              unverifiedInboundCount === 0
-                ? "No unverified inbound transactions"
-                : `Send ${unverifiedInboundCount} unverified transaction(s) to their source websites`
+              selected.size === 0
+                ? "Select unverified inbound transactions first"
+                : `Send ${selected.size} selected transaction(s) to their callback URLs`
             }
           >
             {verifying ? (
@@ -145,9 +145,9 @@ function TransactionsPage() {
               <ShieldCheck className="h-4 w-4" />
             )}
             Trigger verify
-            {unverifiedInboundCount > 0 && (
+            {selected.size > 0 && (
               <span className="rounded-full bg-foreground/10 px-1.5 py-0.5 text-xs">
-                {unverifiedInboundCount}
+                {selected.size}
               </span>
             )}
           </button>
