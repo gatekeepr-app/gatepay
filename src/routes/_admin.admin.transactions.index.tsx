@@ -29,6 +29,7 @@ type Tx = {
 
 function TransactionsPage() {
   const [rows, setRows] = useState<Tx[]>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "verified" | "unverified">("all");
@@ -50,28 +51,49 @@ function TransactionsPage() {
     load();
   }, []);
 
-  const unverifiedInboundCount = rows.filter(
-    (t) => !t.verified_at && t.verified_external_name,
-  ).length;
+  const unverifiedInboundIds = rows
+    .filter((t) => !t.verified_at && t.verified_external_name)
+    .map((t) => t.id);
+
+  const toggleSelect = (id: string) => {
+    setSelected((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const runVerify = async () => {
+    const ids = Array.from(selected).filter((id) => unverifiedInboundIds.includes(id));
+    if (ids.length === 0) {
+      toast.info("Select at least one unverified inbound transaction");
+      return;
+    }
     setVerifying(true);
     try {
-      const res = await verifyFn();
+      const res = await verifyFn({ data: { ids } });
       if (res.total === 0) {
         toast.info("Nothing to verify");
       } else {
-        const delivered = res.groups.filter((g) => g.status === "delivered");
-        const skipped = res.groups.filter((g) => g.status !== "delivered");
-        if (delivered.length > 0) {
-          toast.success(
-            `Sent ${delivered.reduce((n, g) => n + g.sent, 0)} transaction(s) to ${delivered.length} business(es)`,
-          );
-        }
-        for (const g of skipped) {
-          toast.warning(`${g.business_name}: ${g.error ?? g.status}`);
+        for (const g of res.groups) {
+          if (g.status === "delivered") {
+            toast.success(
+              `${g.business_name}: delivered ${g.sent} (HTTP ${g.http_status}) → marked verified`,
+            );
+          } else if (g.status === "failed") {
+            toast.error(
+              `${g.business_name}: ${g.error ?? "failed"}${
+                g.response_body ? ` — ${g.response_body}` : ""
+              }`,
+              { duration: 10000 },
+            );
+          } else {
+            toast.warning(`${g.business_name}: ${g.error ?? g.status}`);
+          }
         }
       }
+      setSelected(new Set());
       await load();
     } catch (e: any) {
       toast.error(e?.message ?? "Verify failed");
@@ -109,12 +131,12 @@ function TransactionsPage() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={runVerify}
-            disabled={verifying || unverifiedInboundCount === 0}
+            disabled={verifying || selected.size === 0}
             className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm hover:bg-muted disabled:opacity-50"
             title={
-              unverifiedInboundCount === 0
-                ? "No unverified inbound transactions"
-                : `Send ${unverifiedInboundCount} unverified transaction(s) to their source websites`
+              selected.size === 0
+                ? "Select unverified inbound transactions first"
+                : `Send ${selected.size} selected transaction(s) to their callback URLs`
             }
           >
             {verifying ? (
@@ -123,9 +145,9 @@ function TransactionsPage() {
               <ShieldCheck className="h-4 w-4" />
             )}
             Trigger verify
-            {unverifiedInboundCount > 0 && (
+            {selected.size > 0 && (
               <span className="rounded-full bg-foreground/10 px-1.5 py-0.5 text-xs">
-                {unverifiedInboundCount}
+                {selected.size}
               </span>
             )}
           </button>
@@ -204,10 +226,10 @@ function TransactionsPage() {
                       {t.verified_external_name || "—"}
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          if (t.verified_at) {
+                      {t.verified_at ? (
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
                             if (!confirm("Mark this transaction as unverified?")) return;
                             const { error } = await supabase
                               .from("transactions")
@@ -215,28 +237,35 @@ function TransactionsPage() {
                               .eq("id", t.id);
                             if (error) return toast.error(error.message);
                             toast.success("Marked unverified");
-                          } else {
-                            const { error } = await supabase
-                              .from("transactions")
-                              .update({
-                                verified_at: new Date().toISOString(),
-                                verified_source: t.verified_external_name ? "manual_override" : "manual",
-                              })
-                              .eq("id", t.id);
-                            if (error) return toast.error(error.message);
-                            toast.success("Marked verified");
-                          }
-                          await load();
-                        }}
-                        title={t.verified_at ? "Click to mark unverified" : "Click to mark verified"}
-                        className="rounded-full p-1 transition-colors hover:bg-muted"
-                      >
-                        {t.verified_at ? (
+                            await load();
+                          }}
+                          title="Click to mark unverified"
+                          className="rounded-full p-1 transition-colors hover:bg-muted"
+                        >
                           <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                        ) : (
-                          <Circle className="h-4 w-4 text-muted-foreground/40 hover:text-emerald-500" />
-                        )}
-                      </button>
+                        </button>
+                      ) : inboundPending ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleSelect(t.id);
+                          }}
+                          title={
+                            selected.has(t.id)
+                              ? "Selected — click to deselect"
+                              : "Select for verify"
+                          }
+                          className="rounded-full p-1 transition-colors hover:bg-muted"
+                        >
+                          {selected.has(t.id) ? (
+                            <CheckCircle2 className="h-4 w-4 text-amber-500" />
+                          ) : (
+                            <Circle className="h-4 w-4 text-muted-foreground/40 hover:text-amber-500" />
+                          )}
+                        </button>
+                      ) : (
+                        <Circle className="h-4 w-4 text-muted-foreground/40" />
+                      )}
                     </td>
                   </tr>
                 );

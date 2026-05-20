@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createHmac } from "crypto";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -7,23 +8,37 @@ type GroupResult = {
   business_name: string;
   callback_url: string | null;
   sent: number;
+  verified_ids: string[];
   status: "delivered" | "skipped_no_callback" | "skipped_no_key" | "failed";
   http_status?: number;
+  response_body?: string;
   error?: string;
 };
 
 export const triggerVerifyBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<{
+  .inputValidator((input: { ids?: string[] } | undefined) =>
+    z
+      .object({ ids: z.array(z.string().uuid()).max(500).optional() })
+      .parse(input ?? {}),
+  )
+  .handler(async ({ data }): Promise<{
     total: number;
     groups: GroupResult[];
   }> => {
-    // Pull all inbound, not-yet-verified transactions
-    const { data: txs, error } = await supabaseAdmin
+    let q = supabaseAdmin
       .from("transactions")
-      .select("id, transaction_ref, amount, currency, occurred_at, method, verified_external_name, verified_external_user_id, verified_source")
+      .select(
+        "id, transaction_ref, amount, currency, occurred_at, method, verified_external_name, verified_external_user_id, verified_source",
+      )
       .is("verified_at", null)
       .not("verified_external_name", "is", null);
+
+    if (data.ids && data.ids.length > 0) {
+      q = q.in("id", data.ids);
+    }
+
+    const { data: txs, error } = await q;
 
     if (error) throw new Error(error.message);
     if (!txs || txs.length === 0) return { total: 0, groups: [] };
@@ -40,10 +55,10 @@ export const triggerVerifyBatch = createServerFn({ method: "POST" })
 
     const results: GroupResult[] = [];
 
-    for (const [lcKey, group] of byBiz.entries()) {
+    for (const [, group] of byBiz.entries()) {
       const displayName = group[0].verified_external_name as string;
+      const groupIds = group.map((t) => t.id);
 
-      // Find an active api_key with matching business_name (case-insensitive)
       const { data: keyRow } = await supabaseAdmin
         .from("api_keys")
         .select("id, callback_url, signing_secret")
@@ -57,6 +72,7 @@ export const triggerVerifyBatch = createServerFn({ method: "POST" })
           business_name: displayName,
           callback_url: null,
           sent: group.length,
+          verified_ids: [],
           status: "skipped_no_key",
           error: `No active API key found with business_name "${displayName}".`,
         });
@@ -68,6 +84,7 @@ export const triggerVerifyBatch = createServerFn({ method: "POST" })
           business_name: displayName,
           callback_url: null,
           sent: group.length,
+          verified_ids: [],
           status: "skipped_no_callback",
           error: "API key has no callback_url configured.",
         });
@@ -104,19 +121,57 @@ export const triggerVerifyBatch = createServerFn({ method: "POST" })
           headers,
           body,
         });
-        results.push({
-          business_name: displayName,
-          callback_url: keyRow.callback_url,
-          sent: group.length,
-          status: res.ok ? "delivered" : "failed",
-          http_status: res.status,
-          error: res.ok ? undefined : `Callback returned ${res.status}`,
-        });
+        const respText = await res.text().catch(() => "");
+        const snippet = respText.length > 500 ? respText.slice(0, 500) + "…" : respText;
+
+        if (res.ok) {
+          // Mark these as verified
+          const verifiedAt = new Date().toISOString();
+          const { error: updErr } = await supabaseAdmin
+            .from("transactions")
+            .update({ verified_at: verifiedAt, verified_source: "callback" })
+            .in("id", groupIds);
+
+          if (updErr) {
+            results.push({
+              business_name: displayName,
+              callback_url: keyRow.callback_url,
+              sent: group.length,
+              verified_ids: [],
+              status: "failed",
+              http_status: res.status,
+              response_body: snippet,
+              error: `Callback ok but DB update failed: ${updErr.message}`,
+            });
+          } else {
+            results.push({
+              business_name: displayName,
+              callback_url: keyRow.callback_url,
+              sent: group.length,
+              verified_ids: groupIds,
+              status: "delivered",
+              http_status: res.status,
+              response_body: snippet,
+            });
+          }
+        } else {
+          results.push({
+            business_name: displayName,
+            callback_url: keyRow.callback_url,
+            sent: group.length,
+            verified_ids: [],
+            status: "failed",
+            http_status: res.status,
+            response_body: snippet,
+            error: `Callback returned ${res.status}`,
+          });
+        }
       } catch (e: any) {
         results.push({
           business_name: displayName,
           callback_url: keyRow.callback_url,
           sent: group.length,
+          verified_ids: [],
           status: "failed",
           error: e?.message ?? "fetch_failed",
         });
