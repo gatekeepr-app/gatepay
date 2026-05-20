@@ -23,6 +23,7 @@ export type Database = {
           id: string
           key_hash: string
           key_prefix: string
+          key_token: string | null
           last_used_at: string | null
           name: string
           revoked_at: string | null
@@ -36,6 +37,7 @@ export type Database = {
           id?: string
           key_hash: string
           key_prefix: string
+          key_token?: string | null
           last_used_at?: string | null
           name: string
           revoked_at?: string | null
@@ -49,6 +51,7 @@ export type Database = {
           id?: string
           key_hash?: string
           key_prefix?: string
+          key_token?: string | null
           last_used_at?: string | null
           name?: string
           revoked_at?: string | null

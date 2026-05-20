@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Copy, Check, KeyRound, Trash2, Plus, X, Pencil } from "lucide-react";
+import { Copy, Check, KeyRound, Trash2, Plus, X, Pencil, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -41,6 +41,8 @@ type Row = {
   revoked_at: string | null;
   business_name: string | null;
   callback_url: string | null;
+  key_token: string | null;
+  signing_secret: string | null;
 };
 
 function ApiKeysPage() {
@@ -58,12 +60,13 @@ function ApiKeysPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCallback, setEditCallback] = useState("");
   const [editBusiness, setEditBusiness] = useState("");
+  const [viewing, setViewing] = useState<Row | null>(null);
 
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("api_keys")
-      .select("id, name, key_prefix, created_at, last_used_at, revoked_at, business_name, callback_url")
+      .select("id, name, key_prefix, created_at, last_used_at, revoked_at, business_name, callback_url, key_token, signing_secret")
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
     setRows((data as Row[]) ?? []);
@@ -88,6 +91,7 @@ function ApiKeysPage() {
         name: name.trim(),
         key_hash: hash,
         key_prefix: prefix,
+        key_token: token,
         created_by: userId,
         business_name: businessName.trim() || null,
         callback_url: callbackUrl.trim() || null,
@@ -247,11 +251,11 @@ function ApiKeysPage() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 text-sm font-medium">
-                <KeyRound className="h-4 w-4" /> Copy these now — shown only once
+                <KeyRound className="h-4 w-4" /> Credentials created
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                Store both in your secret manager. Gatekeepr only keeps a hash of the token; the
-                signing secret is shown once and cannot be retrieved later.
+                Copy these into your secret manager. You can also re-view them anytime from the
+                table below.
               </p>
             </div>
             <button
@@ -391,6 +395,14 @@ function ApiKeysPage() {
                       ) : (
                         <>
                           <button
+                            onClick={() => setViewing(r)}
+                            className="rounded p-1 text-muted-foreground hover:bg-muted"
+                            aria-label="View credentials"
+                            title="View credentials"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </button>
+                          <button
                             onClick={() => startEdit(r)}
                             className="rounded p-1 text-muted-foreground hover:bg-muted"
                             aria-label="Edit"
@@ -422,6 +434,81 @@ function ApiKeysPage() {
           </tbody>
         </table>
       </div>
+
+      {viewing && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setViewing(null)}
+        >
+          <div
+            className="w-full max-w-lg rounded-lg border border-border bg-card p-5 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <KeyRound className="h-4 w-4" /> {viewing.name}
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  These values grant full API access — share carefully.
+                </p>
+              </div>
+              <button
+                onClick={() => setViewing(null)}
+                className="rounded p-1 text-muted-foreground hover:bg-muted"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-4 space-y-3">
+              <div>
+                <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  API token (Authorization: Bearer …)
+                </div>
+                {viewing.key_token ? (
+                  <div className="mt-1 flex items-center gap-2 rounded-md border border-border bg-background p-2">
+                    <code className="flex-1 break-all font-mono text-xs">{viewing.key_token}</code>
+                    <button
+                      onClick={() => copyTo("token", viewing.key_token!)}
+                      className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs hover:bg-muted"
+                    >
+                      {copied === "token" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      {copied === "token" ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="mt-1 rounded-md border border-dashed border-border bg-background px-3 py-2 text-xs text-muted-foreground">
+                    Not recoverable — this key was created before plaintext storage. Rotate by
+                    creating a new key.
+                  </p>
+                )}
+              </div>
+              <div>
+                <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Signing secret
+                </div>
+                {viewing.signing_secret ? (
+                  <div className="mt-1 flex items-center gap-2 rounded-md border border-border bg-background p-2">
+                    <code className="flex-1 break-all font-mono text-xs">{viewing.signing_secret}</code>
+                    <button
+                      onClick={() => copyTo("secret", viewing.signing_secret!)}
+                      className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs hover:bg-muted"
+                    >
+                      {copied === "secret" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      {copied === "secret" ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="mt-1 rounded-md border border-dashed border-border bg-background px-3 py-2 text-xs text-muted-foreground">
+                    Not set for this key.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
