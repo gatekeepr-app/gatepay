@@ -395,6 +395,14 @@ function ApiKeysPage() {
                       ) : (
                         <>
                           <button
+                            onClick={() => setViewing(r)}
+                            className="rounded p-1 text-muted-foreground hover:bg-muted"
+                            aria-label="View credentials"
+                            title="View credentials"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </button>
+                          <button
                             onClick={() => startEdit(r)}
                             className="rounded p-1 text-muted-foreground hover:bg-muted"
                             aria-label="Edit"
