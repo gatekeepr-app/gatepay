@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Copy, Check, KeyRound, Trash2, Plus, X, Pencil } from "lucide-react";
+import { Copy, Check, KeyRound, Trash2, Plus, X, Pencil, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
