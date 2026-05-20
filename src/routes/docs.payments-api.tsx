@@ -355,7 +355,7 @@ function verify(rawBody: string, header: string | null, secret: string) {
           <CopyBlock code={`Authorization: Bearer YOUR_API_KEY`} language="http" />
           <p>
             Keys are created and revoked from <Inline>Admin → API Keys</Inline>. Tokens start with{" "}
-            <Inline>gk_</Inline> and are shown in full only once.
+            <Inline>gk_</Inline> and can be re-viewed by managers from that page at any time.
           </p>
           <p>
             <strong>Rate limit:</strong> 30 requests / minute / IP.
