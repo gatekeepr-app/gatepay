@@ -41,6 +41,8 @@ type Row = {
   revoked_at: string | null;
   business_name: string | null;
   callback_url: string | null;
+  key_token: string | null;
+  signing_secret: string | null;
 };
 
 function ApiKeysPage() {
