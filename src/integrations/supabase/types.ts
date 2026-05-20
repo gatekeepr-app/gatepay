@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       api_keys: {
         Row: {
+          business_name: string | null
+          callback_url: string | null
           created_at: string
           created_by: string
           id: string
@@ -24,8 +26,11 @@ export type Database = {
           last_used_at: string | null
           name: string
           revoked_at: string | null
+          signing_secret: string | null
         }
         Insert: {
+          business_name?: string | null
+          callback_url?: string | null
           created_at?: string
           created_by: string
           id?: string
@@ -34,8 +39,11 @@ export type Database = {
           last_used_at?: string | null
           name: string
           revoked_at?: string | null
+          signing_secret?: string | null
         }
         Update: {
+          business_name?: string | null
+          callback_url?: string | null
           created_at?: string
           created_by?: string
           id?: string
@@ -44,6 +52,7 @@ export type Database = {
           last_used_at?: string | null
           name?: string
           revoked_at?: string | null
+          signing_secret?: string | null
         }
         Relationships: []
       }
