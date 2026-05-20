@@ -29,6 +29,7 @@ type Tx = {
 
 function TransactionsPage() {
   const [rows, setRows] = useState<Tx[]>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "verified" | "unverified">("all");
