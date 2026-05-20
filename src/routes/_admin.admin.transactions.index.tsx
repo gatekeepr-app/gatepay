@@ -1,8 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Search, CheckCircle2, Circle } from "lucide-react";
+import { Plus, Search, CheckCircle2, Circle, ShieldCheck, Loader2 } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/admin/format";
+import { triggerVerifyBatch } from "@/lib/transactions.functions";
 
 export const Route = createFileRoute("/_admin/admin/transactions/")({
   head: () => ({
@@ -29,19 +32,53 @@ function TransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "verified" | "unverified">("all");
+  const [verifying, setVerifying] = useState(false);
+  const verifyFn = useServerFn(triggerVerifyBatch);
+
+  const load = async () => {
+    const { data } = await supabase
+      .from("transactions")
+      .select(
+        "id,transaction_ref,amount,currency,occurred_at,method,verified_at,verified_external_name,client_id,project_id",
+      )
+      .order("occurred_at", { ascending: false });
+    setRows((data ?? []) as Tx[]);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("transactions")
-        .select(
-          "id,transaction_ref,amount,currency,occurred_at,method,verified_at,verified_external_name,client_id,project_id",
-        )
-        .order("occurred_at", { ascending: false });
-      setRows((data ?? []) as Tx[]);
-      setLoading(false);
-    })();
+    load();
   }, []);
+
+  const unverifiedInboundCount = rows.filter(
+    (t) => !t.verified_at && t.verified_external_name,
+  ).length;
+
+  const runVerify = async () => {
+    setVerifying(true);
+    try {
+      const res = await verifyFn();
+      if (res.total === 0) {
+        toast.info("Nothing to verify");
+      } else {
+        const delivered = res.groups.filter((g) => g.status === "delivered");
+        const skipped = res.groups.filter((g) => g.status !== "delivered");
+        if (delivered.length > 0) {
+          toast.success(
+            `Sent ${delivered.reduce((n, g) => n + g.sent, 0)} transaction(s) to ${delivered.length} business(es)`,
+          );
+        }
+        for (const g of skipped) {
+          toast.warning(`${g.business_name}: ${g.error ?? g.status}`);
+        }
+      }
+      await load();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Verify failed");
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   const filtered = rows.filter((t) => {
     const s = q.toLowerCase();
@@ -69,12 +106,36 @@ function TransactionsPage() {
             {loading ? "Loading…" : `${filtered.length} shown · ${formatMoney(total)} total`}
           </p>
         </div>
-        <Link
-          to="/admin/transactions/new"
-          className="inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
-        >
-          <Plus className="h-4 w-4" /> New transaction
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={runVerify}
+            disabled={verifying || unverifiedInboundCount === 0}
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm hover:bg-muted disabled:opacity-50"
+            title={
+              unverifiedInboundCount === 0
+                ? "No unverified inbound transactions"
+                : `Send ${unverifiedInboundCount} unverified transaction(s) to their source websites`
+            }
+          >
+            {verifying ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ShieldCheck className="h-4 w-4" />
+            )}
+            Trigger verify
+            {unverifiedInboundCount > 0 && (
+              <span className="rounded-full bg-foreground/10 px-1.5 py-0.5 text-xs">
+                {unverifiedInboundCount}
+              </span>
+            )}
+          </button>
+          <Link
+            to="/admin/transactions/new"
+            className="inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-sm text-background hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" /> New transaction
+          </Link>
+        </div>
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -120,30 +181,38 @@ function TransactionsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((t) => (
-                <tr key={t.id} className="border-b border-border last:border-0 hover:bg-muted/30">
-                  <td className="px-4 py-3 text-muted-foreground">{formatDate(t.occurred_at)}</td>
-                  <td className="px-4 py-3 font-mono text-xs">
-                    <Link to="/admin/transactions/$id" params={{ id: t.id }} className="hover:underline">
-                      {t.transaction_ref}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium">
-                    {formatMoney(t.amount, t.currency)}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">{t.method || "—"}</td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {t.verified_external_name || "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    {t.verified_at ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                    ) : (
-                      <Circle className="h-4 w-4 text-muted-foreground/40" />
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {filtered.map((t) => {
+                const inboundPending = !t.verified_at && t.verified_external_name;
+                return (
+                  <tr key={t.id} className="border-b border-border last:border-0 hover:bg-muted/30">
+                    <td className="px-4 py-3 text-muted-foreground">{formatDate(t.occurred_at)}</td>
+                    <td className="px-4 py-3 font-mono text-xs">
+                      <Link to="/admin/transactions/$id" params={{ id: t.id }} className="hover:underline">
+                        {t.transaction_ref}
+                      </Link>
+                      {inboundPending && (
+                        <span className="ml-2 rounded bg-amber-500/15 px-1.5 py-0.5 font-sans text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                          Unverified
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium">
+                      {formatMoney(t.amount, t.currency)}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{t.method || "—"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {t.verified_external_name || "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {t.verified_at ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                      ) : (
+                        <Circle className="h-4 w-4 text-muted-foreground/40" />
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
