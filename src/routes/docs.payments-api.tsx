@@ -308,8 +308,9 @@ User-Agent: Gatekeepr-Verify/1.0
           <p>
             The <Inline>X-Gatekeepr-Signature</Inline> header is{" "}
             <Inline>sha256=&lt;hex&gt;</Inline> where the hex is the HMAC-SHA256 of the raw
-            request body using your API key's <Inline>signing_secret</Inline> (shown once at
-            key creation). Reject requests with a missing or non-matching signature.
+            request body using your API key's <Inline>signing_secret</Inline> (stored on the
+            key; managers can re-view it anytime from the API Keys page). Reject requests with
+            a missing or non-matching signature.
           </p>
           <CopyBlock
             code={`import { createHmac, timingSafeEqual } from "crypto";
