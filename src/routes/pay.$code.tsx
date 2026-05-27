@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/../convex/_generated/api";
 import { formatMoney } from "@/lib/admin/format";
 import { toast } from "sonner";
 import { CheckCircle2, Lock } from "lucide-react";
@@ -17,18 +18,6 @@ export const Route = createFileRoute("/pay/$code")({
   component: PayPage,
 });
 
-type Project = { id: string; name: string; project_code: string };
-type Billing = {
-  billing_type: "monthly" | "yearly" | "per_project";
-  amount: number;
-  currency: string;
-  months_count: number | null;
-  start_date: string | null;
-  end_date: string | null;
-  total_calculated: number;
-};
-type Tx = { id: string; amount: number; occurred_at: string };
-
 function monthsBetween(start: Date, now: Date) {
   const s = new Date(start.getFullYear(), start.getMonth(), 1);
   const n = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -41,14 +30,14 @@ function monthLabel(start: Date, offset: number) {
   return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 }
 
-function computeDue(billing: Billing, txs: Tx[]) {
-  const paid = txs.reduce((s, t) => s + Number(t.amount), 0);
+function computeDue(billing: any, txs: any[]) {
+  const paid = txs.reduce((s: number, t: any) => s + Number(t.amount), 0);
   const amount = Number(billing.amount);
   const currency = billing.currency;
 
-  if (billing.billing_type === "monthly") {
-    const start = billing.start_date ? new Date(billing.start_date) : new Date();
-    const totalMonths = billing.months_count ?? Infinity;
+  if (billing.billingType === "monthly") {
+    const start = billing.startDate ? new Date(billing.startDate) : new Date();
+    const totalMonths = billing.monthsCount ?? Infinity;
     const now = new Date();
     const elapsed = Math.min(monthsBetween(start, now), totalMonths);
     if (elapsed <= 0) {
@@ -57,9 +46,9 @@ function computeDue(billing: Billing, txs: Tx[]) {
     const expectedToDate = amount * elapsed;
     const remaining = Math.max(0, expectedToDate - paid);
     const paidMonths = Math.min(elapsed, Math.floor(paid / amount));
-    const dueMonthIndex = paidMonths; // 0-indexed: the next month to pay
+    const dueMonthIndex = paidMonths;
     return {
-      due: remaining > 0 ? amount : 0, // pay one month at a time
+      due: remaining > 0 ? amount : 0,
       period: monthLabel(start, dueMonthIndex),
       currency,
       amount,
@@ -69,15 +58,11 @@ function computeDue(billing: Billing, txs: Tx[]) {
     };
   }
 
-  // yearly or per_project: single bucket
-  const total = Number(billing.total_calculated || amount);
+  const total = Number(billing.totalCalculated || amount);
   const remaining = Math.max(0, total - paid);
   return {
     due: remaining,
-    period:
-      billing.billing_type === "yearly"
-        ? `Year ${new Date().getFullYear()}`
-        : "Project balance",
+    period: billing.billingType === "yearly" ? `Year ${new Date().getFullYear()}` : "Project balance",
     currency,
     amount: remaining,
     expected: total,
@@ -87,79 +72,44 @@ function computeDue(billing: Billing, txs: Tx[]) {
 
 function PayPage() {
   const { code } = Route.useParams();
-  const [project, setProject] = useState<Project | null>(null);
-  const [billing, setBilling] = useState<Billing | null>(null);
-  const [txs, setTxs] = useState<Tx[]>([]);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [form, setForm] = useState({ payer_name: "", method: "bKash", transaction_ref: "", notes: "" });
 
-  useEffect(() => {
-    (async () => {
-      const codeParsed = payCodeSchema.safeParse(code);
-      if (!codeParsed.success) {
-        setLoading(false);
-        return;
-      }
-      const { data: p } = await supabase
-        .from("projects")
-        .select("id,name,project_code")
-        .eq("pay_code", codeParsed.data)
-        .maybeSingle();
-      if (!p) {
-        setLoading(false);
-        return;
-      }
-      setProject(p as Project);
-      const [b, t] = await Promise.all([
-        supabase.from("project_billing").select("*").eq("project_id", (p as Project).id).maybeSingle(),
-        supabase.from("transactions").select("id,amount,occurred_at").eq("project_id", (p as Project).id),
-      ]);
-      setBilling((b.data as Billing | null) ?? null);
-      setTxs(((t.data ?? []) as Tx[]));
-      setLoading(false);
-    })();
-  }, [code]);
+  const parsedCode = payCodeSchema.safeParse(code);
+  const validCode = parsedCode.success ? parsedCode.data : null;
 
-  const computed = useMemo(() => (billing ? computeDue(billing, txs) : null), [billing, txs]);
+  const project = useQuery(api.projects.getByPayCode, validCode ? { payCode: validCode } : "skip");
+  const billing = useQuery(
+    api.billing.getByProject,
+    project ? { projectId: project._id } : "skip",
+  );
+  const txs = useQuery(
+    api.transactions.getByProject,
+    project ? { projectId: project._id } : "skip",
+  );
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!project || !computed || computed.due <= 0) return;
-    const parsed = paymentSubmissionSchema.safeParse(form);
-    if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Please check your inputs.");
-      return;
-    }
-    setSubmitting(true);
-    const { error } = await supabase.from("transactions").insert({
-      transaction_ref: parsed.data.transaction_ref,
-      amount: computed.due,
-      currency: computed.currency,
-      occurred_at: new Date().toISOString(),
-      method: parsed.data.method,
-      project_id: project.id,
-      notes: `Submitted via /pay/${code.toUpperCase()} for ${computed.period} by ${parsed.data.payer_name}${parsed.data.notes ? ` — ${parsed.data.notes}` : ""}`,
-      created_by: "00000000-0000-0000-0000-000000000000",
-    } as never);
-    setSubmitting(false);
-    if (error) {
-      toast.error(
-        error.message.includes("transactions_ref_unique")
-          ? "This reference has already been submitted."
-          : "Could not submit. Please contact support.",
-      );
-      return;
-    }
-    setDone(true);
-  };
+  const createTransaction = useMutation(api.transactions.create);
 
-  if (loading) {
-    return <main className="grid min-h-screen place-items-center bg-background text-sm text-muted-foreground">Loading…</main>;
+  const computed = useMemo(
+    () => (billing && txs ? computeDue(billing, txs) : null),
+    [billing, txs],
+  );
+
+  if (!validCode) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-background px-4">
+        <div className="max-w-md text-center">
+          <h1 className="text-2xl font-semibold">Invalid payment link</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            The code <span className="font-mono">{code}</span> is invalid.
+          </p>
+        </div>
+      </main>
+    );
   }
 
-  if (!project) {
+  if (!project && project !== undefined) {
     return (
       <main className="grid min-h-screen place-items-center bg-background px-4">
         <div className="max-w-md text-center">
@@ -172,6 +122,43 @@ function PayPage() {
     );
   }
 
+  if (!project || !billing || !txs) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-background text-sm text-muted-foreground">
+        Loading…
+      </main>
+    );
+  }
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!computed || computed.due <= 0) return;
+    const parsed = paymentSubmissionSchema.safeParse(form);
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Please check your inputs.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await createTransaction({
+        transactionRef: parsed.data.transaction_ref,
+        amount: computed.due,
+        currency: computed.currency,
+        projectId: project._id,
+        notes: `Submitted via /pay/${code.toUpperCase()} for ${computed.period} by ${parsed.data.payer_name}${parsed.data.notes ? ` — ${parsed.data.notes}` : ""}`,
+        createdBy: "00000000-0000-0000-0000-000000000001",
+      });
+      setDone(true);
+    } catch (err: any) {
+      toast.error(
+        err?.message?.includes("duplicate")
+          ? "This reference has already been submitted."
+          : "Could not submit. Please contact support.",
+      );
+    }
+    setSubmitting(false);
+  };
+
   return (
     <main className="min-h-screen bg-muted/30 px-4 py-10">
       <div className="mx-auto max-w-lg">
@@ -181,15 +168,10 @@ function PayPage() {
           </div>
           <h1 className="mt-2 text-2xl font-semibold">{project.name}</h1>
           <div className="mt-1 font-mono text-xs text-muted-foreground">
-            {project.project_code} · pay code {code.toUpperCase()}
+            {project.projectCode} · pay code {code.toUpperCase()}
           </div>
 
-          {!billing ? (
-            <div className="mt-6 rounded-xl border border-border bg-background p-6 text-center">
-              <h2 className="text-lg font-semibold">No billing configured</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Please contact us for payment details.</p>
-            </div>
-          ) : done ? (
+          {done ? (
             <div className="mt-6 rounded-xl border border-border bg-background p-6 text-center">
               <CheckCircle2 className="mx-auto h-10 w-10 text-foreground" />
               <h2 className="mt-3 text-lg font-semibold">Payment submitted</h2>
@@ -211,16 +193,11 @@ function PayPage() {
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">Amount due</div>
                 <div className="mt-1 text-3xl font-semibold">{formatMoney(computed.due, computed.currency)}</div>
                 <p className="mt-2 text-sm text-muted-foreground">for {computed.period}</p>
-                {billing.billing_type === "monthly" && computed.remainingTotal !== undefined && computed.remainingTotal > computed.due && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Total outstanding across all months: {formatMoney(computed.remainingTotal, computed.currency)}
-                  </p>
-                )}
               </div>
 
               <form onSubmit={submit} className="mt-6 space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Send the amount via your preferred method, then submit your transaction reference below to confirm.
+                  Send the amount via your preferred method, then submit your transaction reference below.
                 </p>
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-muted-foreground">Your name *</span>

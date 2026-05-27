@@ -48,7 +48,7 @@ export function Impact() {
             >
               <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-secondary">
                 <img
-                  src={c.image}
+                  src={c.image.src}
                   alt={c.alt}
                   width={800}
                   height={600}

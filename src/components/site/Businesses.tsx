@@ -162,9 +162,9 @@ export function Businesses() {
                 <div className="flex items-start justify-between">
                   <div className="text-eyebrow text-background/55">{b.label}</div>
                   {b.name === "Darviz Labs" ? (
-                    <img src={darvizMark} alt="Darviz Labs" className="h-10 w-10 object-contain" />
+                    <img src={darvizMark.src} alt="Darviz Labs" className="h-10 w-10 object-contain" />
                   ) : b.name === "Gatestart Experiences" ? (
-                    <img src={gtkrMark} alt="Gatestart Experiences" className="h-10 w-10 object-contain rounded-md" />
+                    <img src={gtkrMark.src} alt="Gatestart Experiences" className="h-10 w-10 object-contain rounded-md" />
                   ) : (
                     <div className="text-display text-3xl text-background/30">{b.accent}</div>
                   )}
@@ -221,9 +221,9 @@ export function Businesses() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="text-eyebrow text-muted-foreground">{active.label}</div>
                   {active.name === "Darviz Labs" ? (
-                    <img src={darvizMark} alt="" className="h-9 w-9 object-contain" />
+                    <img src={darvizMark.src} alt="" className="h-9 w-9 object-contain" />
                   ) : active.name === "Gatestart Experiences" ? (
-                    <img src={gtkrMark} alt="" className="h-9 w-9 object-contain rounded-md" />
+                    <img src={gtkrMark.src} alt="" className="h-9 w-9 object-contain rounded-md" />
                   ) : (
                     <div className="text-display text-2xl text-muted-foreground/50">
                       {active.accent}

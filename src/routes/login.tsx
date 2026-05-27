@@ -1,11 +1,13 @@
-import { createFileRoute, useNavigate, redirect, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { useMutation } from "convex/react";
+import { api } from "@/../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { loginSchema } from "@/lib/validation";
+import { storeToken, getStoredToken } from "@/integrations/convex/auth";
 
 type LoginSearch = { redirect?: string };
 
@@ -25,28 +27,15 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const navigate = useNavigate();
   const search = Route.useSearch();
-  const target = search.redirect || "/admin";
+  const rawTarget = search.redirect || "/admin";
+  const target = rawTarget.startsWith("/") ? rawTarget : "/admin";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // If already signed in, bounce to target
-  useEffect(() => {
-    let cancelled = false;
-    supabase.auth.getSession().then(({ data }) => {
-      if (!cancelled && data.session) {
-        navigate({ to: target });
-      }
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (session) navigate({ to: target });
-    });
-    return () => {
-      cancelled = true;
-      subscription.unsubscribe();
-    };
-  }, [navigate, target]);
+  const signIn = useMutation(api.auth.signIn);
+  const signUp = useMutation(api.auth.signUp);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,30 +46,32 @@ function LoginPage() {
     }
     const creds = { email: parsed.data.email, password: parsed.data.password };
     setSubmitting(true);
-    const { error } = await supabase.auth.signInWithPassword(creds);
-    if (error) {
+
+    try {
+      const result = await signIn(creds);
+      storeToken(result.token);
+      toast.success("Signed in");
+      navigate({ to: target });
+    } catch {
       // First-time provisioning fallback
-      const { error: signUpError } = await supabase.auth.signUp({
-        ...creds,
-        options: { emailRedirectTo: `${window.location.origin}${target}` },
-      });
-      if (signUpError) {
-        setSubmitting(false);
-        toast.error(signUpError.message);
-        return;
+      try {
+        const result = await signUp(creds);
+        storeToken(result.token);
+        const retryResult = await signIn(creds);
+        storeToken(retryResult.token);
+        toast.success("Account created and signed in");
+        navigate({ to: target });
+      } catch (signUpErr: any) {
+        toast.error(signUpErr?.message ?? "Authentication failed");
       }
-      const { error: retryError } = await supabase.auth.signInWithPassword(creds);
-      setSubmitting(false);
-      if (retryError) {
-        toast.error(retryError.message);
-        return;
-      }
-      toast.success("Account created and signed in");
-      return;
     }
     setSubmitting(false);
-    toast.success("Signed in");
   };
+
+  if (getStoredToken()) {
+    navigate({ to: target });
+    return null;
+  }
 
   return (
     <main className="grid min-h-screen place-items-center bg-background px-6 text-foreground">

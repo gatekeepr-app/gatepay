@@ -1,9 +1,7 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Briefcase, FileText, Inbox, UserCog, LogOut, Wallet, Code2, KeyRound } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { usePermissions } from "@/lib/admin/usePermissions";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { LayoutDashboard, Users, Briefcase, FileText, Inbox, UserCog, LogOut, Wallet, Code2, KeyRound, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 
 const items = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -14,22 +12,23 @@ const items = [
   { to: "/admin/leads", label: "Leads", icon: Inbox },
   { to: "/admin/api-keys", label: "API Keys", icon: KeyRound },
   { to: "/admin/api-docs", label: "API Docs", icon: Code2 },
+  { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
-export function Sidebar() {
-  const { isAdmin, email } = usePermissions();
-  const path = useRouterState({ select: (s) => s.location.pathname });
-
-  const logout = async () => {
-    await supabase.auth.signOut();
-    toast.success("Signed out");
-    window.location.href = "/";
-  };
+export function Sidebar({
+  user,
+  onSignOut,
+}: {
+  user: { _id: string; email: string; name?: string; role: string };
+  onSignOut: () => void;
+}) {
+  const path = usePathname();
+  const isAdmin = user.role === "admin" || user.role === "super_admin";
 
   return (
     <aside className="hidden h-screen w-60 shrink-0 border-r border-border bg-card md:flex md:flex-col">
       <div className="border-b border-border px-5 py-5">
-        <Link to="/admin" className="text-lg font-semibold tracking-tight">
+        <Link href="/admin" className="text-lg font-semibold tracking-tight">
           Gatekeepr
         </Link>
         <div className="mt-1 text-xs text-muted-foreground">Workspace</div>
@@ -41,7 +40,7 @@ export function Sidebar() {
           return (
             <Link
               key={item.to}
-              to={item.to}
+              href={item.to}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
                 active
@@ -56,7 +55,7 @@ export function Sidebar() {
         })}
         {isAdmin && (
           <Link
-            to="/admin/users"
+            href="/admin/users"
             className={cn(
               "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
               path.startsWith("/admin/users")
@@ -70,9 +69,9 @@ export function Sidebar() {
         )}
       </nav>
       <div className="border-t border-border p-3">
-        <div className="mb-2 truncate px-3 text-xs text-muted-foreground">{email}</div>
+        <div className="mb-2 truncate px-3 text-xs text-muted-foreground">{user.email}</div>
         <button
-          onClick={logout}
+          onClick={onSignOut}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground/70 hover:bg-muted hover:text-foreground"
         >
           <LogOut className="h-4 w-4" />

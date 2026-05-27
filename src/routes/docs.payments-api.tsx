@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Copy, Check } from "lucide-react";
+import { useState, useEffect, useId } from "react";
+import { Copy, Check, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/docs/payments-api")({
@@ -23,8 +23,20 @@ export const Route = createFileRoute("/docs/payments-api")({
 });
 
 const BASE_URL = "https://gatekeepr-foundations-build.lovable.app";
-const ENDPOINT = `${BASE_URL}/api/public/transactions/verify`;
-const SUBMIT_ENDPOINT = `${BASE_URL}/api/public/transactions/submit`;
+const VERIFY = `${BASE_URL}/api/v1/public/transactions/verify`;
+const SUBMIT = `${BASE_URL}/api/v1/public/transactions/submit`;
+const HEALTH = `${BASE_URL}/api/v1/public/health`;
+const OPENAPI = `${BASE_URL}/api/v1/public/openapi`;
+
+const SECTIONS = [
+  { id: "overview", label: "Overview" },
+  { id: "api-submit", label: "Submit transaction" },
+  { id: "api-verify", label: "Verify transaction" },
+  { id: "api-callback", label: "Verify callback" },
+  { id: "api-health", label: "Health check" },
+  { id: "errors", label: "Error codes" },
+  { id: "security", label: "Security" },
+] as const;
 
 function CopyBlock({ code, language = "bash" }: { code: string; language?: string }) {
   const [copied, setCopied] = useState(false);
@@ -52,498 +64,411 @@ function CopyBlock({ code, language = "bash" }: { code: string; language?: strin
   );
 }
 
+function JsonBlock({ json }: { json: Record<string, unknown> }) {
+  const id = useId();
+  const code = JSON.stringify(json, null, 2);
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    await navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <div className="group relative my-3 overflow-hidden rounded-lg border border-border bg-muted/40">
+      <div className="flex items-center justify-between border-b border-border bg-muted/60 px-3 py-1.5 text-xs text-muted-foreground">
+        <span className="font-mono">json</span>
+        <button
+          onClick={copy}
+          className="flex items-center gap-1.5 rounded px-2 py-0.5 hover:bg-background"
+        >
+          {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+      <pre className="overflow-x-auto p-3 text-xs leading-relaxed">
+        <code className="font-mono">{code}</code>
+      </pre>
+    </div>
+  );
+}
+
 function Inline({ children }: { children: React.ReactNode }) {
   return (
     <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em]">{children}</code>
   );
 }
 
+function FieldTable({ fields }: { fields: [string, string, string, string][] }) {
+  return (
+    <div className="overflow-x-auto rounded-lg border border-border">
+      <table className="w-full text-sm">
+        <thead className="bg-muted/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
+          <tr>
+            <th className="px-3 py-2">Field</th>
+            <th className="px-3 py-2">Type</th>
+            <th className="px-3 py-2">Required</th>
+            <th className="px-3 py-2">Notes</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {fields.map(([f, t, r, n]) => (
+            <tr key={f}>
+              <td className="px-3 py-2"><Inline>{f}</Inline></td>
+              <td className="px-3 py-2 text-muted-foreground">{t}</td>
+              <td className="px-3 py-2">
+                <span className={cn("rounded px-1.5 py-0.5 text-xs", r === "Yes" ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground")}>{r}</span>
+              </td>
+              <td className="px-3 py-2 text-muted-foreground">{n}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function TOC({ active }: { active: string }) {
+  return (
+    <nav className="w-56 shrink-0 hidden xl:block">
+      <div className="sticky top-24 space-y-1 border-l border-border pl-4">
+        <div className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          On this page
+        </div>
+        {SECTIONS.map(({ id, label }) => (
+          <a
+            key={id}
+            href={`#${id}`}
+            className={cn(
+              "block text-sm transition-colors hover:text-foreground",
+              active === id ? "text-foreground font-medium" : "text-muted-foreground",
+            )}
+          >
+            {label}
+          </a>
+        ))}
+        <div className="pt-4">
+          <a
+            href={`${BASE_URL}/api/v1/public/openapi`}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            target="_blank"
+          >
+            <ChevronRight className="h-3 w-3" />
+            OpenAPI spec
+          </a>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
 function Section({ title, children, id }: { title: string; children: React.ReactNode; id?: string }) {
   return (
-    <section id={id} className="mb-10 scroll-mt-20">
-      <h2 className="mb-3 text-xl font-semibold tracking-tight">{title}</h2>
+    <section id={id} className="mb-12 scroll-mt-20">
+      <h2 className="mb-4 text-xl font-semibold tracking-tight">{title}</h2>
       <div className="space-y-3 text-sm leading-relaxed text-foreground/80">{children}</div>
     </section>
   );
 }
 
-const curlExample = `curl -X POST ${ENDPOINT} \\
-  -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -d '{
-    "transaction_ref": "TXN-2026-00482",
-    "business_name": "Nerdy",
-    "external_user_id": "user_8821",
-    "date": "2026-05-06",
-    "amount": 1499.00,
-    "source": "nerdy-checkout"
-  }'`;
+function ApiSection({
+  id,
+  title,
+  description,
+  method,
+  path,
+  fields,
+  example,
+}: {
+  id: string;
+  title: string;
+  description: string;
+  method: string;
+  path: string;
+  fields: [string, string, string, string][];
+  example: Record<string, unknown>;
+}) {
+  return (
+    <section id={id} className="mb-12 scroll-mt-20">
+      <h2 className="mb-4 text-xl font-semibold tracking-tight">{title}</h2>
+      <p className="mb-3 text-sm leading-relaxed text-foreground/80">{description}</p>
 
-const jsExample = `const res = await fetch(
-  "${ENDPOINT}",
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: \`Bearer \${GATEKEEPR_API_KEY}\`,
-    },
-    body: JSON.stringify({
-      transaction_ref: "TXN-2026-00482",
-      business_name: "Nerdy",
-      external_user_id: "user_8821",
-      date: "2026-05-06",
-      amount: 1499.0,
-      source: "nerdy-checkout",
-    }),
-  },
-);
+      <h3 className="mb-2 text-sm font-medium">Endpoint</h3>
+      <CopyBlock code={`${method} ${path}`} language="http" />
 
-const data = await res.json();
-if (data.verified) {
-  // unlock service
-} else {
-  // handle data.reason: "not_found" | "amount_mismatch" | ...
-}`;
+      <h3 className="mb-2 mt-5 text-sm font-medium">Headers</h3>
+      <CopyBlock code="Authorization: Bearer YOUR_API_KEY" language="http" />
 
-const pythonExample = `import os, requests
+      <h3 className="mb-2 mt-5 text-sm font-medium">Request body</h3>
+      <FieldTable fields={fields} />
 
-res = requests.post(
-    "${ENDPOINT}",
-    headers={"Authorization": f"Bearer {os.environ['GATEKEEPR_API_KEY']}"},
-    json={
-        "transaction_ref": "TXN-2026-00482",
-        "business_name": "Nerdy",
-        "external_user_id": "user_8821",
-        "date": "2026-05-06",
-        "amount": 1499.00,
-        "source": "nerdy-checkout",
-    },
-    timeout=15,
-)
-data = res.json()
-print(data)`;
-
-const successResponse = `{
-  "verified": true,
-  "transaction": {
-    "ref": "TXN-2026-00482",
-    "amount": 1499.00,
-    "currency": "USD",
-    "occurred_at": "2026-05-06T10:24:11.000Z",
-    "project_code": "GK-2026-0007"
-  }
-}`;
-
-const failResponse = `{ "verified": false, "reason": "not_found" }`;
+      <h3 className="mb-2 mt-5 text-sm font-medium">Example</h3>
+      <JsonBlock json={example} />
+    </section>
+  );
+}
 
 function PublicApiDocsPage() {
+  const [activeSection, setActiveSection] = useState("overview");
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        }
+      },
+      { rootMargin: "-100px 0px -60% 0px" },
+    );
+    for (const { id } of SECTIONS) {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    }
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-4xl px-6 py-12">
-        <header className="mb-8 border-b border-border pb-6">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">
-            Gatekeepr · Developers
-          </div>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight">
-            Payment Verification API
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Public endpoint that lets partner sites confirm a payment matches a transaction
-            recorded in Gatekeepr, and stamp it with the verifier's business identity.
-          </p>
-        </header>
+      <div className="mx-auto flex max-w-6xl gap-8 px-6 py-12">
+        <div className="min-w-0 flex-1">
+          <header className="mb-8 border-b border-border pb-6">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">
+              Gatekeepr · Developers
+            </div>
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight">
+              Payment Verification API
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Public endpoint that lets partner sites confirm a payment matches a transaction
+              recorded in Gatekeepr, and stamp it with the verifier's business identity.
+            </p>
+          </header>
 
-        <nav className="mb-10 rounded-lg border border-border bg-card p-4 text-sm">
-          <div className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            On this page
-          </div>
-          <ul className="grid grid-cols-2 gap-y-1">
-            {[
-              ["overview", "Overview"],
-              ["submit", "Submit transaction"],
-              ["callback", "Verify callback"],
-              ["endpoint", "Verify endpoint"],
-              ["body", "Verify request body"],
-              ["examples", "Verify examples"],
-              ["responses", "Verify responses"],
-              ["effects", "Side effects"],
-              ["matching", "Matching rules"],
-              ["security", "Security notes"],
-            ].map(([id, label]) => (
-              <li key={id}>
-                <a href={`#${id}`} className="text-primary hover:underline">
-                  {label}
-                </a>
+          <Section id="overview" title="Overview">
+            <p>
+              Gatekeepr exposes two primary flows and supporting endpoints for partner sites:
+            </p>
+            <ol className="ml-5 list-decimal space-y-2">
+              <li>
+                <strong>Submit</strong> — your server POSTs a transaction when an order is
+                placed. It lands in Gatekeepr as <Inline>unverified</Inline>.
               </li>
-            ))}
-          </ul>
-        </nav>
+              <li>
+                <strong>Verify callback (Gatekeepr → your site)</strong> — a Gatekeepr admin
+                selects unverified transactions and clicks <strong>Trigger verify</strong>.
+                Gatekeepr groups them by business, POSTs each group to your configured{" "}
+                <Inline>callback_url</Inline>, and on a <Inline>2xx</Inline> response stamps
+                them as verified.
+              </li>
+              <li>
+                <strong>Verify on demand (your site → Gatekeepr)</strong> — your server can also
+                call this endpoint directly to check a single transaction's status.
+              </li>
+            </ol>
+            <p>
+              All endpoints require an API key via the <Inline>Authorization: Bearer</Inline>{" "}
+              header (except health &amp; OpenAPI spec). Manage keys from{" "}
+              <strong>Admin → API Keys</strong>. The full token is shown only once on creation.
+            </p>
+          </Section>
 
-        <Section id="overview" title="Overview">
-          <p>Gatekeepr exposes two flows for partner sites:</p>
-          <ol className="ml-5 list-decimal space-y-1">
-            <li>
-              <strong>Submit</strong> — partner posts a transaction when an order is placed. It
-              lands in Gatekeepr as <Inline>unverified</Inline>.
-            </li>
-            <li>
-              <strong>Verify callback</strong> — a Gatekeepr admin selects one or more unverified
-              transactions (green radio toggle in the Transactions table) and clicks{" "}
-              <strong>Trigger verify</strong>. Gatekeepr groups the selection by{" "}
-              <Inline>business_name</Inline>, POSTs each group to the matching API key's{" "}
-              <Inline>callback_url</Inline>, and — on a <Inline>2xx</Inline> response — marks the
-              bundled transactions as verified automatically. No further call from the partner is
-              required.
-            </li>
-          </ol>
-          <p>
-            The standalone <Inline>POST /transactions/verify</Inline> endpoint (documented below)
-            remains available for partners that want to verify a single ref on demand, but it is
-            not part of the standard submit → callback flow.
-          </p>
-        </Section>
-
-        <Section id="submit" title="Submit transaction">
-          <p>
-            Called by the partner site when an order is placed. Creates an unverified transaction
-            in Gatekeepr.
-          </p>
-          <CopyBlock code={`POST ${SUBMIT_ENDPOINT}`} language="http" />
-          <CopyBlock code={`Authorization: Bearer YOUR_API_KEY`} language="http" />
-          <h3 className="mt-2 text-sm font-medium">Body (JSON)</h3>
-          <div className="overflow-x-auto rounded-lg border border-border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
-                <tr>
-                  <th className="px-3 py-2">Field</th>
-                  <th className="px-3 py-2">Type</th>
-                  <th className="px-3 py-2">Required</th>
-                  <th className="px-3 py-2">Notes</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {[
-                  ["transaction_ref", "string (1–120)", "Yes", "Your unique transaction ID."],
-                  ["amount", "number ≥ 0", "Yes", "Payment amount."],
-                  ["currency", "string (≤8)", "No", "Defaults to 'BDT'."],
-                  ["occurred_at", "ISO 8601 datetime", "No", "Defaults to now()."],
-                  ["method", "string (≤40)", "No", "e.g. 'bkash', 'card'."],
-                  ["business_name", "string (1–160)", "No*", "Falls back to the API key's business_name."],
-                  ["external_user_id", "string (≤160)", "No", "Your end-user ID."],
-                  ["source", "string (≤160)", "No", "Free-form tag."],
-                  ["notes", "string (≤2000)", "No", "Free-form notes."],
-                ].map(([f, t, r, n]) => (
-                  <tr key={f}>
-                    <td className="px-3 py-2"><Inline>{f}</Inline></td>
-                    <td className="px-3 py-2 text-muted-foreground">{t}</td>
-                    <td className="px-3 py-2">
-                      <span className={cn("rounded px-1.5 py-0.5 text-xs", r === "Yes" ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground")}>
-                        {r}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">{n}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            * Either set <Inline>business_name</Inline> in the body or configure one on the API key.
-          </p>
-          <h3 className="mt-4 text-sm font-medium">Example</h3>
-          <CopyBlock
-            code={`curl -X POST ${SUBMIT_ENDPOINT} \\
-  -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -d '{
-    "transaction_ref": "TRWQREWF126",
-    "amount": 18000,
-    "currency": "BDT",
-    "occurred_at": "2026-05-20T15:50:00Z",
-    "method": "bkash",
-    "external_user_id": "user_42",
-    "source": "nerdy-checkout"
-  }'`}
-            language="bash"
+          <ApiSection
+            id="api-submit"
+            title="POST — Submit transaction"
+            description="Creates an unverified transaction in Gatekeepr. Call this when an order is placed on your end. Safe to retry with the Idempotency-Key header."
+            method="POST"
+            path={SUBMIT}
+            fields={[
+              ["transaction_ref", "string (1–120)", "Yes", "Your unique transaction ID."],
+              ["amount", "number ≥ 0", "Yes", "Payment amount."],
+              ["currency", "string (≤8)", "No", "Defaults to 'BDT'."],
+              ["occurred_at", "ISO 8601 datetime", "No", "Defaults to now()."],
+              ["method", "string (≤40)", "No", "e.g. 'bkash', 'card', 'nagad'."],
+              ["business_name", "string (1–160)", "No*", "Falls back to the API key's business_name."],
+              ["external_user_id", "string (≤160)", "No", "Your end-user ID for cross-reference."],
+              ["source", "string (≤160)", "No", "Free-form tag, e.g. 'web-checkout'."],
+              ["notes", "string (≤2000)", "No", "Free-form notes."],
+              ["idempotency_key", "Idempotency-Key header", "No", "Send a unique value to safely retry."],
+            ]}
+            example={{
+              transaction_ref: "INV-2026-00482",
+              amount: 1499.00,
+              currency: "BDT",
+              method: "bkash",
+              business_name: "Nerdy",
+              external_user_id: "user_8821",
+              source: "web-checkout",
+              occurred_at: "2026-05-27T10:00:00Z",
+            }}
           />
-          <h3 className="mt-4 text-sm font-medium">Responses</h3>
-          <ul className="ml-5 list-disc space-y-1">
-            <li><Inline>201 {`{"received":true,"id":"…","transaction_ref":"…","status":"unverified"}`}</Inline></li>
-            <li><Inline>409 {`{"error":"duplicate_ref",…}`}</Inline> — ref already exists.</li>
-            <li><Inline>400 {`{"error":"invalid_body","issues":[…]}`}</Inline></li>
-            <li><Inline>400 {`{"error":"missing_business_name"}`}</Inline></li>
-            <li><Inline>401 {`{"error":"missing_api_key"}`}</Inline> or <Inline>invalid_api_key</Inline></li>
-            <li><Inline>429 {`{"error":"rate_limited"}`}</Inline> — 60 req/min/IP</li>
-          </ul>
-        </Section>
 
-        <Section id="callback" title="Verify callback (Gatekeepr → your site)">
-          <p>
-            When a Gatekeepr admin selects unverified inbound transactions and clicks{" "}
-            <strong>Trigger verify</strong>, we group the selection by{" "}
-            <Inline>business_name</Inline>, find the matching active API key, and POST each
-            group to that key's <Inline>callback_url</Inline>.
-          </p>
-          <p>
-            <strong>The HTTP response is the verification.</strong> If your endpoint returns a{" "}
-            <Inline>2xx</Inline> status, Gatekeepr stamps every transaction in that batch as
-            verified (<Inline>verified_source = "callback"</Inline>) and records the response
-            body. Any non-2xx response — or a network/connection error — leaves the batch
-            unverified and the admin sees the returned status code and response body as the
-            failure reason.
-          </p>
-          <h3 className="mt-2 text-sm font-medium">Request we send</h3>
-          <CopyBlock
-            code={`POST <your callback_url>
+          <ApiSection
+            id="api-verify"
+            title="POST — Verify transaction"
+            description="Checks if a submitted transaction matches a known ref. Returns the transaction details if found. Use when you need to confirm a specific payment on demand."
+            method="POST"
+            path={VERIFY}
+            fields={[
+              ["transaction_ref", "string (1–120)", "Yes", "Transaction ID to look up. Case-insensitive."],
+              ["business_name", "string (1–160)", "Yes", "Must match the API key's business_name."],
+              ["external_user_id", "string (≤160)", "No", "Your internal user ID, stored on the transaction."],
+              ["date", "ISO date / datetime", "No", "If set, must match the transaction's UTC day."],
+              ["amount", "number ≥ 0", "No", "If set, must equal recorded amount exactly."],
+              ["source", "string (≤160)", "No", "Free-form audit label."],
+            ]}
+            example={{
+              transaction_ref: "INV-2026-00482",
+              business_name: "Nerdy",
+              external_user_id: "user_8821",
+              date: "2026-05-27",
+              amount: 1499.00,
+              source: "web-checkout",
+            }}
+          />
+
+          <section id="api-callback" className="mb-12 scroll-mt-20">
+            <h2 className="mb-4 text-xl font-semibold tracking-tight">Verify callback (Gatekeepr → your site)</h2>
+            <p className="mb-3 text-sm leading-relaxed text-foreground/80">
+              When an admin clicks <strong>Trigger verify</strong> in the dashboard, Gatekeepr groups
+              the selected transactions by business name, finds the matching API key's{" "}
+              <Inline>callback_url</Inline>, and POSTs each group to that URL. Your 2xx response
+              is the verification — nothing more needed.
+            </p>
+
+            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm dark:border-amber-800 dark:bg-amber-950/30">
+              <p className="font-medium text-amber-800 dark:text-amber-300">What is a callback URL?</p>
+              <p className="mt-1 text-amber-700 dark:text-amber-400">
+                A <strong>callback URL</strong> is an HTTP endpoint on your own server that Gatekeepr
+                calls to confirm a batch of transactions. Example:{" "}
+                <Inline>https://api.nerdy.com/gatekeepr/verify</Inline>. It must be HTTPS, must return
+                a <Inline>2xx</Inline> to confirm verification, and you can verify the request via
+                the <Inline>X-Gatekeepr-Signature</Inline> HMAC header.
+              </p>
+            </div>
+
+            <h3 className="mb-2 text-sm font-medium">Why verify fails from the admin</h3>
+            <p className="mb-3 text-sm leading-relaxed text-foreground/80">
+              If your API key has no <Inline>callback_url</Inline> set, or the URL is unreachable
+              (like <Inline>https://example.com/verify</Inline>), the admin verification will show{" "}
+              <Inline>skipped_no_callback</Inline> or <Inline>callback_timeout</Inline>. Set a real
+              callback URL on your API key in <strong>Admin → API Keys</strong>.
+            </p>
+
+            <h3 className="mb-2 mt-5 text-sm font-medium">Request Gatekeepr sends</h3>
+            <CopyBlock
+              code={`POST <your callback_url>
 Content-Type: application/json
 X-Gatekeepr-Signature: sha256=<hex hmac>
 User-Agent: Gatekeepr-Verify/1.0
 
 {
   "business_name": "Nerdy",
-  "sent_at": "2026-05-20T16:30:00.000Z",
+  "sent_at": "2026-05-27T16:30:00.000Z",
   "transactions": [
     {
-      "transaction_ref": "TRWQREWF126",
-      "amount": 18000,
+      "transaction_ref": "INV-2026-00482",
+      "amount": 1499.00,
       "currency": "BDT",
-      "occurred_at": "2026-05-20T15:50:00.000Z",
+      "occurred_at": "2026-05-27T10:00:00.000Z",
       "method": "bkash",
-      "external_user_id": "user_42",
-      "source": "nerdy-checkout"
+      "external_user_id": "user_8821",
+      "source": "web-checkout"
     }
   ]
 }`}
-            language="http"
-          />
-          <h3 className="mt-4 text-sm font-medium">Signature verification</h3>
-          <p>
-            The <Inline>X-Gatekeepr-Signature</Inline> header is{" "}
-            <Inline>sha256=&lt;hex&gt;</Inline> where the hex is the HMAC-SHA256 of the raw
-            request body using your API key's <Inline>signing_secret</Inline> (stored on the
-            key; managers can re-view it anytime from the API Keys page). Reject requests with
-            a missing or non-matching signature.
-          </p>
-          <CopyBlock
-            code={`import { createHmac, timingSafeEqual } from "crypto";
+              language="http"
+            />
 
-function verify(rawBody: string, header: string | null, secret: string) {
-  if (!header?.startsWith("sha256=")) return false;
-  const got = Buffer.from(header.slice(7), "hex");
-  const expected = Buffer.from(
-    createHmac("sha256", secret).update(rawBody).digest("hex"),
-    "hex",
-  );
-  return got.length === expected.length && timingSafeEqual(got, expected);
-}`}
-            language="ts"
-          />
-          <h3 className="mt-4 text-sm font-medium">Expected behavior</h3>
-          <ol className="ml-5 list-decimal space-y-1">
-            <li>Verify the HMAC signature. Reject with <Inline>401</Inline> if invalid.</li>
-            <li>
-              For each item in <Inline>transactions[]</Inline>, look it up in your own DB and
-              confirm it matches a real order on your side (amount, user, etc.).
-            </li>
-            <li>
-              If every transaction in the batch checks out, respond <Inline>2xx</Inline> —
-              Gatekeepr marks them all verified. If any fail, respond with a non-2xx status and
-              a JSON body describing what went wrong; that body is surfaced to the admin and
-              nothing in the batch is marked verified.
-            </li>
-            <li>
-              You do <strong>not</strong> need to call{" "}
-              <Inline>POST /transactions/verify</Inline> from inside the callback — the 2xx
-              response is the confirmation.
-            </li>
-          </ol>
-          <h3 className="mt-4 text-sm font-medium">Admin-side result</h3>
-          <p>
-            For each business group the admin sees one of: <Inline>delivered</Inline> (2xx, all
-            marked verified), <Inline>failed</Inline> (with HTTP status + response body or the
-            network error), <Inline>skipped_no_callback</Inline> (the matched API key has no{" "}
-            <Inline>callback_url</Inline>), or <Inline>skipped_no_key</Inline> (no active API
-            key found whose <Inline>business_name</Inline> matches the transaction).
-          </p>
-        </Section>
+            <h3 className="mb-2 mt-5 text-sm font-medium">What your endpoint should do</h3>
+            <ol className="ml-5 list-decimal space-y-2 text-sm text-foreground/80">
+              <li>Verify the <Inline>X-Gatekeepr-Signature</Inline> HMAC (optional but recommended).</li>
+              <li>For each transaction, look it up in your own DB and confirm it matches a real order.</li>
+              <li>Respond <Inline>2xx</Inline> if everything checks out — Gatekeepr stamps the batch as verified.</li>
+              <li>Respond with a non-2xx status and a JSON error body on failure.</li>
+              <li>You do <strong>not</strong> need to call the verify endpoint from inside the callback.</li>
+            </ol>
+          </section>
 
-        <Section id="endpoint" title="Verify endpoint">
-          <p>
-            Called by your site (typically from inside the callback handler above) to confirm a
-            single transaction.
-          </p>
-          <CopyBlock code={`POST ${ENDPOINT}`} language="http" />
-          <p>
-            Also accepts <Inline>OPTIONS</Inline> for CORS preflight. CORS is open (<Inline>*</Inline>).
-          </p>
-          <p>
-            <strong>Auth:</strong> required. Send a Gatekeepr-issued bearer token in the{" "}
-            <Inline>Authorization</Inline> header:
-          </p>
-          <CopyBlock code={`Authorization: Bearer YOUR_API_KEY`} language="http" />
-          <p>
-            Keys are created and revoked from <Inline>Admin → API Keys</Inline>. Tokens start with{" "}
-            <Inline>gk_</Inline> and can be re-viewed by managers from that page at any time.
-          </p>
-          <p>
-            <strong>Rate limit:</strong> 30 requests / minute / IP.
-          </p>
-        </Section>
+          <section id="api-health" className="mb-12 scroll-mt-20">
+            <h2 className="mb-4 text-xl font-semibold tracking-tight">GET — Health check</h2>
+            <p className="mb-3 text-sm leading-relaxed text-foreground/80">
+              Lightweight endpoint to verify the API is operational. No auth required.
+            </p>
+            <CopyBlock code={`GET ${HEALTH}`} language="http" />
+            <CopyBlock code={`{"status":"ok"}`} language="json" />
+          </section>
 
-        <Section id="body" title="Request body (JSON)">
-          <div className="overflow-x-auto rounded-lg border border-border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
-                <tr>
-                  <th className="px-3 py-2">Field</th>
-                  <th className="px-3 py-2">Type</th>
-                  <th className="px-3 py-2">Required</th>
-                  <th className="px-3 py-2">Notes</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {[
-                  ["transaction_ref", "string (1–120)", "Yes", "Transaction ID. Case-insensitive match."],
-                  ["business_name", "string (1–160)", "Yes", "Caller's business name. Stored on transaction."],
-                  ["external_user_id", "string (≤160)", "No", "Caller's internal user ID, for cross-reference."],
-                  ["date", "ISO date / datetime", "No", "If set, must match transaction's UTC day."],
-                  ["amount", "number ≥ 0", "No", "If set, must equal recorded amount exactly."],
-                  ["source", "string (≤160)", "No", "Free-form audit label, e.g. 'nerdy-checkout'."],
-                ].map(([f, t, r, n]) => (
-                  <tr key={f}>
-                    <td className="px-3 py-2">
-                      <Inline>{f}</Inline>
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">{t}</td>
-                    <td className="px-3 py-2">
-                      <span
-                        className={cn(
-                          "rounded px-1.5 py-0.5 text-xs",
-                          r === "Yes"
-                            ? "bg-primary/15 text-primary"
-                            : "bg-muted text-muted-foreground",
-                        )}
-                      >
-                        {r}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">{n}</td>
+          <section id="errors" className="mb-12 scroll-mt-20">
+            <h2 className="mb-4 text-xl font-semibold tracking-tight">Error codes</h2>
+            <div className="overflow-x-auto rounded-lg border border-border">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                  <tr>
+                    <th className="px-3 py-2">Status</th>
+                    <th className="px-3 py-2">Response</th>
+                    <th className="px-3 py-2">Meaning</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Section>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {([
+                    ["201", `{"received":true,"status":"unverified"}`, "Submit success"],
+                    ["200", `{"verified":true,"transaction":{...}}`, "Transaction matches"],
+                    ["200", `{"verified":false,"reason":"not_found"}`, "No matching transaction"],
+                    ["200", `{"verified":false,"reason":"date_mismatch"}`, "Date doesn't match"],
+                    ["200", `{"verified":false,"reason":"amount_mismatch"}`, "Amount doesn't match"],
+                    ["400", `{"error":"invalid_body","issues":[...]}`, "Zod validation failed"],
+                    ["400", `{"error":"invalid_json"}`, "Body is not valid JSON"],
+                    ["401", `{"error":"missing_api_key"}`, "No Authorization header"],
+                    ["401", `{"error":"invalid_api_key"}`, "Token unknown or revoked"],
+                    ["409", `{"error":"duplicate_ref"}`, "Ref already exists (submit)"],
+                    ["413", `{"error":"body_too_large"}`, "Body exceeds 10 KB"],
+                    ["429", `{"error":"rate_limited"}`, "IP rate limit hit (30/60 req/min)"],
+                    ["429", `{"error":"key_rate_limited"}`, "Key rate limit hit (100 req/min)"],
+                    ["500", `{"verified":false,"reason":"lookup_error"}`, "Server / DB error"],
+                  ] as [string, string, string][]).map(([s, r, m]) => (
+                    <tr key={r}>
+                      <td className="px-3 py-2">
+                        <span className={cn("rounded px-1.5 py-0.5 font-mono text-xs", s.startsWith("2") ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : s.startsWith("4") ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400")}>{s}</span>
+                      </td>
+                      <td className="px-3 py-2 font-mono text-xs">{r}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{m}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Every response includes an <Inline>x-request-id</Inline> header. Include this when reporting issues.
+            </p>
+          </section>
 
-        <Section id="examples" title="Examples">
-          <h3 className="mt-2 text-sm font-medium">cURL</h3>
-          <CopyBlock code={curlExample} language="bash" />
-          <h3 className="mt-4 text-sm font-medium">JavaScript / TypeScript</h3>
-          <CopyBlock code={jsExample} language="ts" />
-          <h3 className="mt-4 text-sm font-medium">Python</h3>
-          <CopyBlock code={pythonExample} language="python" />
-        </Section>
+          <section id="security" className="mb-12 scroll-mt-20">
+            <h2 className="mb-4 text-xl font-semibold tracking-tight">Security</h2>
+            <ul className="ml-5 list-disc space-y-2 text-sm text-foreground/80">
+              <li>All endpoints require HTTPS. HTTP requests are rejected.</li>
+              <li>API keys are hashed with SHA-256 before storage. Revocation is immediate.</li>
+              <li>
+                <strong>Tenant isolation:</strong> keys can only verify transactions matching
+                their own <Inline>business_name</Inline>.
+              </li>
+              <li>
+                <strong>Rate limits:</strong> verify 30 req/min/IP, submit 60 req/min/IP,
+                100 req/min per key.
+              </li>
+              <li>Request body limited to 10 KB. CSRF enforced when Origin/Referer is present.</li>
+              <li>Responses include <Inline>Strict-Transport-Security</Inline> and <Inline>X-Content-Type-Options</Inline>.</li>
+              <li>Callback URLs must use HTTPS. Callbacks have a 15-second timeout.</li>
+              <li>Callback signatures use HMAC-SHA256 with your key's <Inline>signing_secret</Inline>.</li>
+            </ul>
+          </section>
 
-        <Section id="responses" title="Responses">
-          <h3 className="text-sm font-medium">200 — Verified</h3>
-          <CopyBlock code={successResponse} language="json" />
+          <footer className="mt-12 border-t border-border pt-6 text-xs text-muted-foreground">
+            Questions? Contact the Gatekeepr team.
+          </footer>
+        </div>
 
-          <h3 className="mt-4 text-sm font-medium">200 — Not verified</h3>
-          <CopyBlock code={failResponse} language="json" />
-          <p>
-            Possible <Inline>reason</Inline> values:
-          </p>
-          <ul className="ml-5 list-disc space-y-1">
-            <li>
-              <Inline>not_found</Inline> — no transaction with that ref.
-            </li>
-            <li>
-              <Inline>date_mismatch</Inline> — provided date doesn't match recorded UTC day.
-            </li>
-            <li>
-              <Inline>amount_mismatch</Inline> — provided amount differs from recorded amount.
-            </li>
-            <li>
-              <Inline>invalid_date</Inline> — date couldn't be parsed.
-            </li>
-          </ul>
-
-          <h3 className="mt-4 text-sm font-medium">Errors</h3>
-          <ul className="ml-5 list-disc space-y-1">
-            <li>
-              <Inline>401 {`{"error":"missing_api_key"}`}</Inline> — no{" "}
-              <Inline>Authorization: Bearer …</Inline> header was sent.
-            </li>
-            <li>
-              <Inline>401 {`{"error":"invalid_api_key"}`}</Inline> — token is unknown or revoked.
-            </li>
-            <li>
-              <Inline>400 {`{"error":"invalid_json"}`}</Inline> — body isn't valid JSON.
-            </li>
-            <li>
-              <Inline>400 {`{"error":"invalid_body","issues":[...]}`}</Inline> — Zod validation
-              failed.
-            </li>
-            <li>
-              <Inline>429 {`{"error":"rate_limited"}`}</Inline> — too many requests from this IP.
-            </li>
-            <li>
-              <Inline>500 {`{"verified":false,"reason":"lookup_error"}`}</Inline> — DB error.
-            </li>
-          </ul>
-        </Section>
-
-        <Section id="effects" title="Side effects on success">
-          <ol className="ml-5 list-decimal space-y-1">
-            <li>
-              The matched transaction is updated with <Inline>verified_external_name</Inline>,{" "}
-              <Inline>verified_external_user_id</Inline>, <Inline>verified_source</Inline>, and{" "}
-              <Inline>verified_at</Inline>. Latest verification wins.
-            </li>
-            <li>
-              If linked to a project, the project's <Inline>last_transaction_ref</Inline> and{" "}
-              <Inline>last_payment_at</Inline> are updated.
-            </li>
-            <li>
-              The response includes <Inline>project_code</Inline> for correlation.
-            </li>
-          </ol>
-        </Section>
-
-        <Section id="matching" title="Matching rules">
-          <ul className="ml-5 list-disc space-y-1">
-            <li>
-              <Inline>transaction_ref</Inline> — case-insensitive, otherwise exact.
-            </li>
-            <li>
-              <Inline>date</Inline> — compared as calendar day in UTC.
-            </li>
-            <li>
-              <Inline>amount</Inline> — strict numeric equality.
-            </li>
-            <li>
-              Only <Inline>transaction_ref</Inline> and <Inline>business_name</Inline> are required;
-              the rest are optional safety checks.
-            </li>
-          </ul>
-        </Section>
-
-        <Section id="security" title="Security notes">
-          <ul className="ml-5 list-disc space-y-1">
-            <li>Endpoint is intentionally public — never send secrets in the body.</li>
-            <li>
-              <Inline>business_name</Inline> is asserted, not authenticated. Use as audit, not auth.
-            </li>
-            <li>
-              Need stronger trust? An <Inline>x-api-key</Inline> per-partner scheme can be added on
-              request.
-            </li>
-          </ul>
-        </Section>
-
-        <footer className="mt-12 border-t border-border pt-6 text-xs text-muted-foreground">
-          Questions? Contact the Gatekeepr team.
-        </footer>
+        <TOC active={activeSection} />
       </div>
     </div>
   );

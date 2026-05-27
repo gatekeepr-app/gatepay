@@ -30,7 +30,7 @@ export function Header() {
     >
       <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-5 md:px-10">
         <a href="#home" className="flex items-center" aria-label="Gatekeepr">
-          <img src={logo} alt="Gatekeepr" className="h-5 w-auto md:h-6" />
+          <img src={logo.src} alt="Gatekeepr" className="h-5 w-auto md:h-6" />
         </a>
 
         <nav className="hidden items-center gap-10 lg:flex xl:gap-12">

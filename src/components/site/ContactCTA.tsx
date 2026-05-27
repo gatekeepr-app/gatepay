@@ -1,6 +1,7 @@
 import { useState } from "react";
 import statue from "@/assets/statue-bust.jpg";
-import { supabase } from "@/integrations/supabase/client";
+import { useMutation } from "convex/react";
+import { api } from "@/../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -13,6 +14,7 @@ export function ContactCTA() {
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const createLead = useMutation(api.leads.create);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,20 +24,20 @@ export function ContactCTA() {
       return;
     }
     setSubmitting(true);
-    const { error } = await supabase.from("leads").insert({
-      name: parsed.data.name,
-      email: parsed.data.email,
-      company: parsed.data.company ?? null,
-      message: parsed.data.message,
-    });
-    setSubmitting(false);
-    if (error) {
+    try {
+      await createLead({
+        name: parsed.data.name,
+        email: parsed.data.email,
+        company: parsed.data.company ?? undefined,
+        message: parsed.data.message,
+      });
+      setDone(true);
+      setName(""); setEmail(""); setCompany(""); setMessage("");
+      toast.success("Thanks — we'll be in touch.");
+    } catch {
       toast.error("Could not send. Please try again.");
-      return;
     }
-    setDone(true);
-    setName(""); setEmail(""); setCompany(""); setMessage("");
-    toast.success("Thanks — we'll be in touch.");
+    setSubmitting(false);
   };
 
   return (

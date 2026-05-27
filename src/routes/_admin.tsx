@@ -1,6 +1,8 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useMutation } from "convex/react";
+import { api } from "@/../convex/_generated/api";
+import { getStoredToken, clearToken } from "@/integrations/convex/auth";
 import { Sidebar } from "@/components/admin/Sidebar";
 
 export const Route = createFileRoute("/_admin")({
@@ -9,103 +11,49 @@ export const Route = createFileRoute("/_admin")({
 
 function AdminLayout() {
   const navigate = useNavigate();
-  const [state, setState] = useState<"checking" | "ok" | "denied">("checking");
+  const token = getStoredToken();
+  const getMe = useMutation(api.auth.getMe);
+  const [user, setUser] = useState<{ _id: string; email: string; name?: string; role: string } | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let cancelled = false;
-
-    const redirectToLogin = () => {
-      const redirectParam = encodeURIComponent(
-        window.location.pathname + window.location.search
-      );
-      window.location.replace(`/login?redirect=${redirectParam}`);
-    };
-
-    const evaluate = async () => {
+    if (!token) {
+      navigate({ to: "/login", search: { redirect: "/admin" } });
+      return;
+    }
+    (async () => {
       try {
-        const { data: sess } = await supabase.auth.getSession();
-        if (cancelled) return;
-        if (!sess.session) {
-          redirectToLogin();
-          return;
-        }
-        const { data: roles, error } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", sess.session.user.id);
-        if (cancelled) return;
-        if (error) {
-          console.error("[admin] role check failed", error);
-          setState("denied");
-          return;
-        }
-        const allowed = ["super_admin", "admin", "member"];
-        const hasAccess = (roles ?? []).some((r) => allowed.includes(r.role));
-        setState(hasAccess ? "ok" : "denied");
-      } catch (e) {
-        console.error("[admin] auth check error", e);
-        if (!cancelled) redirectToLogin();
+        const u = await getMe({ token });
+        setUser(u);
+      } catch {
+        clearToken();
+        navigate({ to: "/login" });
       }
-    };
+      setLoading(false);
+    })();
+  }, [token]);
 
-    evaluate();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_e, session) => {
-        if (cancelled) return;
-        if (!session) {
-          redirectToLogin();
-        } else {
-          setState("checking");
-          evaluate();
-        }
-      }
-    );
-
-    return () => {
-      cancelled = true;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  if (state === "checking") {
+  if (loading) {
     return (
-      <main className="grid min-h-screen place-items-center bg-background text-foreground">
-        <p className="text-sm text-muted-foreground">Checking access…</p>
-      </main>
+      <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
+        Loading…
+      </div>
     );
   }
 
-  if (state === "denied") {
-    return (
-      <main className="grid min-h-screen place-items-center bg-background px-6 text-foreground">
-        <div className="max-w-md text-center">
-          <h1 className="text-2xl font-semibold">Access denied</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            You're signed in but don't have workspace access.
-          </p>
-          <button
-            onClick={async () => {
-              await supabase.auth.signOut();
-              navigate({ to: "/", replace: true });
-            }}
-            className="mt-6 rounded-full border border-border px-5 py-2 text-sm hover:bg-muted"
-          >
-            Log out
-          </button>
-        </div>
-      </main>
-    );
-  }
+  if (!user) return null;
+
+  const handleSignOut = () => {
+    clearToken();
+    navigate({ to: "/login" });
+  };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-foreground">
-      <div className="h-screen sticky top-0 shrink-0">
-        <Sidebar />
-      </div>
-      <main className="flex-1 h-screen overflow-y-auto overflow-x-hidden">
+    <div className="flex min-h-screen bg-background">
+      <Sidebar user={user} onSignOut={handleSignOut} />
+      <div className="flex-1">
         <Outlet />
-      </main>
+      </div>
     </div>
   );
 }

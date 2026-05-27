@@ -1,4 +1,5 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { ConvexProvider, convexClient } from "@/integrations/convex/client";
 
 import appCss from "../styles.css?url";
 
@@ -31,16 +32,13 @@ export const Route = createRootRoute({
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Gatekeepr" },
       { name: "description", content: "A company for your success" },
-      { name: "author", content: "Lovable" },
+      { name: "author", content: "Gatekeepr" },
       { property: "og:title", content: "Gatekeepr" },
       { property: "og:description", content: "A company for your success" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "Gatekeepr" },
       { name: "twitter:description", content: "A company for your success" },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/rp25NgSv8KTRX8ZVwwql5FI6T5l2/social-images/social-1778845225166-Gatekeepr_Facebook_cover.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/rp25NgSv8KTRX8ZVwwql5FI6T5l2/social-images/social-1778845225166-Gatekeepr_Facebook_cover.webp" },
     ],
     links: [
       {
@@ -69,5 +67,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  return <Outlet />;
+  return (
+    <ConvexProvider client={convexClient}>
+      <Outlet />
+    </ConvexProvider>
+  );
 }
