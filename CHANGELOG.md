@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.1.0 (2026-05-28)
+
+### Added
+- **Payment confirmation emails**: Resend integration sends confirmation email to client after admin verifies payment
+- **Client editing**: Edit dialog on client detail page with all fields (name, email, business, brand, phone, notes)
+- **Transaction detail page**: Full details with receiving data, payer name, period, verification info, linked project/invoice
+- **Dashboard updates**: Revenue stats, unverified transaction count, recent transactions/leads lists, clickable stat cards
+- **Invoice form labels**: All fields on invoice/new page now have proper labels
+- **API docs redirect**: `/admin/api-docs` redirects to `/docs/payments-api`
+
+### Changed
+- **Homepage redesigned**: Pixel Perfect Landing structure (Hero, About, Features, How It Works, Partners, Testimonial, Footer) with Gatekeepr branding
+- **Homepage mobile responsive**: Hamburger menu, responsive headings, scaled sections
+- **Sidebar mobile responsive**: Hamburger drawer with overlay, auto-closes on navigation
+- **Color system updated**: ClashDisplay font, neon blue primary, ink dark sections
+
+### Removed
+- Old TanStack Router routes (`src/routes/`)
+- Stale `Pixel Perfect Landing` directory from build (excluded from tsconfig)
+- Vite-era `src/styles.css`
+
 ## 2.0.0 (2026-05-28)
 
 ### Major Changes
@@ -8,16 +29,6 @@
 - **Client payment portal**: `/pay/:code` with bKash instructions, two-column layout, auto-invoice generation
 - **Public API**: Versioned under `/api/v1/public/` with rate limiting, logging, and OpenAPI spec
 - **Auto-invoicing**: `submitPayMutation` creates a transaction + invoice atomically when a client pays
-
-### What's New
-- Pay code entry page (`/pay`) and payment form (`/pay/[code]`)
-- Admin: projects, clients, invoices, transactions, users, API keys, leads, analytics
-- Invite flow: `/invite/:token` for team invitations
-- Health check endpoint: `GET /api/v1/public/health`
-- OpenAPI spec endpoint: `GET /api/v1/public/openapi`
-- DB-based sessions (replaced in-memory Map)
-- DB-based rate limiting (replaced in-memory burst)
-- `createdBy`/`invitedBy` made optional in all Convex mutations to fix admin page validation errors
 
 ### Removed
 - TanStack Router (file-based routing in `src/routes/`)
