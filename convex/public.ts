@@ -3,6 +3,9 @@ import { mutation } from "./_generated/server";
 import { hmacSha256 } from "./lib/crypto";
 import { requireAdmin } from "./lib/auth";
 
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const EMAIL_FROM = "Gatekeepr <noreply@darvizlabs.com>";
+
 // POST /api/public/transactions/submit
 export const submitTransaction = mutation({
   args: {
@@ -310,6 +313,48 @@ export const triggerVerifyBatch = mutation({
           for (const id of groupIds) {
             await ctx.db.patch(id, { verifiedAt, verifiedSource: "callback", updatedAt: verifiedAt });
           }
+
+          // Send confirmation emails to clients with linked transactions
+          if (RESEND_API_KEY) {
+            for (const t of group) {
+              if (t.clientId) {
+                const client = await ctx.db.get(t.clientId);
+                if (client?.email) {
+                  const project = t.projectId ? await ctx.db.get(t.projectId) : null;
+                  const period = t.notes?.match(/for (.+?) by/)?.[1] ?? "";
+                  try {
+                    await fetch("https://api.resend.com/emails", {
+                      method: "POST",
+                      headers: {
+                        Authorization: `Bearer ${RESEND_API_KEY}`,
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        from: EMAIL_FROM,
+                        to: [client.email],
+                        subject: `Payment Confirmed — ${project?.name ?? "Gatekeepr"}`,
+                        html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px;">
+                          <h2 style="margin:0 0 16px;font-size:20px;">Payment Confirmed</h2>
+                          <p style="color:#555;margin:0 0 24px;">Your payment has been verified by our team.</p>
+                          <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                            <tr><td style="padding:8px 0;color:#888;">Transaction ref</td><td style="padding:8px 0;font-family:monospace;">${t.transactionRef}</td></tr>
+                            <tr><td style="padding:8px 0;color:#888;">Amount</td><td style="padding:8px 0;">${t.currency} ${t.amount.toLocaleString()}</td></tr>
+                            ${period ? `<tr><td style="padding:8px 0;color:#888;">Period</td><td style="padding:8px 0;">${period}</td></tr>` : ""}
+                            ${project ? `<tr><td style="padding:8px 0;color:#888;">Project</td><td style="padding:8px 0;">${project.name} (${project.projectCode})</td></tr>` : ""}
+                            <tr><td style="padding:8px 0;color:#888;">Verified at</td><td style="padding:8px 0;">${new Date(verifiedAt).toLocaleDateString()}</td></tr>
+                          </table>
+                          <p style="color:#888;font-size:12px;margin:24px 0 0;">Gatekeepr — Payment Verification Platform</p>
+                        </div>`,
+                      }),
+                    });
+                  } catch {
+                    // Email send failed silently — don't block verification
+                  }
+                }
+              }
+            }
+          }
+
           groups.push({
             businessName: displayName,
             callbackUrl: keyRow.callbackUrl,

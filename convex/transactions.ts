@@ -3,6 +3,9 @@ import { mutation, query, action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { generateInvoiceNumber } from "./lib/helpers";
 
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const EMAIL_FROM = "Gatekeepr <noreply@darvizlabs.com>";
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
