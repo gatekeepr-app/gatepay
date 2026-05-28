@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Briefcase, FileText, Inbox, UserCog, LogOut, Wallet, Code2, KeyRound, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, FileText, Inbox, UserCog, LogOut, Wallet, Code2, KeyRound, BarChart3, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
 
 const items = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -15,20 +18,22 @@ const items = [
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
-export function Sidebar({
+function SidebarContent({
   user,
   onSignOut,
+  onLinkClick,
 }: {
   user: { _id: string; email: string; name?: string; role: string };
   onSignOut: () => void;
+  onLinkClick?: () => void;
 }) {
   const path = usePathname();
   const isAdmin = user.role === "admin" || user.role === "super_admin";
 
   return (
-    <aside className="hidden h-screen w-60 shrink-0 border-r border-border bg-card md:flex md:flex-col">
+    <>
       <div className="border-b border-border px-5 py-5">
-        <Link href="/admin" className="text-lg font-semibold tracking-tight">
+        <Link href="/admin" onClick={onLinkClick} className="text-lg font-semibold tracking-tight">
           Gatekeepr
         </Link>
         <div className="mt-1 text-xs text-muted-foreground">Workspace</div>
@@ -41,6 +46,7 @@ export function Sidebar({
             <Link
               key={item.to}
               href={item.to}
+              onClick={onLinkClick}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
                 active
@@ -56,6 +62,7 @@ export function Sidebar({
         {isAdmin && (
           <Link
             href="/admin/users"
+            onClick={onLinkClick}
             className={cn(
               "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
               path.startsWith("/admin/users")
@@ -78,6 +85,59 @@ export function Sidebar({
           Log out
         </button>
       </div>
-    </aside>
+    </>
+  );
+}
+
+export function Sidebar({
+  user,
+  onSignOut,
+  open,
+  onToggle,
+}: {
+  user: { _id: string; email: string; name?: string; role: string };
+  onSignOut: () => void;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (open) onToggle();
+  }, [pathname]);
+
+  return (
+    <>
+      {/* Mobile header bar */}
+      <div className="fixed inset-x-0 top-0 z-40 flex items-center border-b border-border bg-card px-4 py-3 md:hidden">
+        <button onClick={onToggle} className="p-1">
+          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
+        <Link href="/admin" className="ml-3 text-lg font-semibold tracking-tight">Gatekeepr</Link>
+      </div>
+
+      {/* Mobile overlay */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          onClick={onToggle}
+        />
+      )}
+
+      {/* Mobile drawer */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r border-border bg-card transition-transform duration-200 md:hidden",
+          open ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        <SidebarContent user={user} onSignOut={onSignOut} onLinkClick={onToggle} />
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden h-screen w-60 shrink-0 border-r border-border bg-card md:flex md:flex-col">
+        <SidebarContent user={user} onSignOut={onSignOut} />
+      </aside>
+    </>
   );
 }

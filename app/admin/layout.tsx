@@ -13,6 +13,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const getMe = useMutation(api.auth.getMe);
   const [user, setUser] = useState<{ _id: string; email: string; name?: string; role: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -48,8 +49,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex min-h-screen bg-background">
-      <Sidebar user={user} onSignOut={handleSignOut} />
-      <div className="flex-1">{children}</div>
+      <Sidebar user={user} onSignOut={handleSignOut} open={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+      <div className="flex-1 pt-12 md:pt-0">{children}</div>
     </div>
   );
 }

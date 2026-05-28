@@ -49,19 +49,70 @@ export default function NewInvoicePage() {
     <div className="p-6 max-w-lg">
       <h1 className="text-2xl font-semibold">New invoice</h1>
       <div className="mt-4 space-y-4">
-        <select value={form.projectId} onChange={(e) => setForm({ ...form, projectId: e.target.value })} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm">
-          <option value="">No project</option>
-          {projects?.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
-        </select>
-        {lineItems.map((li, i) => (
-          <div key={i} className="flex gap-2">
-            <input placeholder="Description" value={li.description} onChange={(e) => { const n = [...lineItems]; n[i].description = e.target.value; setLineItems(n); }} className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm" />
-            <input type="number" placeholder="Qty" value={li.quantity} onChange={(e) => { const n = [...lineItems]; n[i].quantity = parseInt(e.target.value) || 0; setLineItems(n); }} className="w-16 rounded-lg border border-border bg-background px-3 py-2 text-sm" />
-            <input type="number" placeholder="Price" value={li.unitPrice} onChange={(e) => { const n = [...lineItems]; n[i].unitPrice = parseFloat(e.target.value) || 0; setLineItems(n); }} className="w-24 rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+        <label className="block">
+          <span className="mb-1 block text-xs font-medium text-muted-foreground">Project</span>
+          <select
+            value={form.projectId}
+            onChange={(e) => setForm({ ...form, projectId: e.target.value })}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/30"
+          >
+            <option value="">No project</option>
+            {projects?.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
+          </select>
+        </label>
+
+        <div>
+          <span className="mb-1 block text-xs font-medium text-muted-foreground">Line items</span>
+          <div className="space-y-2">
+            {lineItems.map((li, i) => (
+              <div key={i} className="flex gap-2">
+                <input
+                  placeholder="Description"
+                  value={li.description}
+                  onChange={(e) => { const n = [...lineItems]; n[i].description = e.target.value; setLineItems(n); }}
+                  className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/30"
+                />
+                <input
+                  type="number"
+                  placeholder="Qty"
+                  value={li.quantity}
+                  onChange={(e) => { const n = [...lineItems]; n[i].quantity = parseInt(e.target.value) || 0; setLineItems(n); }}
+                  className="w-16 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/30"
+                />
+                <input
+                  type="number"
+                  placeholder="Unit price"
+                  value={li.unitPrice}
+                  onChange={(e) => { const n = [...lineItems]; n[i].unitPrice = parseFloat(e.target.value) || 0; setLineItems(n); }}
+                  className="w-24 rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/30"
+                />
+              </div>
+            ))}
           </div>
-        ))}
-        <button onClick={addLine} className="text-sm text-primary hover:underline">+ Add line item</button>
-        <input type="number" placeholder="Tax rate %" value={form.taxRate} onChange={(e) => setForm({ ...form, taxRate: parseFloat(e.target.value) })} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+          <button onClick={addLine} className="mt-2 text-sm text-primary hover:underline">+ Add line item</button>
+        </div>
+
+        <label className="block">
+          <span className="mb-1 block text-xs font-medium text-muted-foreground">Tax rate (%)</span>
+          <input
+            type="number"
+            placeholder="0"
+            value={form.taxRate}
+            onChange={(e) => setForm({ ...form, taxRate: parseFloat(e.target.value) })}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/30"
+          />
+        </label>
+
+        <label className="block">
+          <span className="mb-1 block text-xs font-medium text-muted-foreground">Notes (optional)</span>
+          <textarea
+            value={form.notes}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            rows={3}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/30"
+          />
+        </label>
+
         <button onClick={submit} disabled={submitting} className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background hover:opacity-90 disabled:opacity-50">
           {submitting ? "Creating…" : "Create invoice"}
         </button>
