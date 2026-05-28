@@ -17,6 +17,7 @@ dist-ssr
 .nitro
 *.local
 .env
+Pixel Perfect Landing
 
 # Wrangler / Cloudflare
 .wrangler/
