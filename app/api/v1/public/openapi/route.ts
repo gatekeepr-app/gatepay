@@ -3,13 +3,13 @@ import { json, corsHeaders, SECURITY_HEADERS } from "@/lib/api/helpers";
 
 const spec = {
   openapi: "3.1.0",
-  info: { title: "Gatekeepr Payment Verification API", version: "1.0.0" },
+  info: { title: "GatePay Payment Verification API", version: "1.0.0" },
   servers: [{ url: "https://pay.darvizlabs.com" }],
   paths: {
     "/api/v1/public/transactions/submit": {
       post: {
         summary: "Submit a transaction",
-        description: "Creates an unverified transaction in Gatekeepr.",
+        description: "Creates an unverified transaction in GatePay.",
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,

@@ -294,11 +294,11 @@ export const triggerVerifyBatch = mutation({
 
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
-        "User-Agent": "Gatekeepr-Verify/1.0",
+        "User-Agent": "GatePay-Verify/1.0",
       };
       if (keyRow.signingSecret) {
         const sig = await hmacSha256(keyRow.signingSecret, body);
-        headers["X-Gatekeepr-Signature"] = `sha256=${sig}`;
+        headers["X-GatePay-Signature"] = `sha256=${sig}`;
       }
 
       try {

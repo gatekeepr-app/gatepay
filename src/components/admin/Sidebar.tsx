@@ -34,7 +34,7 @@ function SidebarContent({
     <>
       <div className="border-b border-border px-5 py-5">
         <Link href="/admin" onClick={onLinkClick} className="text-lg font-semibold tracking-tight">
-          Gatekeepr
+          GatePay
         </Link>
         <div className="mt-1 text-xs text-muted-foreground">Workspace</div>
       </div>
@@ -113,7 +113,7 @@ export function Sidebar({
         <button onClick={onToggle} className="p-1">
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
-        <Link href="/admin" className="ml-3 text-lg font-semibold tracking-tight">Gatekeepr</Link>
+        <Link href="/admin" className="ml-3 text-lg font-semibold tracking-tight">GatePay</Link>
       </div>
 
       {/* Mobile overlay */}

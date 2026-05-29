@@ -203,32 +203,32 @@ export default function PublicApiDocsPage() {
         <div className="min-w-0 flex-1">
           <header className="mb-8 border-b border-border pb-6">
             <div className="text-xs uppercase tracking-wider text-muted-foreground">
-              Gatekeepr · Developers
+              GatePay · Developers
             </div>
             <h1 className="mt-1 text-3xl font-semibold tracking-tight">
               Payment Verification API
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
               Public endpoint that lets partner sites confirm a payment matches a transaction
-              recorded in Gatekeepr, and stamp it with the verifier's business identity.
+              recorded in GatePay, and stamp it with the verifier's business identity.
             </p>
           </header>
 
           <Section id="overview" title="Overview">
-            <p>Gatekeepr exposes two primary flows and supporting endpoints for partner sites:</p>
+            <p>GatePay exposes two primary flows and supporting endpoints for partner sites:</p>
             <ol className="ml-5 list-decimal space-y-2">
               <li>
                 <strong>Submit</strong> — your server POSTs a transaction when an order is placed.
-                It lands in Gatekeepr as <Inline>unverified</Inline>.
+                It lands in GatePay as <Inline>unverified</Inline>.
               </li>
               <li>
-                <strong>Verify callback (Gatekeepr → your site)</strong> — a Gatekeepr admin
+                <strong>Verify callback (GatePay → your site)</strong> — a GatePay admin
                 selects unverified transactions and clicks <strong>Trigger verify</strong>.
-                Gatekeepr groups them by business, POSTs each group to your configured{" "}
+                GatePay groups them by business, POSTs each group to your configured{" "}
                 <Inline>callback_url</Inline>, and on a <Inline>2xx</Inline> response stamps them as verified.
               </li>
               <li>
-                <strong>Verify on demand (your site → Gatekeepr)</strong> — your server can also
+                <strong>Verify on demand (your site → GatePay)</strong> — your server can also
                 call this endpoint directly to check a single transaction's status.
               </li>
             </ol>
@@ -242,7 +242,7 @@ export default function PublicApiDocsPage() {
           <ApiSection
             id="api-submit"
             title="POST — Submit transaction"
-            description="Creates an unverified transaction in Gatekeepr. Call this when an order is placed on your end. Safe to retry with the Idempotency-Key header."
+            description="Creates an unverified transaction in GatePay. Call this when an order is placed on your end. Safe to retry with the Idempotency-Key header."
             method="POST"
             path={SUBMIT}
             fields={[
@@ -311,9 +311,9 @@ export default function PublicApiDocsPage() {
           />
 
           <section id="api-callback" className="mb-12 scroll-mt-20">
-            <h2 className="mb-4 text-xl font-semibold tracking-tight">Verify callback (Gatekeepr → your site)</h2>
+            <h2 className="mb-4 text-xl font-semibold tracking-tight">Verify callback (GatePay → your site)</h2>
             <p className="mb-3 text-sm leading-relaxed text-foreground/80">
-              When an admin clicks <strong>Trigger verify</strong> in the dashboard, Gatekeepr
+              When an admin clicks <strong>Trigger verify</strong> in the dashboard, GatePay
               groups the selected transactions by business name, finds the matching API key's{" "}
               <Inline>callback_url</Inline>, and POSTs each group to that URL. Your 2xx response
               is the verification — nothing more needed.
@@ -323,10 +323,10 @@ export default function PublicApiDocsPage() {
               <p className="font-medium text-amber-800 dark:text-amber-300">What is a callback URL?</p>
               <p className="mt-1 text-amber-700 dark:text-amber-400">
                 A <strong>callback URL</strong> is an HTTP endpoint on your own server that
-                Gatekeepr calls to confirm a batch of transactions. Example:{" "}
+                GatePay calls to confirm a batch of transactions. Example:{" "}
                 <Inline>https://api.nerdy.com/gatekeepr/verify</Inline>. It must be HTTPS, must
                 return a <Inline>2xx</Inline> to confirm verification, and you can verify the
-                request via the <Inline>X-Gatekeepr-Signature</Inline> HMAC header.
+                request via the <Inline>X-GatePay-Signature</Inline> HMAC header.
               </p>
             </div>
 
@@ -338,12 +338,12 @@ export default function PublicApiDocsPage() {
               callback URL on your API key in <strong>Admin → API Keys</strong>.
             </p>
 
-            <h3 className="mb-2 mt-5 text-sm font-medium">Request Gatekeepr sends</h3>
+            <h3 className="mb-2 mt-5 text-sm font-medium">Request GatePay sends</h3>
             <CopyBlock
               code={`POST <your callback_url>
 Content-Type: application/json
-X-Gatekeepr-Signature: sha256=<hex hmac>
-User-Agent: Gatekeepr-Verify/1.0
+X-GatePay-Signature: sha256=<hex hmac>
+User-Agent: GatePay-Verify/1.0
 
 {
   "business_name": "Nerdy",
@@ -365,9 +365,9 @@ User-Agent: Gatekeepr-Verify/1.0
 
             <h3 className="mb-2 mt-5 text-sm font-medium">What your endpoint should do</h3>
             <ol className="ml-5 list-decimal space-y-2 text-sm text-foreground/80">
-              <li>Verify the <Inline>X-Gatekeepr-Signature</Inline> HMAC (optional but recommended).</li>
+              <li>Verify the <Inline>X-GatePay-Signature</Inline> HMAC (optional but recommended).</li>
               <li>For each transaction, look it up in your own DB and confirm it matches a real order.</li>
-              <li>Respond <Inline>2xx</Inline> if everything checks out — Gatekeepr stamps the batch as verified.</li>
+              <li>Respond <Inline>2xx</Inline> if everything checks out — GatePay stamps the batch as verified.</li>
               <li>Respond with a non-2xx status and a JSON error body on failure.</li>
               <li>You do <strong>not</strong> need to call the verify endpoint from inside the callback.</li>
             </ol>
@@ -441,7 +441,7 @@ User-Agent: Gatekeepr-Verify/1.0
           </section>
 
           <footer className="mt-12 border-t border-border pt-6 text-xs text-muted-foreground">
-            Questions? Contact the Gatekeepr team.
+            Questions? Contact the GatePay team.
           </footer>
         </div>
         <TOC active={activeSection} />

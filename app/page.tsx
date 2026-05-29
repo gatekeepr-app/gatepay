@@ -68,7 +68,7 @@ function Hero() {
     <section className="relative overflow-hidden rounded-b-[28px] bg-ink text-ink-foreground">
       {/* Nav */}
       <header className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 sm:py-6 lg:px-10">
-        <Link href="/" className="text-xl font-bold tracking-tight sm:text-2xl">Gatekeepr</Link>
+        <Link href="/" className="text-xl font-bold tracking-tight sm:text-2xl">GatePay</Link>
         <nav className="hidden items-center gap-8 text-sm text-ink-foreground/70 md:flex">
           <a href="#features" className="hover:text-ink-foreground">Features</a>
           <a href="#how-it-works" className="hover:text-ink-foreground">How it works</a>
@@ -197,7 +197,7 @@ function About() {
             500<span className="ml-1 align-top text-xl font-semibold sm:text-2xl">+</span>
           </div>
           <p className="mt-6 text-xs text-primary-foreground/85 sm:mt-8">
-            Businesses trust Gatekeepr to verify and audit their payment transactions every day.
+            Businesses trust GatePay to verify and audit their payment transactions every day.
           </p>
         </div>
         <div className="rounded-3xl bg-ink p-6 text-ink-foreground sm:p-7">
@@ -363,7 +363,7 @@ function Monitoring() {
             MONITORING
           </h2>
           <p className="self-end text-sm text-ink-foreground/70 lg:col-span-5">
-            Gatekeepr integrates with your existing payment stack. bKash, Nagad, Rocket, bank transfer — verify any payment method through one unified API.
+            GatePay integrates with your existing payment stack. bKash, Nagad, Rocket, bank transfer — verify any payment method through one unified API.
           </p>
         </div>
 
@@ -373,7 +373,7 @@ function Monitoring() {
               98<span className="align-top text-xl sm:text-3xl">%</span>
             </div>
             <p className="mt-6 text-xs text-primary-foreground/85 sm:mt-8">
-              Businesses enjoy faster transaction processing with Gatekeepr&apos;s real-time monitoring.
+              Businesses enjoy faster transaction processing with GatePay&apos;s real-time monitoring.
             </p>
           </div>
 
@@ -417,7 +417,7 @@ function Testimonial() {
         <div className="lg:col-span-9">
           <Quote className="h-6 w-6 text-primary sm:h-8 sm:w-8" />
           <p className="mt-4 font-display text-2xl leading-[1.15] sm:mt-6 sm:text-3xl lg:text-5xl">
-            Gatekeepr has completely transformed how we handle payment verification. The real-time API and webhook callbacks have been invaluable.
+            GatePay has completely transformed how we handle payment verification. The real-time API and webhook callbacks have been invaluable.
           </p>
         </div>
         <div className="lg:col-span-3">
@@ -440,14 +440,14 @@ function Footer() {
   return (
     <footer className="border-t border-border">
       <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 sm:py-10 lg:flex-row lg:items-center lg:justify-between lg:px-10">
-        <div className="text-xl font-bold tracking-tight sm:text-2xl">Gatekeepr</div>
+        <div className="text-xl font-bold tracking-tight sm:text-2xl">GatePay</div>
         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground sm:gap-6">
           <a href="#features" className="hover:text-foreground">Features</a>
           <a href="#how-it-works" className="hover:text-foreground">How it works</a>
           <a href="#partners" className="hover:text-foreground">Partners</a>
           <Link href="/docs/payments-api" className="hover:text-foreground">API Docs</Link>
         </div>
-        <div className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} Gatekeepr. All rights reserved.</div>
+        <div className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} GatePay. All rights reserved.</div>
       </div>
     </footer>
   );

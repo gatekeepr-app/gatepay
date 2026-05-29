@@ -51,7 +51,7 @@ export default function PayPage() {
             </button>
           </form>
         </div>
-        <p className="mt-4 text-center text-xs text-muted-foreground">Powered by Gatekeepr</p>
+        <p className="mt-4 text-center text-xs text-muted-foreground">Powered by GatePay</p>
       </div>
     </main>
   );

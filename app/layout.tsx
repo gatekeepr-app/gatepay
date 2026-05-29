@@ -4,7 +4,7 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata = {
-  title: "Gatekeepr",
+  title: "GatePay",
   description: "Payment Verification Platform",
 };
 

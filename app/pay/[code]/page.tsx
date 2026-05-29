@@ -7,7 +7,7 @@ import { formatMoney } from "@/lib/admin/format";
 import { toast } from "sonner";
 import { CheckCircle2, Lock } from "lucide-react";
 import { payCodeSchema, paymentSubmissionSchema } from "@/lib/validation";
-import gatekeeprLogo from "@/assets/gatekeepr-logo.png";
+import gatepayLogo from "@/assets/gatepay-logo.png";
 
 const BKASH_NUMBER = "01790176253";
 
@@ -186,7 +186,7 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
         {/* Right: confirmation form */}
         <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
           <div className="flex items-center justify-center">
-            <img src={gatekeeprLogo.src} alt="Gatekeepr" className="h-[1.4rem] w-auto" />
+            <img src={gatepayLogo.src} alt="GatePay" className="h-[1.4rem] w-auto" />
           </div>
           <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
             <Lock className="h-3 w-3" /> Secure payment
@@ -306,7 +306,7 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
               </form>
             </>
           ) : null}
-          <p className="mt-4 text-center text-xs text-muted-foreground">Powered by Gatekeepr</p>
+          <p className="mt-4 text-center text-xs text-muted-foreground">Powered by GatePay</p>
         </div>
       </div>
     </main>

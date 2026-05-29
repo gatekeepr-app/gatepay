@@ -3,7 +3,7 @@ import { convex, extractBearer, hashKey } from "@/integrations/convex/server";
 import { api } from "@/../convex/_generated/api";
 
 const ALLOWED_ORIGINS = [
-  "https://gatekeepr-foundations-build.lovable.app",
+  "https://pay.darvizlabs.com",
   "http://localhost:3000",
   "http://localhost:5173",
 ];
