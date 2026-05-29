@@ -2,7 +2,7 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
-import { useQuery, useMutation, useAction } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, Clock, FileText, ExternalLink, RotateCcw } from "lucide-react";
@@ -49,10 +49,9 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
   const deleteTx = useMutation(api.transactions.remove);
   const refunds = useQuery(api.refunds.getByTransaction, { transactionId: id as any });
   const initiateRefund = useMutation(api.refunds.initiateRefund);
-  const processRefund = useAction(api.refunds.processGatewayRefund);
   const [reimbOpen, setReimbOpen] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
-  const [refundForm, setRefundForm] = useState({ amount: 0, method: "sslcommerz", notes: "" });
+  const [refundForm, setRefundForm] = useState({ amount: 0, method: "bank_transfer", notes: "" });
   const [reimbForm, setReimbForm] = useState({ amount: 0, method: "bank_transfer", reimbursementRef: "", notes: "" });
 
   if (!tx) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
@@ -98,23 +97,16 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
   const handleInitiateRefund = async () => {
     if (refundForm.amount <= 0) { toast.error("Amount must be > 0"); return; }
     try {
-      const result = await initiateRefund({
+      await initiateRefund({
         transactionId: id as any,
         amount: refundForm.amount,
         method: refundForm.method,
         notes: refundForm.notes || undefined,
         token: getStoredToken() ?? "",
       });
-      toast.success("Refund initiated — processing via gateway");
+      toast.success("Refund initiated");
       setRefundOpen(false);
-      setRefundForm({ amount: 0, method: "sslcommerz", notes: "" });
-      // Auto-process via gateway
-      try {
-        await processRefund({ refundId: result.refundId });
-        toast.success("Refund completed via gateway");
-      } catch {
-        // Gateway processing happens async
-      }
+      setRefundForm({ amount: 0, method: "bank_transfer", notes: "" });
     } catch (err: any) {
       toast.error(err?.message ?? "Failed to initiate refund");
     }
@@ -377,9 +369,11 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
                 onChange={(e) => setRefundForm({ ...refundForm, method: e.target.value })}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
               >
-                <option value="sslcommerz">SSLCommerz</option>
-                <option value="eps">EPS</option>
-                <option value="manual">Manual (bank transfer)</option>
+                <option value="bank_transfer">Bank Transfer</option>
+                <option value="bKash">bKash</option>
+                <option value="Nagad">Nagad</option>
+                <option value="Rocket">Rocket</option>
+                <option value="other">Other</option>
               </select>
             </label>
             <label className="block">

@@ -1,11 +1,6 @@
 import { v } from "convex/values";
-import { mutation, query, action } from "./_generated/server";
-import { api } from "./_generated/api";
+import { mutation, query } from "./_generated/server";
 import { requireAdmin } from "./lib/auth";
-
-const SSLCOMMERZ_URL = process.env.SSLCOMMERZ_URL || "https://sandbox.sslcommerz.com";
-const SSLCOMMERZ_STORE_ID = process.env.SSLCOMMERZ_STORE_ID || "";
-const SSLCOMMERZ_STORE_PASS = process.env.SSLCOMMERZ_STORE_PASS || "";
 
 // ─── Queries ──────────────────────────────────────────────
 
@@ -91,7 +86,6 @@ export const updateRefundStatus = mutation({
       v.literal("cancelled"),
     ),
     gatewayRef: v.optional(v.string()),
-    gatewayResponse: v.optional(v.string()),
     notes: v.optional(v.string()),
     token: v.string(),
   },
@@ -106,7 +100,6 @@ export const updateRefundStatus = mutation({
     await ctx.db.patch(args.id, {
       status: args.status,
       gatewayRef: args.gatewayRef,
-      gatewayResponse: args.gatewayResponse,
       notes: args.notes,
       updatedAt: now,
     });
@@ -133,7 +126,7 @@ export const updateRefundStatus = mutation({
           toStatus: "reimbursed",
           changedBy: args.token,
           changedAt: now,
-          notes: `Refund completed: ${args.gatewayRef ?? "no gateway ref"}`,
+          notes: `Refund completed: ${args.gatewayRef ?? "manual"}`,
         });
       }
     }
@@ -163,83 +156,5 @@ export const cancelRefund = mutation({
     });
 
     return { ok: true };
-  },
-});
-
-// ─── SSLCommerz Gateway Integration ───────────────────────
-
-export const processGatewayRefund = action({
-  args: {
-    refundId: v.id("refunds"),
-  },
-  handler: async (ctx, args): Promise<{ success: boolean; gatewayRef?: string; error?: string }> => {
-    // Use public queries to read data
-    const refund = await ctx.runQuery(api.refunds.getById, { id: args.refundId });
-    if (!refund) throw new Error("refund_not_found");
-
-    const tx = await ctx.runQuery(api.transactions.getById, { id: refund.transactionId });
-    if (!tx) throw new Error("transaction_not_found");
-
-    // Sandbox mode — simulate success
-    if (!SSLCOMMERZ_STORE_ID) {
-      const gatewayRef = `REFUND-${Date.now()}`;
-      await ctx.runMutation(api.refunds.updateRefundStatus, {
-        id: args.refundId,
-        status: "completed",
-        gatewayRef,
-        gatewayResponse: JSON.stringify({
-          status: "success",
-          message: "Refund processed (sandbox)",
-          refund_id: gatewayRef,
-        }),
-        token: "system",
-      });
-      return { success: true, gatewayRef };
-    }
-
-    // Production: call SSLCommerz refund API
-    try {
-      const response: any = await fetch(`${SSLCOMMERZ_URL}/gwprocess/v4/api.php`, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          store_id: SSLCOMMERZ_STORE_ID,
-          store_pass: SSLCOMMERZ_STORE_PASS,
-          refund_amount: String(refund.amount),
-          transaction_id: tx.transactionRef,
-          refund_remarks: refund.notes ?? "Refund via GatePay",
-        }).toString(),
-      });
-
-      const data: any = await response.json();
-
-      if (data.status === "success") {
-        await ctx.runMutation(api.refunds.updateRefundStatus, {
-          id: args.refundId,
-          status: "completed",
-          gatewayRef: data.refund_id,
-          gatewayResponse: JSON.stringify(data),
-          token: "system",
-        });
-        return { success: true, gatewayRef: data.refund_id };
-      } else {
-        await ctx.runMutation(api.refunds.updateRefundStatus, {
-          id: args.refundId,
-          status: "failed",
-          gatewayResponse: JSON.stringify(data),
-          notes: data.message ?? "Gateway refund failed",
-          token: "system",
-        });
-        return { success: false, error: data.message };
-      }
-    } catch (err: any) {
-      await ctx.runMutation(api.refunds.updateRefundStatus, {
-        id: args.refundId,
-        status: "failed",
-        gatewayResponse: err.message,
-        token: "system",
-      });
-      return { success: false, error: err.message };
-    }
   },
 });
