@@ -201,7 +201,16 @@ export default function WidgetPage() {
         <div className="mt-10">
           <h2 className="mb-3 text-lg font-semibold">Live Preview</h2>
           <div className="rounded-xl border border-border bg-[#f9fafb] p-1">
-            {mounted && <div dangerouslySetInnerHTML={{ __html: previewCode }} />}
+            {mounted && (
+              <iframe
+                srcDoc={`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head><body style="margin:0;background:#f9fafb">${previewCode}</body></html>`}
+                width="100%"
+                height="520"
+                className="rounded-lg border-0"
+                style={{ border: "none" }}
+                sandbox="allow-scripts"
+              />
+            )}
           </div>
         </div>
 
