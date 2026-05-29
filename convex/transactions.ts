@@ -168,18 +168,6 @@ async function sendStatusEmail(
 
   if (newStatus === "pending" && oldStatus === "failed") return; // re-open, no email
 
-  // Determine recipient: client email if available, otherwise admin
-  let recipientEmail = client?.email;
-  if (!recipientEmail && newStatus !== "pending") {
-    const admins = await ctx.db
-      .query("users")
-      .withIndex("by_role", (q: any) => q.eq("role", "admin"))
-      .collect();
-    recipientEmail = admins.find((a: any) => a.email)?.email;
-  }
-
-  if (!recipientEmail) return;
-
   if (newStatus === "pending" && oldStatus === "pending") {
     // New transaction — email admin
     const admins = await ctx.db
@@ -212,6 +200,8 @@ async function sendStatusEmail(
     }
     return;
   }
+
+  if (!client?.email) return;
 
   let subject = "";
   let body = "";
@@ -259,12 +249,18 @@ async function sendStatusEmail(
   if (!subject) return;
 
   try {
-    await fetch("https://api.resend.com/emails", {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({ from: EMAIL_FROM, to: [client.email], subject, html: body }),
     });
-  } catch {}
+    if (!res.ok) {
+      const err = await res.text();
+      console.error("Resend email failed:", res.status, err);
+    }
+  } catch (e) {
+    console.error("Resend email error:", e);
+  }
 }
 
 // ─── Mutations ────────────────────────────────────────────
