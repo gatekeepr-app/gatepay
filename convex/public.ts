@@ -65,6 +65,7 @@ export const submitTransaction = mutation({
       currency: args.currency ?? "BDT",
       occurredAt: args.occurredAt ?? now,
       method: args.method,
+      status: "pending",
       verifiedExternalName: businessName,
       verifiedExternalUserId: args.externalUserId,
       verifiedSource: args.source,
@@ -278,12 +279,14 @@ export const triggerVerifyBatch = mutation({
       }
 
       const payload = {
+        event: "verified" as const,
         businessName: displayName,
         sentAt: new Date().toISOString(),
         transactions: group.map((t) => ({
           transactionRef: t.transactionRef,
           amount: t.amount,
           currency: t.currency,
+          status: "verified" as const,
           occurredAt: new Date(t.occurredAt).toISOString(),
           method: t.method,
           externalUserId: t.verifiedExternalUserId,
@@ -311,7 +314,21 @@ export const triggerVerifyBatch = mutation({
         if (res.ok) {
           const verifiedAt = Date.now();
           for (const id of groupIds) {
-            await ctx.db.patch(id, { verifiedAt, verifiedSource: "callback", updatedAt: verifiedAt });
+            await ctx.db.patch(id, {
+              verifiedAt,
+              verifiedSource: "callback",
+              status: "verified",
+              statusChangedAt: verifiedAt,
+              statusChangedBy: "callback",
+              updatedAt: verifiedAt,
+            });
+            await ctx.db.insert("statusHistory", {
+              transactionId: id,
+              fromStatus: "pending",
+              toStatus: "verified",
+              changedBy: "callback",
+              changedAt: verifiedAt,
+            });
           }
 
           // Send confirmation emails to clients with linked transactions
@@ -332,7 +349,7 @@ export const triggerVerifyBatch = mutation({
                       body: JSON.stringify({
                         from: EMAIL_FROM,
                         to: [client.email],
-                        subject: `Payment Confirmed — ${project?.name ?? "Gatekeepr"}`,
+                        subject: `Payment Confirmed — ${project?.name ?? "GatePay"}`,
                         html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px;">
                           <h2 style="margin:0 0 16px;font-size:20px;">Payment Confirmed</h2>
                           <p style="color:#555;margin:0 0 24px;">Your payment has been verified by our team.</p>
@@ -343,7 +360,7 @@ export const triggerVerifyBatch = mutation({
                             ${project ? `<tr><td style="padding:8px 0;color:#888;">Project</td><td style="padding:8px 0;">${project.name} (${project.projectCode})</td></tr>` : ""}
                             <tr><td style="padding:8px 0;color:#888;">Verified at</td><td style="padding:8px 0;">${new Date(verifiedAt).toLocaleDateString()}</td></tr>
                           </table>
-                          <p style="color:#888;font-size:12px;margin:24px 0 0;">Gatekeepr — Payment Verification Platform</p>
+                          <p style="color:#888;font-size:12px;margin:24px 0 0;">GatePay — Payment Verification</p>
                         </div>`,
                       }),
                     });

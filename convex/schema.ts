@@ -126,6 +126,19 @@ export default defineSchema({
     clientId: v.optional(v.id("clients")),
     projectId: v.optional(v.id("projects")),
     invoiceId: v.optional(v.id("invoices")),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("verified"),
+      v.literal("reimbursed"),
+      v.literal("failed"),
+    ),
+    statusChangedAt: v.optional(v.number()),
+    statusChangedBy: v.optional(v.string()),
+    reimbursedAt: v.optional(v.number()),
+    reimbursedBy: v.optional(v.string()),
+    reimbursementAmount: v.optional(v.number()),
+    reimbursementRef: v.optional(v.string()),
+    reimbursementMethod: v.optional(v.string()),
     verifiedExternalName: v.optional(v.string()),
     verifiedExternalUserId: v.optional(v.string()),
     verifiedSource: v.optional(v.string()),
@@ -144,9 +157,22 @@ export default defineSchema({
     .index("by_transaction_ref", ["transactionRef"])
     .index("by_project", ["projectId"])
     .index("by_client", ["clientId"])
+    .index("by_status", ["status"])
     .index("by_verified_external_name", ["verifiedExternalName"])
     .index("by_verified_at", ["verifiedAt"])
     .index("by_occurred_at", ["occurredAt"]),
+
+  // Transaction status history
+  statusHistory: defineTable({
+    transactionId: v.id("transactions"),
+    fromStatus: v.string(),
+    toStatus: v.string(),
+    changedBy: v.string(),
+    changedAt: v.number(),
+    notes: v.optional(v.string()),
+  })
+    .index("by_transaction", ["transactionId"])
+    .index("by_changed_at", ["changedAt"]),
 
   // Leads
   leads: defineTable({

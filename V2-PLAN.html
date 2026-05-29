@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GatePay V2 — Transaction Status System</title>
+<style>
+  :root { --bg: #0a0a0a; --card: #141414; --border: #262626; --text: #e5e5e5; --muted: #737373; --primary: #3b82f6; --green: #22c55e; --yellow: #eab308; --red: #ef4444; --purple: #a855f7; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+  .container { max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+  .subtitle { color: var(--muted); margin-bottom: 40px; font-size: 0.95rem; }
+  h2 { font-size: 1.25rem; font-weight: 600; margin: 32px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 1rem; font-weight: 600; margin: 20px 0 10px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+  .badge-pending { background: #eab30820; color: var(--yellow); border: 1px solid #eab30840; }
+  .badge-verified { background: #22c55e20; color: var(--green); border: 1px solid #22c55e40; }
+  .badge-reimbursed { background: #a855f720; color: var(--purple); border: 1px solid #a855f740; }
+  .badge-failed { background: #ef444420; color: var(--red); border: 1px solid #ef444440; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  th { text-align: left; padding: 10px 12px; background: var(--bg); color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  code { background: #1a1a1a; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; font-family: 'SF Mono', Menlo, monospace; }
+  pre { background: #1a1a1a; border: 1px solid var(--border); border-radius: 8px; padding: 16px; overflow-x: auto; font-size: 0.8rem; line-height: 1.5; margin: 12px 0; }
+  .checklist { list-style: none; }
+  .checklist li { padding: 8px 0; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 10px; font-size: 0.9rem; }
+  .checklist li::before { content: "\2610"; color: var(--muted); flex-shrink: 0; }
+  .note { background: #3b82f610; border: 1px solid #3b82f630; border-radius: 8px; padding: 14px 16px; font-size: 0.85rem; margin: 12px 0; color: #93c5fd; }
+  .warn { background: #eab30810; border: 1px solid #eab30830; border-radius: 8px; padding: 14px 16px; font-size: 0.85rem; margin: 12px 0; color: #fde047; }
+  .section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .section-grid { grid-template-columns: 1fr; } }
+  .status-diagram { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 16px 0; }
+  .status-node { padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; border: 2px solid; }
+  .status-arrow { color: var(--muted); font-size: 1.2rem; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>GatePay V2 — Transaction Status System</h1>
+<p class="subtitle">Implementation plan for transaction lifecycle, notifications, callbacks, and reimbursement tracking</p>
+
+<!-- CURRENT STATE -->
+<h2>1. Current State</h2>
+<div class="card">
+  <p style="font-size:0.9rem; margin-bottom:12px;">Currently, transactions have a binary state: <code>verifiedAt</code> (null = pending, timestamp = verified). No reimbursed or failed state. Admin clicks "Trigger verify" which calls the callback URL and marks as verified.</p>
+  <table>
+    <tr><th>Field</th><th>Current (V1)</th><th>V2</th></tr>
+    <tr><td>Status tracking</td><td><code>verifiedAt: number | null</code></td><td><code>status: "pending" | "verified" | "reimbursed" | "failed"</code></td></tr>
+    <tr><td>Notifications</td><td>Email on verify only</td><td>Email on every status change + optional PWA push</td></tr>
+    <tr><td>Callback triggers</td><td>On verify only</td><td>On verify + reimbursed</td></tr>
+    <tr><td>Admin UI</td><td>Batch verify checkbox</td><td>Status dropdown per transaction + batch status change</td></tr>
+    <tr><td>Audit trail</td><td>None</td><td>statusHistory table (every change logged)</td></tr>
+    <tr><td>Reimbursement</td><td>Not tracked</td><td>Full reimbursement flow with amount tracking</td></tr>
+  </table>
+</div>
+
+<!-- STATUS FLOW -->
+<h2>2. Transaction Status Flow</h2>
+<div class="card">
+  <div class="status-diagram">
+    <div class="status-node" style="border-color: var(--yellow); color: var(--yellow);">Pending</div>
+    <span class="status-arrow">&rarr;</span>
+    <div class="status-node" style="border-color: var(--green); color: var(--green);">Verified</div>
+    <span class="status-arrow">&rarr;</span>
+    <div class="status-node" style="border-color: var(--purple); color: var(--purple);">Reimbursed</div>
+  </div>
+  <div class="status-diagram" style="margin-top: -8px;">
+    <div class="status-node" style="border-color: var(--yellow); color: var(--yellow);">Pending</div>
+    <span class="status-arrow">&rarr;</span>
+    <div class="status-node" style="border-color: var(--red); color: var(--red);">Failed</div>
+    <span class="status-arrow">&larr;</span>
+    <div class="status-node" style="border-color: var(--yellow); color: var(--yellow);">Pending</div>
+  </div>
+  <div class="note" style="margin-top: 16px;">
+    <strong>Rules:</strong><br>
+    &bull; <strong>Pending &rarr; Verified:</strong> Admin verifies, callback fires to partner, email sent to client<br>
+    &bull; <strong>Pending &rarr; Failed:</strong> Admin marks as failed, admin notification sent<br>
+    &bull; <strong>Verified &rarr; Reimbursed:</strong> Admin marks reimbursed, callback fires to partner, email sent to client. Reimbursement = accumulated client payments sent back to client<br>
+    &bull; <strong>Failed &rarr; Pending:</strong> Admin can re-open a failed transaction<br>
+    &bull; <strong>Reimbursed:</strong> Terminal state, cannot be reversed
+  </div>
+</div>
+
+<!-- SCHEMA CHANGES -->
+<h2>3. Schema Changes</h2>
+<div class="card">
+  <h3>3a. transactions table &mdash; new fields</h3>
+  <pre>// Add to convex/schema.ts &rarr; transactions
+status: v.union(
+  v.literal("pending"),
+  v.literal("verified"),
+  v.literal("reimbursed"),
+  v.literal("failed")
+),
+statusChangedAt: v.optional(v.number()),
+statusChangedBy: v.optional(v.string()),
+
+// Reimbursement fields
+reimbursedAt: v.optional(v.number()),
+reimbursedBy: v.optional(v.string()),
+reimbursementAmount: v.optional(v.number()),
+reimbursementRef: v.optional(v.string()),  // external refund ID
+reimbursementMethod: v.optional(v.string()), // bank transfer, bKash, etc.</pre>
+
+  <h3>3b. New table: statusHistory</h3>
+  <pre>// Add to convex/schema.ts
+statusHistory: defineTable({
+  transactionId: v.id("transactions"),
+  fromStatus: v.string(),
+  toStatus: v.string(),
+  changedBy: v.string(),
+  changedAt: v.number(),
+  notes: v.optional(v.string()),
+})
+  .index("by_transaction", ["transactionId"])
+  .index("by_changed_at", ["changedAt"]),</pre>
+
+  <h3>3c. Backfill strategy</h3>
+  <p style="font-size:0.85rem; color:var(--muted);">Run a one-time mutation: if <code>verifiedAt</code> is set &rarr; <code>status = "verified"</code>, else &rarr; <code>status = "pending"</code>. Also insert a statusHistory entry for each backfilled transaction.</p>
+</div>
+
+<!-- REIMBURSEMENT FLOW -->
+<h2>4. Reimbursement Flow</h2>
+<div class="card">
+  <p style="font-size:0.9rem; margin-bottom:12px;">GatePay collects payments from clients. Reimbursement means sending accumulated payment value back to the client (e.g. refund, payout, settlement).</p>
+  <h3>Reimbursement process</h3>
+  <ol style="margin-left: 20px; font-size: 0.9rem; line-height: 2;">
+    <li>Admin selects verified transaction(s) to reimburse</li>
+    <li>Admin enters reimbursement details: amount, method, external ref</li>
+    <li>GatePay calls partner callback with <code>event: "reimbursed"</code></li>
+    <li>GatePay sends client email: "Your payment of {amount} has been reimbursed"</li>
+    <li>Transaction status moves to "reimbursed" (terminal)</li>
+  </ol>
+
+  <h3>Reimbursement callback payload</h3>
+  <pre>{
+  "event": "reimbursed",
+  "business_name": "Nerdy",
+  "sent_at": "2026-05-27T16:30:00Z",
+  "transactions": [{
+    "transaction_ref": "INV-2026-00482",
+    "amount": 1499,
+    "currency": "BDT",
+    "status": "reimbursed",
+    "reimbursement_amount": 1499,
+    "reimbursement_method": "bank_transfer",
+    "reimbursement_ref": "REF-98234",
+    "occurred_at": "2026-05-27T10:00:00Z"
+  }]
+}</pre>
+</div>
+
+<!-- CALLBACK CHANGES -->
+<h2>5. Callback System Changes</h2>
+<div class="card">
+  <h3>V2 callback payload &mdash; unified for verify + reimburse</h3>
+  <pre>{
+  "event": "verified" | "reimbursed",
+  "business_name": "Nerdy",
+  "sent_at": "2026-05-27T16:30:00Z",
+  "transactions": [{
+    "transaction_ref": "INV-2026-00482",
+    "amount": 1499,
+    "currency": "BDT",
+    "status": "verified",
+    "occurred_at": "2026-05-27T10:00:00Z",
+    "method": "bkash",
+    "external_user_id": "user_8821",
+    "source": "web-checkout"
+  }]
+}</pre>
+  <div class="note">
+    <strong>Backward compatible:</strong> Partners that only handle "verified" events will continue to work. The new <code>event</code> field lets them distinguish verify vs reimburse. Partners should add handling for <code>event: "reimbursed"</code> to update their records.
+  </div>
+</div>
+
+<!-- NOTIFICATION SYSTEM -->
+<h2>6. Notification System</h2>
+<div class="section-grid">
+  <div class="card">
+    <h3>Email Notifications</h3>
+    <table>
+      <tr><th>Event</th><th>Recipient</th><th>Subject</th></tr>
+      <tr><td>New transaction (pending)</td><td>Admin</td><td>New Payment &mdash; {ref}</td></tr>
+      <tr><td>Verified</td><td>Client</td><td>Payment Confirmed &mdash; {project}</td></tr>
+      <tr><td>Reimbursed</td><td>Client</td><td>Payment Reimbursed &mdash; {project}</td></tr>
+      <tr><td>Failed</td><td>Admin</td><td>Payment Failed &mdash; {ref}</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h3>PWA Push Notifications (Admin)</h3>
+    <ul class="checklist">
+      <li>Service worker for push notifications</li>
+      <li>Instant alerts when new transaction arrives</li>
+      <li>Works even when dashboard tab is closed</li>
+      <li>Requires user opt-in (browser permission)</li>
+      <li>Falls back to in-app toast if PWA not supported</li>
+    </ul>
+    <div class="note">
+      <strong>Suggestion:</strong> Implement PWA push via <code>web-push</code> library + Convex action. Service worker registers on admin layout mount. Push triggered from <code>submitPayPayment</code> mutation. Browser shows native notification with transaction details + deep link to admin.
+    </div>
+  </div>
+</div>
+
+<!-- MUTATIONS -->
+<h2>7. New/Modified Mutations</h2>
+<div class="card">
+  <table>
+    <tr><th>Mutation</th><th>File</th><th>Purpose</th></tr>
+    <tr><td><code>updateStatus</code></td><td>transactions.ts</td><td>Change status, fire callback, send email, log history</td></tr>
+    <tr><td><code>reimburse</code></td><td>transactions.ts</td><td>Set reimbursed with amount/method/ref, fire callback, email</td></tr>
+    <tr><td><code>backfillStatus</code></td><td>transactions.ts</td><td>One-time: set status from verifiedAt for existing data</td></tr>
+    <tr><td><code>submitPayPayment</code></td><td>transactions.ts</td><td>Modified: set status="pending", send admin notification + PWA push</td></tr>
+    <tr><td><code>triggerVerifyBatch</code></td><td>public.ts</td><td>Modified: set status="verified", event="verified"</td></tr>
+  </table>
+
+  <h3>updateStatus mutation</h3>
+  <pre>export const updateStatus = mutation({
+  args: {
+    id: v.id("transactions"),
+    status: v.union(
+      v.literal("verified"),
+      v.literal("reimbursed"),
+      v.literal("failed"),
+      v.literal("pending"),  // for re-open from failed
+    ),
+    notes: v.optional(v.string()),
+    token: v.string(),
+  },
+  handler: async (ctx, args) =&gt; {
+    await requireAdmin(ctx, args.token);
+    const tx = await ctx.db.get(args.id);
+    if (!tx) throw new Error("not_found");
+
+    const now = Date.now();
+    const oldStatus = (tx as any).status ?? "pending";
+
+    // Update transaction
+    await ctx.db.patch(args.id, {
+      status: args.status,
+      statusChangedAt: now,
+      statusChangedBy: args.token,
+      updatedAt: now,
+    });
+
+    // Log history
+    await ctx.db.insert("statusHistory", {
+      transactionId: args.id,
+      fromStatus: oldStatus,
+      toStatus: args.status,
+      changedBy: args.token,
+      changedAt: now,
+      notes: args.notes,
+    });
+
+    // Fire callback if verified or reimbursed
+    if (args.status === "verified" || args.status === "reimbursed") {
+      await fireCallback(ctx, tx, args.status as "verified" | "reimbursed");
+    }
+
+    // Send email
+    await sendStatusEmail(ctx, tx, args.status, oldStatus);
+
+    return { ok: true, from: oldStatus, to: args.status };
+  },
+});</pre>
+
+  <h3>reimburse mutation</h3>
+  <pre>export const reimburse = mutation({
+  args: {
+    id: v.id("transactions"),
+    amount: v.number(),
+    method: v.string(),
+    reimbursementRef: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    token: v.string(),
+  },
+  handler: async (ctx, args) =&gt; {
+    await requireAdmin(ctx, args.token);
+    const tx = await ctx.db.get(args.id);
+    if (!tx) throw new Error("not_found");
+    if ((tx as any).status === "reimbursed") throw new Error("already_reimbursed");
+
+    const now = Date.now();
+    const oldStatus = (tx as any).status ?? "pending";
+
+    await ctx.db.patch(args.id, {
+      status: "reimbursed",
+      statusChangedAt: now,
+      statusChangedBy: args.token,
+      reimbursedAt: now,
+      reimbursedBy: args.token,
+      reimbursementAmount: args.amount,
+      reimbursementRef: args.reimbursementRef,
+      reimbursementMethod: args.method,
+      updatedAt: now,
+    });
+
+    await ctx.db.insert("statusHistory", {
+      transactionId: args.id,
+      fromStatus: oldStatus,
+      toStatus: "reimbursed",
+      changedBy: args.token,
+      changedAt: now,
+      notes: `Reimbursed ${tx.currency} ${args.amount} via ${args.method}${args.notes ? ` — ${args.notes}` : ""}`,
+    });
+
+    // Fire callback with event: "reimbursed"
+    await fireCallback(ctx, tx, "reimbursed");
+
+    // Email client
+    await sendStatusEmail(ctx, tx, "reimbursed", oldStatus);
+
+    return { ok: true };
+  },
+});</pre>
+</div>
+
+<!-- ADMIN UI -->
+<h2>8. Admin UI Changes</h2>
+<div class="section-grid">
+  <div class="card">
+    <h3>Transaction List Page</h3>
+    <ul class="checklist">
+      <li>Status filter tabs: All | Pending | Verified | Reimbursed | Failed</li>
+      <li>Colored status badges per row</li>
+      <li>Batch status change (select &rarr; set status)</li>
+      <li>Quick-action dropdown per row</li>
+      <li>Count badges on each tab</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Transaction Detail Page</h3>
+    <ul class="checklist">
+      <li>Status dropdown: change status inline with confirmation</li>
+      <li>Reimbursement form: amount, method, external ref</li>
+      <li>Status history timeline (every change logged)</li>
+      <li>Callback log: last callback response + status</li>
+      <li>Email log: last email sent + status</li>
+    </ul>
+  </div>
+</div>
+
+<!-- PWA IMPLEMENTATION -->
+<h2>9. PWA Push Notifications</h2>
+<div class="card">
+  <h3>Implementation approach</h3>
+  <table>
+    <tr><th>Component</th><th>Technology</th><th>Purpose</th></tr>
+    <tr><td>Service Worker</td><td><code>next-pwa</code> or manual</td><td>Receives push, shows native notification</td></tr>
+    <tr><td>Push subscription</td><td>Web Push API</td><td>Browser generates subscription endpoint</td></tr>
+    <tr><td>Push trigger</td><td>Convex action</td><td>Server sends push via <code>web-push</code> library</td></tr>
+    <tr><td>Subscription storage</td><td>Convex table</td><td>Store admin push subscriptions</td></tr>
+    <tr><td>VAPID keys</td><td>Env vars</td><td><code>VAPID_PUBLIC_KEY</code>, <code>VAPID_PRIVATE_KEY</code></td></tr>
+  </table>
+
+  <h3>New table: pushSubscriptions</h3>
+  <pre>pushSubscriptions: defineTable({
+  userId: v.id("users"),
+  endpoint: v.string(),
+  p256dh: v.string(),
+  auth: v.string(),
+  createdAt: v.number(),
+})
+  .index("by_user", ["userId"])
+  .index("by_endpoint", ["endpoint"]),</pre>
+
+  <h3>Flow</h3>
+  <ol style="margin-left: 20px; font-size: 0.9rem; line-height: 2;">
+    <li>Admin logs in &rarr; service worker registers &rarr; requests notification permission</li>
+    <li>If granted, browser generates push subscription &rarr; stored in <code>pushSubscriptions</code></li>
+    <li>When <code>submitPayPayment</code> fires &rarr; Convex action sends push to all admin subscriptions</li>
+    <li>Service worker receives push &rarr; shows native notification with transaction details</li>
+    <li>Click notification &rarr; opens <code>/admin/transactions/{id}</code></li>
+  </ol>
+</div>
+
+<!-- EMAIL TEMPLATES -->
+<h2>10. Email Templates</h2>
+<div class="section-grid">
+  <div class="card">
+    <h3>New Transaction (Admin)</h3>
+    <pre>Subject: New Payment — {ref}
+
+Hi,
+
+A new payment has been received:
+
+  Transaction: {ref}
+  Amount: {currency} {amount}
+  Method: {method}
+  Payer: {payer_name}
+  Project: {project_name}
+
+Review it in the dashboard:
+  /admin/transactions/{id}
+
+— GatePay</pre>
+  </div>
+  <div class="card">
+    <h3>Verified (Client)</h3>
+    <pre>Subject: Payment Confirmed — {project}
+
+Hi,
+
+Your payment has been verified:
+
+  Transaction: {ref}
+  Amount: {currency} {amount}
+  Period: {period}
+  Status: Verified
+
+Thank you for your payment.
+
+— GatePay</pre>
+  </div>
+  <div class="card">
+    <h3>Reimbursed (Client)</h3>
+    <pre>Subject: Payment Reimbursed — {project}
+
+Hi,
+
+Your payment has been reimbursed:
+
+  Transaction: {ref}
+  Original amount: {currency} {amount}
+  Reimbursed: {currency} {reimbursement_amount}
+  Method: {reimbursement_method}
+  Reference: {reimbursement_ref}
+
+The funds have been sent to you.
+
+— GatePay</pre>
+  </div>
+  <div class="card">
+    <h3>Failed (Admin)</h3>
+    <pre>Subject: Payment Failed — {ref}
+
+Hi,
+
+A payment has been marked as failed:
+
+  Transaction: {ref}
+  Amount: {currency} {amount}
+  Reason: {notes}
+
+Review: /admin/transactions/{id}
+
+— GatePay</pre>
+  </div>
+</div>
+
+<!-- IMPLEMENTATION ORDER -->
+<h2>11. Implementation Order</h2>
+<div class="card">
+  <table>
+    <tr><th>#</th><th>Task</th><th>Files</th><th>Est.</th></tr>
+    <tr><td>1</td><td>Add <code>status</code> field to schema + <code>statusHistory</code> table</td><td>schema.ts</td><td>20min</td></tr>
+    <tr><td>2</td><td>Backfill mutation (set status from verifiedAt)</td><td>transactions.ts</td><td>20min</td></tr>
+    <tr><td>3</td><td><code>updateStatus</code> mutation (callback + email + history)</td><td>transactions.ts</td><td>1hr</td></tr>
+    <tr><td>4</td><td><code>reimburse</code> mutation (amount/method/ref + callback + email)</td><td>transactions.ts</td><td>45min</td></tr>
+    <tr><td>5</td><td>Modify <code>submitPayPayment</code> to set status + admin notification</td><td>transactions.ts</td><td>30min</td></tr>
+    <tr><td>6</td><td>Modify <code>triggerVerifyBatch</code> to set status + event field</td><td>public.ts</td><td>30min</td></tr>
+    <tr><td>7</td><td>Status filter tabs + badges on transaction list</td><td>transactions/page.tsx</td><td>45min</td></tr>
+    <tr><td>8</td><td>Status dropdown + reimbursement form on transaction detail</td><td>transactions/[id]/page.tsx</td><td>1hr</td></tr>
+    <tr><td>9</td><td>Status history timeline on transaction detail</td><td>transactions/[id]/page.tsx</td><td>30min</td></tr>
+    <tr><td>10</td><td>Batch status change UI on transaction list</td><td>transactions/page.tsx</td><td>30min</td></tr>
+    <tr><td>11</td><td>Email templates for all status changes</td><td>public.ts, transactions.ts</td><td>30min</td></tr>
+    <tr><td>12</td><td>PWA push notifications (service worker + subscriptions)</td><td>layout.tsx, transactions.ts, new table</td><td>2hr</td></tr>
+    <tr><td>13</td><td>End-to-end testing</td><td>&mdash;</td><td>1hr</td></tr>
+  </table>
+  <p style="margin-top: 12px; font-size: 0.85rem; color: var(--muted);"><strong>Total estimate:</strong> ~8.5 hours</p>
+</div>
+
+<!-- API DOCS -->
+<h2>12. API Docs Updates</h2>
+<div class="card">
+  <h3>Changes to public API</h3>
+  <ul class="checklist">
+    <li>Add <code>event</code> field to callback payload (values: "verified", "reimbursed")</li>
+    <li>Add <code>status</code> field to each transaction in callback payload</li>
+    <li>Add <code>reimbursement_amount</code>, <code>reimbursement_method</code>, <code>reimbursement_ref</code> for reimbursed events</li>
+    <li>Document new error codes for status transitions</li>
+    <li>Update OpenAPI spec with new fields</li>
+  </ul>
+</div>
+
+</div>
+</body>
+</html>
