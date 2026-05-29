@@ -8,7 +8,7 @@ export const getApiLogStats = query({
     const logs = await ctx.db
       .query("apiLogs")
       .withIndex("by_created_at", (q) => q.gte("createdAt", cutoff))
-      .collect();
+      .take(500);
 
     const total = logs.length;
     const byRoute: Record<string, { count: number; errors: number; totalMs: number }> = {};

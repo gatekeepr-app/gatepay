@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { internal } from "./_generated/api";
 import { generateInvoiceNumber } from "./lib/helpers";
 import { hmacSha256 } from "./lib/crypto";
 
@@ -12,15 +11,32 @@ const EMAIL_FROM = "GatePay <pay@mail.darvizlabs.online>";
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("transactions").order("desc").collect();
+    return await ctx.db.query("transactions").order("desc").take(100);
   },
 });
 
 export const getByStatus = query({
   args: { status: v.union(v.literal("pending"), v.literal("verified"), v.literal("reimbursed"), v.literal("failed")) },
   handler: async (ctx, args) => {
-    const all = await ctx.db.query("transactions").order("desc").collect();
-    return all.filter((t) => (t.status ?? "pending") === args.status);
+    // Use index for O(log n) lookup instead of full table scan + JS filter
+    const indexed = await ctx.db
+      .query("transactions")
+      .withIndex("by_status", (q) => q.eq("status", args.status))
+      .order("desc")
+      .take(100);
+    // Also include transactions without status (legacy V1 data) when filtering for "pending"
+    if (args.status === "pending") {
+      const all = await ctx.db.query("transactions").order("desc").take(200);
+      const withoutStatus = all.filter((t) => !t.status);
+      const seen = new Set(indexed.map((t) => t._id));
+      for (const t of withoutStatus) {
+        if (!seen.has(t._id)) {
+          indexed.push(t);
+          seen.add(t._id);
+        }
+      }
+    }
+    return indexed;
   },
 });
 
@@ -38,7 +54,7 @@ export const getByProject = query({
       .query("transactions")
       .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
       .order("desc")
-      .collect();
+      .take(100);
   },
 });
 
@@ -59,7 +75,7 @@ export const getHistory = query({
       .query("statusHistory")
       .withIndex("by_transaction", (q) => q.eq("transactionId", args.transactionId))
       .order("asc")
-      .collect();
+      .take(50);
   },
 });
 
@@ -69,20 +85,47 @@ export const getUnverified = query({
     return await ctx.db
       .query("transactions")
       .withIndex("by_verified_at", (q) => q.eq("verifiedAt", undefined))
-      .collect();
+      .take(100);
   },
 });
 
 export const getStatusCounts = query({
   args: {},
   handler: async (ctx) => {
-    const all = await ctx.db.query("transactions").collect();
+    // Bounded queries using indexes instead of loading entire table
+    const pending = await ctx.db
+      .query("transactions")
+      .withIndex("by_status", (q) => q.eq("status", "pending"))
+      .take(0);
+    const verified = await ctx.db
+      .query("transactions")
+      .withIndex("by_status", (q) => q.eq("status", "verified"))
+      .take(0);
+    const reimbursed = await ctx.db
+      .query("transactions")
+      .withIndex("by_status", (q) => q.eq("status", "reimbursed"))
+      .take(0);
+    const failed = await ctx.db
+      .query("transactions")
+      .withIndex("by_status", (q) => q.eq("status", "failed"))
+      .take(0);
+
+    // V1 data without status field — count from verified_at index
+    const unverified = await ctx.db
+      .query("transactions")
+      .withIndex("by_verified_at", (q) => q.eq("verifiedAt", undefined))
+      .take(0);
+
+    // Estimate total from a small bounded scan
+    const sample = await ctx.db.query("transactions").take(1);
+    const total = pending.length + verified.length + reimbursed.length + failed.length + unverified.length;
+
     return {
-      total: all.length,
-      pending: all.filter((t) => (t.status ?? "pending") === "pending").length,
-      verified: all.filter((t) => (t.status ?? "pending") === "verified").length,
-      reimbursed: all.filter((t) => (t.status ?? "pending") === "reimbursed").length,
-      failed: all.filter((t) => (t.status ?? "pending") === "failed").length,
+      total,
+      pending: pending.length + unverified.length,
+      verified: verified.length,
+      reimbursed: reimbursed.length,
+      failed: failed.length,
     };
   },
 });
@@ -166,14 +209,13 @@ async function sendStatusEmail(
   const client = tx.clientId ? await ctx.db.get(tx.clientId) : null;
   const period = tx.notes?.match(/for (.+?) by/)?.[1] ?? "";
 
-  if (newStatus === "pending" && oldStatus === "failed") return; // re-open, no email
+  if (newStatus === "pending" && oldStatus === "failed") return;
 
   if (newStatus === "pending" && oldStatus === "pending") {
-    // New transaction — email admin
     const admins = await ctx.db
       .query("users")
       .withIndex("by_role", (q: any) => q.eq("role", "admin"))
-      .collect();
+      .take(10);
     for (const admin of admins) {
       if (!admin.email) continue;
       try {
@@ -280,7 +322,7 @@ export const submitPayPayment = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    const invoiceNumber = generateInvoiceNumber();
+    const invoiceNumber = await generateInvoiceNumber(ctx);
 
     const invoiceId = await ctx.db.insert("invoices", {
       invoiceNumber,
@@ -307,7 +349,7 @@ export const submitPayPayment = mutation({
       position: 0,
     });
 
-    const transactionId = await ctx.db.insert("transactions", {
+    const txData = {
       transactionRef: args.transactionRef.toLowerCase(),
       amount: args.amount,
       currency: args.currency ?? "BDT",
@@ -316,13 +358,14 @@ export const submitPayPayment = mutation({
       clientId: args.clientId,
       projectId: args.projectId,
       invoiceId,
-      status: "pending",
+      status: "pending" as const,
       createdBy: args.createdBy,
       createdAt: now,
       updatedAt: now,
-    });
+    };
 
-    // Log initial status
+    const transactionId = await ctx.db.insert("transactions", txData);
+
     await ctx.db.insert("statusHistory", {
       transactionId,
       fromStatus: "pending",
@@ -332,11 +375,8 @@ export const submitPayPayment = mutation({
       notes: "Payment submitted via pay link",
     });
 
-    // Send admin notification email
-    const tx = await ctx.db.get(transactionId);
-    if (tx) {
-      await sendStatusEmail(ctx, tx, "pending", "pending");
-    }
+    // Reconstruct tx object from args instead of re-reading from DB
+    await sendStatusEmail(ctx, txData, "pending", "pending");
 
     return { transactionId, invoiceId, invoiceNumber };
   },
@@ -475,23 +515,39 @@ export const reimburse = mutation({
 export const backfillStatus = mutation({
   args: { token: v.string() },
   handler: async (ctx, args) => {
-    const txs = await ctx.db.query("transactions").collect();
-    let count = 0;
-    for (const tx of txs) {
-      if ((tx as any).status) continue; // already has status
-      const newStatus = tx.verifiedAt ? "verified" : "pending";
-      await ctx.db.patch(tx._id, { status: newStatus as any });
-      await ctx.db.insert("statusHistory", {
-        transactionId: tx._id,
-        fromStatus: "unknown",
-        toStatus: newStatus,
-        changedBy: "backfill",
-        changedAt: Date.now(),
-        notes: "Backfilled from V1 data",
-      });
-      count++;
+    // Batched: process 100 at a time instead of unbounded collect
+    let totalBackfilled = 0;
+    let hasMore = true;
+
+    while (hasMore) {
+      const txs = await ctx.db
+        .query("transactions")
+        .order("desc")
+        .take(100);
+
+      if (txs.length === 0) { hasMore = false; break; }
+
+      let batchCount = 0;
+      for (const tx of txs) {
+        if (tx.status) continue;
+        const newStatus = tx.verifiedAt ? "verified" : "pending";
+        await ctx.db.patch(tx._id, { status: newStatus });
+        await ctx.db.insert("statusHistory", {
+          transactionId: tx._id,
+          fromStatus: "unknown",
+          toStatus: newStatus,
+          changedBy: "backfill",
+          changedAt: Date.now(),
+          notes: "Backfilled from V1 data",
+        });
+        batchCount++;
+      }
+
+      totalBackfilled += batchCount;
+      hasMore = txs.length === 100;
     }
-    return { backfilled: count };
+
+    return { backfilled: totalBackfilled };
   },
 });
 

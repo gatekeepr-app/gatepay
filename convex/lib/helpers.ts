@@ -1,19 +1,35 @@
 import { v } from "convex/values";
+import type { MutationCtx } from "../_generated/server";
 
-export const projectCodeSequence = { value: 0 };
-export const invoiceNumberSequence = { value: 0 };
-
-export function generateProjectCode(): string {
-  projectCodeSequence.value += 1;
-  const n = projectCodeSequence.value;
+export async function generateProjectCode(ctx: MutationCtx): Promise<string> {
   const year = new Date().getFullYear();
+  const name = `projectCode-${year}`;
+  const existing = await ctx.db
+    .query("counters")
+    .withIndex("by_name", (q) => q.eq("name", name))
+    .first();
+  const n = (existing?.value ?? 0) + 1;
+  if (existing) {
+    await ctx.db.patch(existing._id, { value: n });
+  } else {
+    await ctx.db.insert("counters", { name, value: n });
+  }
   return `GK-${year}-${String(n).padStart(4, "0")}`;
 }
 
-export function generateInvoiceNumber(): string {
-  invoiceNumberSequence.value += 1;
-  const n = invoiceNumberSequence.value;
+export async function generateInvoiceNumber(ctx: MutationCtx): Promise<string> {
   const year = new Date().getFullYear();
+  const name = `invoiceNumber-${year}`;
+  const existing = await ctx.db
+    .query("counters")
+    .withIndex("by_name", (q) => q.eq("name", name))
+    .first();
+  const n = (existing?.value ?? 0) + 1;
+  if (existing) {
+    await ctx.db.patch(existing._id, { value: n });
+  } else {
+    await ctx.db.insert("counters", { name, value: n });
+  }
   return `INV-${year}-${String(n).padStart(4, "0")}`;
 }
 

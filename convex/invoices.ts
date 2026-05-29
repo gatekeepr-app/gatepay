@@ -5,7 +5,7 @@ import { generateInvoiceNumber } from "./lib/helpers";
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("invoices").order("desc").collect();
+    return await ctx.db.query("invoices").order("desc").take(100);
   },
 });
 
@@ -49,7 +49,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    const invoiceNumber = generateInvoiceNumber();
+    const invoiceNumber = await generateInvoiceNumber(ctx);
     const taxAmount = args.subtotal * (args.taxRate / 100);
     const total = args.subtotal + taxAmount;
 

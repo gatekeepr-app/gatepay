@@ -5,7 +5,7 @@ import { randomHex } from "./lib/crypto";
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("invitations").order("desc").collect();
+    return await ctx.db.query("invitations").order("desc").take(100);
   },
 });
 

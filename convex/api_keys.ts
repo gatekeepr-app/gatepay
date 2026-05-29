@@ -7,7 +7,7 @@ export const list = query({
   args: { token: v.string() },
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.token);
-    const keys = await ctx.db.query("apiKeys").order("desc").collect();
+    const keys = await ctx.db.query("apiKeys").order("desc").take(100);
     return keys.map((k) => ({
       _id: k._id,
       name: k.name,

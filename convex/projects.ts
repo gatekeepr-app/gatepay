@@ -5,7 +5,7 @@ import { generateProjectCode, generatePayCode } from "./lib/helpers";
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("projects").order("desc").collect();
+    return await ctx.db.query("projects").order("desc").take(100);
   },
 });
 
@@ -37,7 +37,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    const projectCode = generateProjectCode();
+    const projectCode = await generateProjectCode(ctx);
     const payCode = generatePayCode();
     const id = await ctx.db.insert("projects", {
       projectCode,

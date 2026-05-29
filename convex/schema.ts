@@ -182,7 +182,9 @@ export default defineSchema({
     message: v.string(),
     status: v.string(),
     createdAt: v.number(),
-  }),
+  })
+    .index("by_status", ["status"])
+    .index("by_created_at", ["createdAt"]),
 
   // Invitations
   invitations: defineTable({
@@ -216,6 +218,13 @@ export default defineSchema({
     .index("by_key_hash", ["keyHash"])
     .index("by_business_name", ["businessName"])
     .index("by_revoked", ["revokedAt"]),
+
+  // Counters (for sequence generation)
+  counters: defineTable({
+    name: v.string(),
+    value: v.number(),
+  })
+    .index("by_name", ["name"]),
 
   // Rate limits
   rateLimits: defineTable({
