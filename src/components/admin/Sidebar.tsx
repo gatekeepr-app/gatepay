@@ -38,7 +38,7 @@ function SidebarContent({
         </Link>
         <div className="mt-1 text-xs text-muted-foreground">Workspace</div>
       </div>
-      <nav className="flex-1 space-y-1 p-3">
+      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {items.map((item) => {
           const active = item.exact ? path === item.to : path.startsWith(item.to);
           const Icon = item.icon;
@@ -135,7 +135,7 @@ export function Sidebar({
       </aside>
 
       {/* Desktop sidebar */}
-      <aside className="hidden h-screen w-60 shrink-0 border-r border-border bg-card md:flex md:flex-col">
+      <aside className="hidden h-screen w-60 shrink-0 overflow-y-auto border-r border-border bg-card md:flex md:flex-col">
         <SidebarContent user={user} onSignOut={onSignOut} />
       </aside>
     </>
