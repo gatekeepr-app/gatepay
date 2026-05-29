@@ -19,10 +19,11 @@ Full-stack payment verification platform. Next.js 16 App Router + Turbopack + Co
 - All page components use `"use client"` for Convex hooks
 
 ### Convex Backend
-- Schema: `convex/schema.ts` (13 tables including `statusHistory`, `counters`)
+- Schema: `convex/schema.ts` (14 tables including `statusHistory`, `counters`, `refunds`)
 - Auth: `convex/auth.ts` (signUp, signIn, getMe with DB session store)
 - Public API: `convex/public.ts` (verifyTransaction, submitTransaction, triggerVerifyBatch)
 - Transactions: `convex/transactions.ts` (status lifecycle: pending/verified/reimbursed/failed)
+- Refunds: `convex/refunds.ts` (initiate, track, process via SSLCommerz gateway)
 - Rate limiting: DB-based in `convex/rate_limit.ts`
 - All mutations/queries in `convex/` submodules by domain
 - DB-backed counters in `counters` table for project codes and invoice numbers
@@ -32,6 +33,14 @@ Full-stack payment verification platform. Next.js 16 App Router + Turbopack + Co
 - `statusHistory` table logs every change with timestamp, who, and notes
 - Callbacks fire on verify (`event: "verified"`) and reimburse (`event: "reimbursed"`)
 - Emails sent on every status change (admin notification on new, client on verify/reimburse/fail)
+
+### Refund System
+- `refunds` table tracks refund attempts with status (pending/processing/completed/failed/cancelled)
+- `initiateRefund` mutation: validates transaction is verified, creates refund record
+- `processGatewayRefund` action: calls SSLCommerz refund API (sandbox simulation + production)
+- `updateRefundStatus` mutation: updates refund status and transaction status on completion
+- UI: "Initiate Refund" button on verified transactions, refund history display
+- Env vars: `SSLCOMMERZ_URL`, `SSLCOMMERZ_STORE_ID`, `SSLCOMMERZ_STORE_PASS`
 
 ### Convex Client Integration
 - Client provider: `src/integrations/convex/provider.tsx`

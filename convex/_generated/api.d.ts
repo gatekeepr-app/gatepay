@@ -23,6 +23,7 @@ import type * as lib_helpers from "../lib/helpers.js";
 import type * as projects from "../projects.js";
 import type * as public_ from "../public.js";
 import type * as rate_limit from "../rate_limit.js";
+import type * as refunds from "../refunds.js";
 import type * as seed from "../seed.js";
 import type * as transactions from "../transactions.js";
 import type * as users from "../users.js";
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   projects: typeof projects;
   public: typeof public_;
   rate_limit: typeof rate_limit;
+  refunds: typeof refunds;
   seed: typeof seed;
   transactions: typeof transactions;
   users: typeof users;

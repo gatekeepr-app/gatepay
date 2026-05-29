@@ -2,7 +2,7 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, Clock, FileText, ExternalLink, RotateCcw } from "lucide-react";
@@ -47,7 +47,12 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
   const updateStatus = useMutation(api.transactions.updateStatus);
   const reimburse = useMutation(api.transactions.reimburse);
   const deleteTx = useMutation(api.transactions.remove);
+  const refunds = useQuery(api.refunds.getByTransaction, { transactionId: id as any });
+  const initiateRefund = useMutation(api.refunds.initiateRefund);
+  const processRefund = useAction(api.refunds.processGatewayRefund);
   const [reimbOpen, setReimbOpen] = useState(false);
+  const [refundOpen, setRefundOpen] = useState(false);
+  const [refundForm, setRefundForm] = useState({ amount: 0, method: "sslcommerz", notes: "" });
   const [reimbForm, setReimbForm] = useState({ amount: 0, method: "bank_transfer", reimbursementRef: "", notes: "" });
 
   if (!tx) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
@@ -88,6 +93,31 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
     if (!confirm("Delete this transaction? This cannot be undone.")) return;
     await deleteTx({ id: id as any });
     toast.success("Transaction deleted");
+  };
+
+  const handleInitiateRefund = async () => {
+    if (refundForm.amount <= 0) { toast.error("Amount must be > 0"); return; }
+    try {
+      const result = await initiateRefund({
+        transactionId: id as any,
+        amount: refundForm.amount,
+        method: refundForm.method,
+        notes: refundForm.notes || undefined,
+        token: getStoredToken() ?? "",
+      });
+      toast.success("Refund initiated — processing via gateway");
+      setRefundOpen(false);
+      setRefundForm({ amount: 0, method: "sslcommerz", notes: "" });
+      // Auto-process via gateway
+      try {
+        await processRefund({ refundId: result.refundId });
+        toast.success("Refund completed via gateway");
+      } catch {
+        // Gateway processing happens async
+      }
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to initiate refund");
+    }
   };
 
   const payerName = tx.notes?.match(/by (.+?)(?:\(|$)/)?.[1] ?? "—";
@@ -281,6 +311,97 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
           )}
         </div>
       </section>
+
+      {/* Refunds */}
+      {(tx.status ?? "pending") === "verified" && (
+        <section className="mt-4 rounded-xl border border-border bg-card p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Refunds</h2>
+            <button
+              onClick={() => {
+                setRefundForm({ ...refundForm, amount: tx.amount });
+                setRefundOpen(true);
+              }}
+              className="rounded-full bg-red-600 px-4 py-1.5 text-xs font-medium text-white hover:opacity-90"
+            >
+              Initiate Refund
+            </button>
+          </div>
+          {refunds && refunds.length > 0 ? (
+            <div className="mt-4 space-y-3">
+              {refunds.map((r) => (
+                <div key={r._id} className="flex items-center justify-between rounded-lg border border-border p-3">
+                  <div>
+                    <div className="text-sm font-medium">{formatMoney(r.amount, r.currency)} via {r.method}</div>
+                    <div className="text-xs text-muted-foreground">{formatDate(new Date(r.createdAt))} — {r.status}</div>
+                    {r.gatewayRef && <div className="text-xs text-muted-foreground font-mono">{r.gatewayRef}</div>}
+                  </div>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                    r.status === "completed" ? "bg-green-100 text-green-700" :
+                    r.status === "failed" ? "bg-red-100 text-red-700" :
+                    r.status === "cancelled" ? "bg-gray-100 text-gray-700" :
+                    "bg-yellow-100 text-yellow-700"
+                  }`}>
+                    {r.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm text-muted-foreground">No refunds initiated.</p>
+          )}
+        </section>
+      )}
+
+      {/* Refund form */}
+      {refundOpen && (
+        <section className="mt-4 rounded-xl border border-red-200 bg-red-50 p-5 dark:border-red-800 dark:bg-red-950/30">
+          <h2 className="text-sm font-semibold">Initiate Refund</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Process a refund through the payment gateway (SSLCommerz).
+          </p>
+          <div className="mt-4 space-y-3">
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-muted-foreground">Refund amount *</span>
+              <input
+                type="number"
+                value={refundForm.amount}
+                onChange={(e) => setRefundForm({ ...refundForm, amount: parseFloat(e.target.value) || 0 })}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/30"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-muted-foreground">Gateway</span>
+              <select
+                value={refundForm.method}
+                onChange={(e) => setRefundForm({ ...refundForm, method: e.target.value })}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+              >
+                <option value="sslcommerz">SSLCommerz</option>
+                <option value="eps">EPS</option>
+                <option value="manual">Manual (bank transfer)</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-muted-foreground">Notes</span>
+              <textarea
+                value={refundForm.notes}
+                onChange={(e) => setRefundForm({ ...refundForm, notes: e.target.value })}
+                rows={2}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/30"
+              />
+            </label>
+            <div className="flex gap-2">
+              <button onClick={handleInitiateRefund} className="rounded-full bg-red-600 px-5 py-2 text-sm font-medium text-white hover:opacity-90">
+                Process Refund
+              </button>
+              <button onClick={() => setRefundOpen(false)} className="rounded-full border border-border px-4 py-2 text-sm hover:bg-muted">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Status history */}
       {history && history.length > 0 && (

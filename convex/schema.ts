@@ -174,6 +174,30 @@ export default defineSchema({
     .index("by_transaction", ["transactionId"])
     .index("by_changed_at", ["changedAt"]),
 
+  // Refunds
+  refunds: defineTable({
+    transactionId: v.id("transactions"),
+    amount: v.number(),
+    currency: v.string(),
+    method: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed"),
+      v.literal("cancelled"),
+    ),
+    gatewayRef: v.optional(v.string()),
+    gatewayResponse: v.optional(v.string()),
+    initiatedBy: v.string(),
+    notes: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_transaction", ["transactionId"])
+    .index("by_status", ["status"])
+    .index("by_created_at", ["createdAt"]),
+
   // Leads
   leads: defineTable({
     name: v.string(),
