@@ -19,11 +19,19 @@ Full-stack payment verification platform. Next.js 16 App Router + Turbopack + Co
 - All page components use `"use client"` for Convex hooks
 
 ### Convex Backend
-- Schema: `convex/schema.ts` (11 tables)
+- Schema: `convex/schema.ts` (13 tables including `statusHistory`, `counters`)
 - Auth: `convex/auth.ts` (signUp, signIn, getMe with DB session store)
 - Public API: `convex/public.ts` (verifyTransaction, submitTransaction, triggerVerifyBatch)
+- Transactions: `convex/transactions.ts` (status lifecycle: pending/verified/reimbursed/failed)
 - Rate limiting: DB-based in `convex/rate_limit.ts`
 - All mutations/queries in `convex/` submodules by domain
+- DB-backed counters in `counters` table for project codes and invoice numbers
+
+### Transaction Status Lifecycle
+- Statuses: `pending` → `verified` → `reimbursed` (terminal) / `failed` (can re-open to pending)
+- `statusHistory` table logs every change with timestamp, who, and notes
+- Callbacks fire on verify (`event: "verified"`) and reimburse (`event: "reimbursed"`)
+- Emails sent on every status change (admin notification on new, client on verify/reimburse/fail)
 
 ### Convex Client Integration
 - Client provider: `src/integrations/convex/provider.tsx`
@@ -51,10 +59,11 @@ Full-stack payment verification platform. Next.js 16 App Router + Turbopack + Co
 - `paymentSubmissionSchema` for bKash payment submissions
 
 ### Email (Resend)
-- Confirmation emails sent after admin verifies payment
+- Admin notification when new transaction received
+- Client email on status change (verified, reimbursed, failed)
 - API key: `RESEND_API_KEY` env var
 - From: `GatePay <pay@mail.darvizlabs.online>`
-- Called from `convex/public.ts` in `triggerVerifyBatch`
+- Called from `convex/transactions.ts` in `sendStatusEmail` helper
 
 ### API (public)
 - `POST /api/v1/public/transactions/verify` — Bearer token auth

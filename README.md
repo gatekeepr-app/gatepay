@@ -89,13 +89,18 @@ src/                    # Shared client code
 
 ## Key Features
 
+- **Transaction status lifecycle**: Pending → Verified → Reimbursed / Failed with full audit trail
 - **Auto-invoicing**: `submitPayPayment` creates a transaction + invoice atomically when a client pays
-- **Payment confirmation emails**: Resend integration sends GatePay confirmation to client after admin verifies payment
+- **Reimbursement tracking**: Track amount, method, external reference when paying clients back
+- **Payment confirmation emails**: Resend integration sends GatePay confirmation to client after status changes
+- **Admin notifications**: Email sent to admins when new payment is received
+- **Callback system**: Partners receive `event: "verified"` or `event: "reimbursed"` webhooks with HMAC signing
 - **Mobile responsive**: Hamburger sidebar, responsive homepage, mobile-friendly admin
 - **GatePay branding**: All UI, API headers (`X-GatePay-Signature`), and docs use GatePay name
 - **Client editing**: Full CRUD on clients with edit dialog and linked projects
-- **Transaction details**: Receiving data, verification info, linked invoice/project
-- **Dashboard**: Revenue stats, unverified count, recent transactions/leads
+- **Transaction details**: Receiving data, status history timeline, verification info, linked invoice/project
+- **Dashboard**: Revenue stats, status counts, recent transactions/leads
+- **Performance optimized**: DB-backed counters, bounded queries, indexed lookups, pagination on all lists
 
 ## Environment Variables
 
