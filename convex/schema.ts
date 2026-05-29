@@ -126,12 +126,12 @@ export default defineSchema({
     clientId: v.optional(v.id("clients")),
     projectId: v.optional(v.id("projects")),
     invoiceId: v.optional(v.id("invoices")),
-    status: v.union(
+    status: v.optional(v.union(
       v.literal("pending"),
       v.literal("verified"),
       v.literal("reimbursed"),
       v.literal("failed"),
-    ),
+    )),
     statusChangedAt: v.optional(v.number()),
     statusChangedBy: v.optional(v.string()),
     reimbursedAt: v.optional(v.number()),

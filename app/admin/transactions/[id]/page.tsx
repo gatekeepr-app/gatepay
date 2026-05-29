@@ -92,7 +92,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
 
   const payerName = tx.notes?.match(/by (.+?)(?:\(|$)/)?.[1] ?? "—";
   const period = tx.notes?.match(/for (.+?) by/)?.[1] ?? "";
-  const StatusIcon = STATUS_ICONS[tx.status] ?? Clock;
+  const StatusIcon = STATUS_ICONS[tx.status ?? "pending"] ?? Clock;
 
   return (
     <div className="p-6 max-w-2xl">
@@ -104,9 +104,9 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
         <div>
           <h1 className="text-2xl font-semibold">{tx.transactionRef}</h1>
           <div className="mt-1 flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[tx.status] ?? "bg-muted"}`}>
+            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[tx.status ?? "pending"] ?? "bg-muted"}`}>
               <StatusIcon className="h-3 w-3" />
-              {tx.status}
+              {tx.status ?? "pending"}
             </span>
             {tx.method && <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs">{tx.method}</span>}
           </div>
@@ -130,9 +130,9 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
             <button
               key={s}
               onClick={() => handleStatusChange(s)}
-              disabled={tx.status === s || (tx.status === "reimbursed" && s !== "reimbursed")}
+              disabled={(tx.status ?? "pending") === s || ((tx.status ?? "pending") === "reimbursed" && s !== "reimbursed")}
               className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${
-                tx.status === s
+                (tx.status ?? "pending") === s
                   ? "bg-foreground text-background"
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               } disabled:opacity-40`}
@@ -141,7 +141,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
             </button>
           ))}
         </div>
-        {tx.status === "verified" && (
+        {(tx.status ?? "pending") === "verified" && (
           <button
             onClick={() => {
               setReimbForm({ ...reimbForm, amount: tx.amount });
@@ -216,7 +216,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
       )}
 
       {/* Reimbursement info */}
-      {tx.status === "reimbursed" && (
+      {(tx.status ?? "pending") === "reimbursed" && (
         <section className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-5 dark:border-purple-800 dark:bg-purple-950/30">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-purple-700 dark:text-purple-300">Reimbursement Details</h2>
           <div className="mt-4 grid grid-cols-2 gap-4">

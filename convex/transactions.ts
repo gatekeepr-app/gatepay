@@ -19,11 +19,8 @@ export const list = query({
 export const getByStatus = query({
   args: { status: v.union(v.literal("pending"), v.literal("verified"), v.literal("reimbursed"), v.literal("failed")) },
   handler: async (ctx, args) => {
-    return await ctx.db
-      .query("transactions")
-      .withIndex("by_status", (q) => q.eq("status", args.status))
-      .order("desc")
-      .collect();
+    const all = await ctx.db.query("transactions").order("desc").collect();
+    return all.filter((t) => (t.status ?? "pending") === args.status);
   },
 });
 
@@ -82,10 +79,10 @@ export const getStatusCounts = query({
     const all = await ctx.db.query("transactions").collect();
     return {
       total: all.length,
-      pending: all.filter((t) => t.status === "pending").length,
-      verified: all.filter((t) => t.status === "verified").length,
-      reimbursed: all.filter((t) => t.status === "reimbursed").length,
-      failed: all.filter((t) => t.status === "failed").length,
+      pending: all.filter((t) => (t.status ?? "pending") === "pending").length,
+      verified: all.filter((t) => (t.status ?? "pending") === "verified").length,
+      reimbursed: all.filter((t) => (t.status ?? "pending") === "reimbursed").length,
+      failed: all.filter((t) => (t.status ?? "pending") === "failed").length,
     };
   },
 });
@@ -395,7 +392,7 @@ export const updateStatus = mutation({
     if (!tx) throw new Error("not_found");
 
     const now = Date.now();
-    const oldStatus = tx.status;
+    const oldStatus = tx.status ?? "pending";
 
     await ctx.db.patch(args.id, {
       status: args.status,
@@ -414,12 +411,10 @@ export const updateStatus = mutation({
       notes: args.notes,
     });
 
-    // Fire callback if verified or reimbursed
     if (args.status === "verified" || args.status === "reimbursed") {
       await fireCallback(ctx, tx, args.status as "verified" | "reimbursed");
     }
 
-    // Send email
     await sendStatusEmail(ctx, tx, args.status, oldStatus);
 
     return { ok: true, from: oldStatus, to: args.status };
@@ -438,10 +433,10 @@ export const reimburse = mutation({
   handler: async (ctx, args) => {
     const tx = await ctx.db.get(args.id);
     if (!tx) throw new Error("not_found");
-    if (tx.status === "reimbursed") throw new Error("already_reimbursed");
+    if ((tx.status ?? "pending") === "reimbursed") throw new Error("already_reimbursed");
 
     const now = Date.now();
-    const oldStatus = tx.status;
+    const oldStatus = tx.status ?? "pending";
 
     await ctx.db.patch(args.id, {
       status: "reimbursed",
@@ -464,10 +459,7 @@ export const reimburse = mutation({
       notes: `Reimbursed ${tx.currency} ${args.amount} via ${args.method}${args.notes ? ` — ${args.notes}` : ""}`,
     });
 
-    // Fire callback with event: "reimbursed"
     await fireCallback(ctx, tx, "reimbursed");
-
-    // Email client
     await sendStatusEmail(ctx, tx, "reimbursed", oldStatus);
 
     return { ok: true };

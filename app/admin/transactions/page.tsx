@@ -33,7 +33,7 @@ export default function TransactionsPage() {
   const [batchStatus, setBatchStatus] = useState<string>("");
 
   const filtered = transactions?.filter(
-    (t) => activeTab === "all" || t.status === activeTab,
+    (t) => activeTab === "all" || (t.status ?? "pending") === activeTab,
   );
 
   const toggle = (id: string) => {
@@ -156,10 +156,10 @@ export default function TransactionsPage() {
                   <span className="font-mono text-sm">{tx.transactionRef}</span>
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      STATUS_COLORS[tx.status] ?? "bg-muted"
+                      STATUS_COLORS[tx.status ?? "pending"] ?? "bg-muted"
                     }`}
                   >
-                    {tx.status}
+                    {tx.status ?? "pending"}
                   </span>
                 </div>
                 <div className="mt-0.5 text-xs text-muted-foreground">
