@@ -11,7 +11,7 @@
 - **API docs redirect**: `/admin/api-docs` redirects to `/docs/payments-api`
 
 ### Changed
-- **Homepage redesigned**: Pixel Perfect Landing structure (Hero, About, Features, How It Works, Partners, Testimonial, Footer) with Gatekeepr branding
+- **Homepage redesigned**: Pixel Perfect Landing structure (Hero, About, Features, How It Works, Partners, Testimonial, Footer) with GatePay branding
 - **Homepage mobile responsive**: Hamburger menu, responsive headings, scaled sections
 - **Sidebar mobile responsive**: Hamburger drawer with overlay, auto-closes on navigation
 - **Color system updated**: ClashDisplay font, neon blue primary, ink dark sections
@@ -24,7 +24,8 @@
 ## 2.0.0 (2026-05-28)
 
 ### Major Changes
-- **Full stack migration**: TanStack Router + Vite + Supabase → Next.js 15 App Router + Convex
+- **Full stack migration**: TanStack Router + Vite + Supabase → Next.js 16 App Router + Turbopack + Convex
+- **GatePay branding**: All UI, API headers (`X-GatePay-Signature`), and docs use GatePay name
 - **New admin panel**: 16+ pages migrated to `app/admin/` with auth guard and sidebar
 - **Client payment portal**: `/pay/:code` with bKash instructions, two-column layout, auto-invoice generation
 - **Public API**: Versioned under `/api/v1/public/` with rate limiting, logging, and OpenAPI spec

@@ -1,12 +1,12 @@
-# OpenCode Configuration for Gatekeepr
+# OpenCode Configuration for GatePay
 
 ## Project Overview
-Full-stack business management platform. Next.js 15 App Router + Convex backend.
+Full-stack payment verification platform. Next.js 16 App Router + Turbopack + Convex backend.
 
 ## Dev Commands
 - `npm run dev` — start Next.js dev server on port 8080
 - `npx convex dev` — sync Convex functions with dev deployment (separate terminal)
-- `npm run build` — production build
+- `npm run build` — production build (Turbopack)
 - `npx convex deploy` — deploy Convex functions to production
 
 ## Key Conventions
@@ -53,7 +53,7 @@ Full-stack business management platform. Next.js 15 App Router + Convex backend.
 ### Email (Resend)
 - Confirmation emails sent after admin verifies payment
 - API key: `RESEND_API_KEY` env var
-- From: `Gatekeepr <noreply@darvizlabs.com>`
+- From: `GatePay <noreply@darvizlabs.com>`
 - Called from `convex/public.ts` in `triggerVerifyBatch`
 
 ### API (public)
@@ -64,7 +64,7 @@ Full-stack business management platform. Next.js 15 App Router + Convex backend.
 - Handlers in `app/api/v1/public/*/route.ts`
 
 ### Homepage
-- `app/page.tsx` — Pixel Perfect Landing design adapted for Gatekeepr
+- `app/page.tsx` — Pixel Perfect Landing design adapted for GatePay
 - ClashDisplay font (`public/fonts/ClashDisplay-Variable.woff`)
 - Color system in `app/globals.css` (neon blue primary, ink dark sections)
 

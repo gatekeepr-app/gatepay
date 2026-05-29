@@ -1,4 +1,4 @@
-# Gatekeepr
+# GatePay
 
 Full-stack business management platform with a public marketing site, admin workspace (CRM, projects, billing, invoicing, transactions), client payment portal, and a partner-facing payment verification API.
 
@@ -7,7 +7,7 @@ Full-stack business management platform with a public marketing site, admin work
 | Layer | Technology |
 |---|---|
 | Frontend | React 19 + TypeScript |
-| Framework | Next.js 15 (App Router) |
+| Framework | Next.js 16 (App Router + Turbopack) |
 | Backend | Convex (schema, auth, mutations, queries, HTTP actions) |
 | Styling | Tailwind CSS v4 + shadcn/ui (new-york) |
 | Fonts | ClashDisplay (headings) + Inter (body) |
@@ -15,6 +15,7 @@ Full-stack business management platform with a public marketing site, admin work
 | Validation | Zod |
 | Email | Resend |
 | Deployment | Vercel (Next.js) + Convex (backend) |
+| Email | Resend |
 
 ## Quick Start
 
@@ -43,7 +44,7 @@ app/                    # Next.js App Router pages
 ├── login/              # Authentication
 ├── pay/                # Client payment portal
 ├── layout.tsx          # Root layout (ConvexClientProvider)
-└── page.tsx            # Marketing homepage (Pixel Perfect Landing design)
+└── page.tsx            # Marketing homepage
 
 convex/                 # Convex backend
 ├── schema.ts           # 11 tables
@@ -53,7 +54,7 @@ convex/                 # Convex backend
 ├── projects.ts         # CRUD + pay code lookup
 ├── billing.ts          # Billing config per project
 ├── clients.ts, users.ts, api_keys.ts, invitations.ts, leads.ts
-├── public.ts           # verifyTransaction + submitTransaction + triggerVerifyBatch (sends confirmation emails)
+├── public.ts           # verifyTransaction + submitTransaction + triggerVerifyBatch (sends GatePay confirmation emails)
 ├── rate_limit.ts       # DB-based rate limiter
 └── seed.ts             # Initial admin seeding
 
@@ -89,8 +90,9 @@ src/                    # Shared client code
 ## Key Features
 
 - **Auto-invoicing**: `submitPayPayment` creates a transaction + invoice atomically when a client pays
-- **Payment confirmation emails**: Resend integration sends confirmation to client after admin verifies payment
+- **Payment confirmation emails**: Resend integration sends GatePay confirmation to client after admin verifies payment
 - **Mobile responsive**: Hamburger sidebar, responsive homepage, mobile-friendly admin
+- **GatePay branding**: All UI, API headers (`X-GatePay-Signature`), and docs use GatePay name
 - **Client editing**: Full CRUD on clients with edit dialog and linked projects
 - **Transaction details**: Receiving data, verification info, linked invoice/project
 - **Dashboard**: Revenue stats, unverified count, recent transactions/leads
