@@ -4,7 +4,7 @@ import { hmacSha256 } from "./lib/crypto";
 import { requireAdmin } from "./lib/auth";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_FROM = "Gatekeepr <noreply@darvizlabs.com>";
+const EMAIL_FROM = "GatePay <pay@mail.darvizlabs.online>";
 
 // POST /api/public/transactions/submit
 export const submitTransaction = mutation({

@@ -53,7 +53,7 @@ Full-stack payment verification platform. Next.js 16 App Router + Turbopack + Co
 ### Email (Resend)
 - Confirmation emails sent after admin verifies payment
 - API key: `RESEND_API_KEY` env var
-- From: `GatePay <noreply@darvizlabs.com>`
+- From: `GatePay <pay@mail.darvizlabs.online>`
 - Called from `convex/public.ts` in `triggerVerifyBatch`
 
 ### API (public)
