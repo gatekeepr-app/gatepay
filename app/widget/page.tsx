@@ -159,7 +159,7 @@ export default function WidgetPage() {
 
         <h1 className="mt-4 text-3xl font-semibold tracking-tight">Payment Widget</h1>
         <p className="mt-2 text-muted-foreground">
-          One code block. Paste into any HTML page. It just works.
+          Embed on your website. Your customers pay directly. One code block.
         </p>
 
         {/* API Key input */}
@@ -206,13 +206,14 @@ export default function WidgetPage() {
         <div className="mt-10 rounded-xl border border-border bg-card p-6">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">How it works</h2>
           <ol className="mt-4 space-y-3 text-sm text-muted-foreground list-decimal list-inside">
+            <li>Get your API key from <Link href="/admin/api-keys" className="text-primary hover:underline">API Keys</Link></li>
             <li>Copy the code block above</li>
-            <li>Paste it anywhere in your HTML (before <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">&lt;/body&gt;</code>)</li>
+            <li>Paste it into your website HTML (before <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">&lt;/body&gt;</code>)</li>
             <li>Replace <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">gk_YOUR_API_KEY_HERE</code> with your key</li>
-            <li>The widget renders automatically with submit/verify tabs</li>
+            <li>Your customers can now submit and verify payments directly on your site</li>
           </ol>
           <div className="mt-4 rounded-lg bg-muted/50 p-4 text-xs text-muted-foreground">
-            <strong className="text-foreground">No dependencies.</strong> Tailwind CSS loads from CDN. No build step, no npm install, no framework required. Works with plain HTML, WordPress, Shopify, React, Vue, anything.
+            <strong className="text-foreground">Works on any website.</strong> No build step, no npm install, no framework required. Paste into WordPress, Shopify, Squarespace, React, Vue, plain HTML — anything. All payment data flows through GatePay&apos;s secure API.
           </div>
         </div>
       </div>

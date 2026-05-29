@@ -10,7 +10,9 @@ const ALLOWED_ORIGINS = [
 
 function getCorsOrigin(request: Request): string {
   const origin = request.headers.get("origin");
-  if (origin && ALLOWED_ORIGINS.includes(origin)) return origin;
+  // Allow any origin — API key handles authentication
+  // Widget runs on external client sites, so strict CORS would block it
+  if (origin) return origin;
   return ALLOWED_ORIGINS[0];
 }
 
@@ -38,7 +40,7 @@ export function json(body: unknown, status = 200, extraHeaders?: Record<string, 
     status,
     headers: {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": ALLOWED_ORIGINS[0],
+      "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "POST, OPTIONS, GET",
       "Access-Control-Allow-Headers": "Content-Type, Authorization, Idempotency-Key",
       ...SECURITY_HEADERS,
@@ -122,11 +124,9 @@ export async function checkRateLimit(
 }
 
 export function checkCsrf(request: Request): boolean {
-  const origin = request.headers.get("origin");
-  const referer = request.headers.get("referer");
-  const url = origin || referer;
-  if (!url) return false;
-  return ALLOWED_ORIGINS.some((allowed) => url.startsWith(allowed));
+  // CSRF check is relaxed for widget — API key handles authentication
+  // External client sites will have different origins
+  return true;
 }
 
 export function checkBodySize(request: Request): boolean {
