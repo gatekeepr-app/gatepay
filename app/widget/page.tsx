@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Copy, Check, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -141,6 +141,9 @@ tailwind.config = { theme: { extend: { fontFamily: { sans: ["Inter", "system-ui"
 export default function WidgetPage() {
   const [copied, setCopied] = useState(false);
   const [apiKey, setApiKey] = useState("gk_YOUR_API_KEY_HERE");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const copy = async () => {
     await navigator.clipboard.writeText(WIDGET_CODE.replace("gk_YOUR_API_KEY_HERE", apiKey));
@@ -198,7 +201,7 @@ export default function WidgetPage() {
         <div className="mt-10">
           <h2 className="mb-3 text-lg font-semibold">Live Preview</h2>
           <div className="rounded-xl border border-border bg-[#f9fafb] p-1">
-            <div dangerouslySetInnerHTML={{ __html: previewCode }} />
+            {mounted && <div dangerouslySetInnerHTML={{ __html: previewCode }} />}
           </div>
         </div>
 
