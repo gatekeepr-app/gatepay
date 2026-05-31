@@ -6,6 +6,7 @@ import { useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { getStoredToken, clearToken } from "@/integrations/convex/auth";
 import { Sidebar } from "@/components/admin/Sidebar";
+import { UserProvider } from "@/components/admin/UserProvider";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -14,6 +15,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [user, setUser] = useState<{ _id: string; email: string; name?: string; role: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+      document.documentElement.classList.add("dark");
+    }
+  }, []);
 
   useEffect(() => {
     if (!token) {
@@ -48,9 +56,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar user={user} onSignOut={handleSignOut} open={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
-      <div className="flex-1 pt-12 md:pt-0">{children}</div>
-    </div>
+    <UserProvider>
+      <div className="flex max-h-screen bg-background">
+        <Sidebar user={user} onSignOut={handleSignOut} open={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+        <div className="flex-1 pt-12 md:pt-0">{children}</div>
+      </div>
+    </UserProvider>
   );
 }

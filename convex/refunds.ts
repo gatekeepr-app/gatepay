@@ -36,6 +36,8 @@ export const initiateRefund = mutation({
     transactionId: v.id("transactions"),
     amount: v.number(),
     method: v.string(),
+    receiverName: v.optional(v.string()),
+    receiverNumber: v.optional(v.string()),
     notes: v.optional(v.string()),
     token: v.string(),
   },
@@ -57,6 +59,8 @@ export const initiateRefund = mutation({
       method: args.method,
       status: "pending",
       initiatedBy: args.token,
+      receiverName: args.receiverName,
+      receiverNumber: args.receiverNumber,
       notes: args.notes,
       createdAt: now,
       updatedAt: now,
@@ -68,7 +72,7 @@ export const initiateRefund = mutation({
       toStatus: "reimbursed",
       changedBy: args.token,
       changedAt: now,
-      notes: `Refund initiated: ${tx.currency} ${args.amount} via ${args.method}${args.notes ? ` — ${args.notes}` : ""}`,
+      notes: `Refund initiated: ${tx.currency} ${args.amount} via ${args.method}${args.receiverName ? ` to ${args.receiverName}` : ""}${args.receiverNumber ? ` (${args.receiverNumber})` : ""}${args.notes ? ` — ${args.notes}` : ""}`,
     });
 
     return { refundId, ok: true };

@@ -106,9 +106,9 @@ function Hero() {
             <Sparkles className="ml-2 inline-block h-6 w-6 -translate-y-4 fill-primary text-primary sm:h-10 sm:w-10 sm:-translate-y-6 lg:h-14 lg:w-14" />
           </h1>
           <p className="mt-6 max-w-md text-sm text-ink-foreground/70 sm:mt-8">
-            Real-time payment verification for businesses.
+            Verify bKash, Nagad, Rocket & bank payments in under 3 seconds.
             <br className="hidden sm:block" />
-            Submit, verify, and audit — all via one API.
+            One API to submit, confirm, and audit every transaction.
           </p>
           <div className="mt-6 flex items-center gap-3 sm:mt-8">
             <Link
@@ -181,10 +181,10 @@ function About() {
         <h2 className="font-display text-4xl text-foreground sm:text-5xl lg:text-7xl">
           GETTING TO
           <br />
-          KNOW GATEKEEPR
+          KNOW GATEPAY
         </h2>
         <p className="max-w-md self-end text-base text-muted-foreground">
-          We are more than a verification tool — we are your trusted partner in building transparent, auditable payment workflows for your business.
+          GatePay helps Bangladeshi businesses verify mobile financial service payments in real time. Built for freelancers, agencies, and SaaS companies tired of manual screenshot verification.
         </p>
       </div>
 
@@ -196,8 +196,8 @@ function About() {
           <div className="mt-8 font-display text-6xl leading-none sm:mt-10 sm:text-7xl">
             500<span className="ml-1 align-top text-xl font-semibold sm:text-2xl">+</span>
           </div>
-          <p className="mt-6 text-xs text-primary-foreground/85 sm:mt-8">
-            Businesses trust GatePay to verify and audit their payment transactions every day.
+            <p className="mt-6 text-xs text-primary-foreground/85 sm:mt-8">
+            Businesses trust GatePay to verify and audit their bKash, Nagad, and Rocket transactions daily.
           </p>
         </div>
         <div className="rounded-3xl bg-ink p-6 text-ink-foreground sm:p-7">
@@ -245,8 +245,8 @@ function Features() {
           <br />
           FOR PAYMENTS
         </h2>
-        <p className="max-w-md self-end text-base text-muted-foreground lg:col-span-5">
-          Simplify your payment workflows by securely submitting and verifying transactions through a single, auditable API.
+          <p className="max-w-md self-end text-base text-muted-foreground lg:col-span-5">
+          Accept payments without the back-and-forth. Customers pay via bKash or Nagad, you call our API once, and get a verified or rejected verdict instantly.
         </p>
       </div>
 
@@ -320,9 +320,9 @@ function Features() {
 
 function HowItWorks() {
   const steps = [
-    { num: "01", title: "Submit", desc: "Send transaction details to the API — amount, reference, and metadata." },
-    { num: "02", title: "Verify", desc: "Query the transaction at verification time to confirm or reject a payment claim." },
-    { num: "03", title: "Callback", desc: "Receive automatic webhooks when transactions are verified on your behalf." },
+    { num: "01", title: "Submit", desc: "Send the transaction reference, amount, and payment method to our endpoint." },
+    { num: "02", title: "Verify", desc: "We check the transaction against live carrier data and return a verified or rejected verdict." },
+    { num: "03", title: "Callback", desc: "Get instant webhook notifications when verification completes — no polling needed." },
   ];
   return (
     <section id="how-it-works" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-10 lg:py-28">
@@ -363,7 +363,7 @@ function Monitoring() {
             MONITORING
           </h2>
           <p className="self-end text-sm text-ink-foreground/70 lg:col-span-5">
-            GatePay integrates with your existing payment stack. bKash, Nagad, Rocket, bank transfer — verify any payment method through one unified API.
+            GatePay connects to bKash, Nagad, Rocket, and major Bangladeshi banks. Submit a transaction reference through one endpoint and get a verified or rejected verdict in under 3 seconds.
           </p>
         </div>
 
@@ -417,7 +417,7 @@ function Testimonial() {
         <div className="lg:col-span-9">
           <Quote className="h-6 w-6 text-primary sm:h-8 sm:w-8" />
           <p className="mt-4 font-display text-2xl leading-[1.15] sm:mt-6 sm:text-3xl lg:text-5xl">
-            GatePay has completely transformed how we handle payment verification. The real-time API and webhook callbacks have been invaluable.
+            GatePay eliminated our manual payment verification entirely. We used to spend hours checking bKash screenshots — now it takes 3 seconds via API.
           </p>
         </div>
         <div className="lg:col-span-3">

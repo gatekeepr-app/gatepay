@@ -8,6 +8,7 @@ const SITE = "https://pay.darvizlabs.com";
 const VERIFY = `${SITE}/api/v1/public/transactions/verify`;
 const SUBMIT = `${SITE}/api/v1/public/transactions/submit`;
 const REVIEW = `${SITE}/api/v1/public/transactions/review`;
+const REFUND = `${SITE}/api/v1/public/transactions/refund`;
 const HEALTH = `${SITE}/api/v1/public/health`;
 const OPENAPI = `${SITE}/api/v1/public/openapi`;
 
@@ -18,6 +19,8 @@ const SECTIONS = [
   { id: "api-review", label: "Review transaction" },
   { id: "api-callback", label: "Verify callback" },
   { id: "api-health", label: "Health check" },
+  { id: "api-refund", label: "Request refund" },
+  { id: "api-refunds", label: "Refund lifecycle" },
   { id: "errors", label: "Error codes" },
   { id: "security", label: "Security" },
 ] as const;
@@ -231,6 +234,11 @@ export default function PublicApiDocsPage() {
                 <strong>Verify on demand (your site → GatePay)</strong> — your server can also
                 call this endpoint directly to check a single transaction's status.
               </li>
+              <li>
+                <strong>Refund</strong> — admin-initiated through the dashboard. A verified
+                transaction can be refunded via the payment gateway. Partners receive a callback
+                with <Inline>event: "reimbursed"</Inline>.
+              </li>
             </ol>
             <p>
               All endpoints require an API key via the <Inline>Authorization: Bearer</Inline>{" "}
@@ -382,6 +390,83 @@ User-Agent: GatePay-Verify/1.0
             <CopyBlock code={`{"status":"ok"}`} language="json" />
           </section>
 
+          <ApiSection
+            id="api-refund"
+            title="POST — Request refund"
+            description="Request a refund for a verified transaction. The client specifies who should receive the refund (name and number) and the amount. Refunds are processed by GatePay and require the transaction to be in verified status."
+            method="POST"
+            path={REFUND}
+            fields={[
+              ["transaction_ref", "string (1–120)", "Yes", "Transaction ID to refund. Must belong to the same business."],
+              ["amount", "number > 0", "Yes", "Refund amount. Cannot exceed the original transaction amount."],
+              ["method", "string (1–40)", "Yes", "Refund method: 'bKash', 'Nagad', 'Rocket', 'bank_transfer', 'other'."],
+              ["receiver_name", "string (1–256)", "Yes", "Full name of the person receiving the refund."],
+              ["receiver_number", "string (1–64)", "Yes", "Account or phone number of the receiver."],
+              ["notes", "string (≤2000)", "No", "Free-form notes about the refund."],
+            ]}
+            example={{
+              transaction_ref: "INV-2026-00482",
+              amount: 1499.00,
+              method: "bKash",
+              receiver_name: "Rafid Mahim",
+              receiver_number: "01712345678",
+              notes: "Customer requested full refund",
+            }}
+          />
+
+          <section id="api-refunds" className="mb-12 scroll-mt-20">
+            <h2 className="mb-4 text-xl font-semibold tracking-tight">Refund lifecycle</h2>
+            <p className="mb-3 text-sm leading-relaxed text-foreground/80">
+              Refunds can be initiated by clients via the API or by admins through the dashboard.
+              The flow is: initiate → process via payment gateway → complete or fail.
+            </p>
+            <p className="mb-3 text-sm leading-relaxed text-foreground/80">
+              Only <Inline>verified</Inline> transactions can be refunded. The receiver name and
+              number are required — these specify who receives the refunded amount.
+            </p>
+
+            <h3 className="mb-2 mt-5 text-sm font-medium">Lifecycle</h3>
+            <ol className="ml-5 list-decimal space-y-2 text-sm text-foreground/80">
+              <li><strong>Initiate</strong> — admin clicks &quot;Initiate Refund&quot; on a verified transaction, enters amount, method, and optional reference. Creates a refund record with status <Inline>pending</Inline>.</li>
+              <li><strong>Process</strong> — system calls the payment gateway (SSLCommerz) refund API. Refund status moves to <Inline>processing</Inline>.</li>
+              <li><strong>Complete</strong> — on gateway confirmation, refund status becomes <Inline>completed</Inline> and the transaction status moves to <Inline>reimbursed</Inline>.</li>
+              <li><strong>Cancel</strong> — admin can cancel a pending or processing refund. Cancellation is not allowed once completed.</li>
+            </ol>
+
+            <h3 className="mb-2 mt-5 text-sm font-medium">Refund statuses</h3>
+            <div className="overflow-x-auto rounded-lg border border-border">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                  <tr>
+                    <th className="px-3 py-2">Status</th>
+                    <th className="px-3 py-2">Meaning</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {([
+                    ["pending", "Refund initiated, waiting for gateway processing"],
+                    ["processing", "Gateway has accepted the refund request"],
+                    ["completed", "Refund succeeded — transaction is now reimbursed"],
+                    ["failed", "Gateway rejected the refund"],
+                    ["cancelled", "Admin cancelled before completion"],
+                  ] as [string, string][]).map(([s, m]) => (
+                    <tr key={s}>
+                      <td className="px-3 py-2"><Inline>{s}</Inline></td>
+                      <td className="px-3 py-2 text-muted-foreground">{m}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <h3 className="mb-2 mt-5 text-sm font-medium">What gets logged</h3>
+            <ul className="ml-5 list-disc space-y-2 text-sm text-foreground/80">
+              <li>Every refund action is recorded in the <Inline>statusHistory</Inline> table with from/to status and notes.</li>
+              <li>On completion, the transaction stores: <Inline>reimbursedAt</Inline>, <Inline>reimbursementAmount</Inline>, <Inline>reimbursementRef</Inline>, and <Inline>reimbursementMethod</Inline>.</li>
+              <li>Partners receive a callback with <Inline>event: "reimbursed"</Inline> when the transaction status changes.</li>
+            </ul>
+          </section>
+
           <section id="errors" className="mb-12 scroll-mt-20">
             <h2 className="mb-4 text-xl font-semibold tracking-tight">Error codes</h2>
             <div className="overflow-x-auto rounded-lg border border-border">
@@ -396,6 +481,7 @@ User-Agent: GatePay-Verify/1.0
                 <tbody className="divide-y divide-border">
                   {([
                     ["201", `{"received":true,"status":"unverified"}`, "Submit success"],
+                    ["201", `{"refund_id":"...","status":"pending",...}`, "Refund requested"],
                     ["200", `{"verified":true,"transaction":{...}}`, "Transaction matches"],
                     ["200", `{"verified":false,"reason":"not_found"}`, "No matching transaction"],
                     ["200", `{"verified":false,"reason":"date_mismatch"}`, "Date doesn't match"],
@@ -404,7 +490,9 @@ User-Agent: GatePay-Verify/1.0
                     ["400", `{"error":"invalid_json"}`, "Body is not valid JSON"],
                     ["401", `{"error":"missing_api_key"}`, "No Authorization header"],
                     ["401", `{"error":"invalid_api_key"}`, "Token unknown or revoked"],
+                    ["404", `{"error":"transaction_not_found"}`, "Transaction doesn't exist or belongs to another business"],
                     ["409", `{"error":"duplicate_ref"}`, "Ref already exists (submit)"],
+                    ["409", `{"error":"transaction_not_verified"}`, "Transaction must be verified before refund"],
                     ["413", `{"error":"body_too_large"}`, "Body exceeds 10 KB"],
                     ["429", `{"error":"rate_limited"}`, "IP rate limit hit (30/60 req/min)"],
                     ["429", `{"error":"key_rate_limited"}`, "Key rate limit hit (100 req/min)"],

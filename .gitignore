@@ -33,3 +33,4 @@ Pixel Perfect Landing
 *.njsproj
 *.sln
 *.sw?
+*.tsbuildinfo

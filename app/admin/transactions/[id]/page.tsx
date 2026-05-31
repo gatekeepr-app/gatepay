@@ -51,7 +51,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
   const initiateRefund = useMutation(api.refunds.initiateRefund);
   const [reimbOpen, setReimbOpen] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
-  const [refundForm, setRefundForm] = useState({ amount: 0, method: "bank_transfer", notes: "" });
+  const [refundForm, setRefundForm] = useState({ amount: 0, method: "bank_transfer", receiverName: "", receiverNumber: "", notes: "" });
   const [reimbForm, setReimbForm] = useState({ amount: 0, method: "bank_transfer", reimbursementRef: "", notes: "" });
 
   if (!tx) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
@@ -96,17 +96,21 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
 
   const handleInitiateRefund = async () => {
     if (refundForm.amount <= 0) { toast.error("Amount must be > 0"); return; }
+    if (!refundForm.receiverName.trim()) { toast.error("Receiver name is required"); return; }
+    if (!refundForm.receiverNumber.trim()) { toast.error("Receiver number is required"); return; }
     try {
       await initiateRefund({
         transactionId: id as any,
         amount: refundForm.amount,
         method: refundForm.method,
+        receiverName: refundForm.receiverName || undefined,
+        receiverNumber: refundForm.receiverNumber || undefined,
         notes: refundForm.notes || undefined,
         token: getStoredToken() ?? "",
       });
       toast.success("Refund initiated");
       setRefundOpen(false);
-      setRefundForm({ amount: 0, method: "bank_transfer", notes: "" });
+      setRefundForm({ amount: 0, method: "bank_transfer", receiverName: "", receiverNumber: "", notes: "" });
     } catch (err: any) {
       toast.error(err?.message ?? "Failed to initiate refund");
     }
@@ -322,10 +326,11 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
           {refunds && refunds.length > 0 ? (
             <div className="mt-4 space-y-3">
               {refunds.map((r) => (
-                <div key={r._id} className="flex items-center justify-between rounded-lg border border-border p-3">
+                  <div key={r._id} className="flex items-center justify-between rounded-lg border border-border p-3">
                   <div>
                     <div className="text-sm font-medium">{formatMoney(r.amount, r.currency)} via {r.method}</div>
                     <div className="text-xs text-muted-foreground">{formatDate(new Date(r.createdAt))} — {r.status}</div>
+                    {r.receiverName && <div className="text-xs text-muted-foreground">To: {r.receiverName} ({r.receiverNumber})</div>}
                     {r.gatewayRef && <div className="text-xs text-muted-foreground font-mono">{r.gatewayRef}</div>}
                   </div>
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -375,6 +380,24 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
                 <option value="Rocket">Rocket</option>
                 <option value="other">Other</option>
               </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-muted-foreground">Receiver name *</span>
+              <input
+                value={refundForm.receiverName}
+                onChange={(e) => setRefundForm({ ...refundForm, receiverName: e.target.value })}
+                placeholder="e.g. John Doe"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/30"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-muted-foreground">Receiver number *</span>
+              <input
+                value={refundForm.receiverNumber}
+                onChange={(e) => setRefundForm({ ...refundForm, receiverNumber: e.target.value })}
+                placeholder="e.g. 01XXXXXXXXX"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/30"
+              />
             </label>
             <label className="block">
               <span className="mb-1 block text-xs font-medium text-muted-foreground">Notes</span>

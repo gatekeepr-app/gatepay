@@ -190,6 +190,8 @@ export default defineSchema({
     gatewayRef: v.optional(v.string()),
     gatewayResponse: v.optional(v.string()),
     initiatedBy: v.string(),
+    receiverName: v.optional(v.string()),
+    receiverNumber: v.optional(v.string()),
     notes: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),

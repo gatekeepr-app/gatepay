@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Briefcase, FileText, Inbox, UserCog, LogOut, Wallet, Code2, KeyRound, BarChart3, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, FileText, UserCog, LogOut, Wallet, Code2, KeyRound, BarChart3, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 
@@ -12,7 +12,6 @@ const items = [
   { to: "/admin/projects", label: "Projects", icon: Briefcase },
   { to: "/admin/invoices", label: "Invoices", icon: FileText },
   { to: "/admin/transactions", label: "Transactions", icon: Wallet },
-  { to: "/admin/leads", label: "Leads", icon: Inbox },
   { to: "/admin/api-keys", label: "API Keys", icon: KeyRound },
   { to: "/admin/api-docs", label: "API Docs", icon: Code2 },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
@@ -38,7 +37,7 @@ function SidebarContent({
         </Link>
         <div className="mt-1 text-xs text-muted-foreground">Workspace</div>
       </div>
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+      <nav className="flex-1 space-y-1 overflow-y-auto p-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {items.map((item) => {
           const active = item.exact ? path === item.to : path.startsWith(item.to);
           const Icon = item.icon;
@@ -135,7 +134,7 @@ export function Sidebar({
       </aside>
 
       {/* Desktop sidebar */}
-      <aside className="hidden h-screen w-60 shrink-0 overflow-y-auto border-r border-border bg-card md:flex md:flex-col">
+      <aside className="hidden max-h-screen w-60 shrink-0 overflow-y-auto border-r border-border bg-card md:flex md:flex-col [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <SidebarContent user={user} onSignOut={onSignOut} />
       </aside>
     </>

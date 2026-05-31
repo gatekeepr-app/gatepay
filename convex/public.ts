@@ -404,3 +404,67 @@ export const triggerVerifyBatch = mutation({
     return { total: txs.length, groups };
   },
 });
+
+// POST /api/v1/public/transactions/refund
+export const requestRefund = mutation({
+  args: {
+    transactionRef: v.string(),
+    amount: v.number(),
+    method: v.string(),
+    receiverName: v.string(),
+    receiverNumber: v.string(),
+    notes: v.optional(v.string()),
+    keyHash: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const key = await ctx.db
+      .query("apiKeys")
+      .withIndex("by_key_hash", (q) => q.eq("keyHash", args.keyHash))
+      .first();
+
+    if (!key || key.revokedAt) throw new Error("invalid_api_key");
+    if (!key.businessName) throw new Error("key_missing_business_name");
+
+    const tx = await ctx.db
+      .query("transactions")
+      .withIndex("by_transaction_ref", (q) => q.eq("transactionRef", args.transactionRef.toLowerCase()))
+      .first();
+
+    if (!tx) throw new Error("transaction_not_found");
+    if (tx.verifiedExternalName !== key.businessName) {
+      throw new Error("transaction_not_found");
+    }
+    if ((tx.status ?? "pending") !== "verified") {
+      throw new Error("transaction_not_verified");
+    }
+
+    const now = Date.now();
+
+    const refundId = await ctx.db.insert("refunds", {
+      transactionId: tx._id,
+      amount: args.amount,
+      currency: tx.currency,
+      method: args.method,
+      status: "pending",
+      initiatedBy: key.businessName ?? key.name,
+      receiverName: args.receiverName,
+      receiverNumber: args.receiverNumber,
+      notes: args.notes,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await ctx.db.insert("statusHistory", {
+      transactionId: tx._id,
+      fromStatus: tx.status ?? "verified",
+      toStatus: "reimbursed",
+      changedBy: key.businessName ?? key.name,
+      changedAt: now,
+      notes: `Refund requested via API: ${tx.currency} ${args.amount} via ${args.method} to ${args.receiverName} (${args.receiverNumber})${args.notes ? ` — ${args.notes}` : ""}`,
+    });
+
+    await ctx.db.patch(key._id, { lastUsedAt: now });
+
+    return { refundId: refundId.toString(), ok: true };
+  },
+});

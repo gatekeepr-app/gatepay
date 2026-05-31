@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
-import { Users, Briefcase, FileText, MessageSquare, Wallet, Clock, ArrowRight } from "lucide-react";
+import { Users, Briefcase, FileText, Wallet, ArrowRight } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/admin/format";
+import { DashboardBanner } from "@/components/dashboard/banner";
+import { useUser } from "@/components/admin/UserProvider";
 
 export default function DashboardPage() {
+  const user = useUser();
   const clients = useQuery(api.clients.list);
   const projects = useQuery(api.projects.list);
   const invoices = useQuery(api.invoices.list);
@@ -20,7 +23,8 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
+      <h1 className="text-2xl pb-4 font-semibold">Dashboard</h1>
+      <DashboardBanner userName={user?.name ?? "Admin"} />
 
       {/* Stat cards */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
