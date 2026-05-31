@@ -57,9 +57,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <UserProvider>
+      <style>{`.scrollico{overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}.scrollico::-webkit-scrollbar{display:none}`}</style>
       <div className="flex max-h-screen bg-background">
         <Sidebar user={user} onSignOut={handleSignOut} open={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
-        <div className="flex-1 pt-12 md:pt-0">{children}</div>
+        <div className="scrollico flex-1 max-h-screen pt-12 md:pt-0">{children}</div>
       </div>
     </UserProvider>
   );

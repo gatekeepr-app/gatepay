@@ -106,5 +106,9 @@
     line-height: 0.92;
     font-weight: 700;
   }
+
+  .scrollico::-webkit-scrollbar{
+    display: none;
+  }
   ::selection { background: var(--neon); color: oklch(0.99 0 0); }
 }
