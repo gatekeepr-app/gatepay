@@ -1,9 +1,11 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
+import { requireAdmin } from "./lib/auth";
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     const users = await ctx.db.query("users").take(100);
     return users.map((u) => ({
       _id: u._id,
@@ -45,15 +47,17 @@ export const create = internalMutation({
 });
 
 export const updateRole = mutation({
-  args: { userId: v.id("users"), role: v.string() },
+  args: { userId: v.id("users"), role: v.string(), token: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     await ctx.db.patch(args.userId, { role: args.role as any });
   },
 });
 
 export const remove = mutation({
-  args: { userId: v.id("users") },
+  args: { userId: v.id("users"), token: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     await ctx.db.delete(args.userId);
   },
 });

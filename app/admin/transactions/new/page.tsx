@@ -4,12 +4,14 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
+import { getStoredToken } from "@/integrations/convex/auth";
 import { toast } from "sonner";
 
 export default function NewTransactionPage() {
   const router = useRouter();
-  const clients = useQuery(api.clients.list);
-  const projects = useQuery(api.projects.list);
+  const token = getStoredToken();
+  const clients = useQuery(api.clients.list, token ? { token } : "skip");
+  const projects = useQuery(api.projects.list, token ? { token } : "skip");
   const createTx = useMutation(api.transactions.create);
   const [form, setForm] = useState({ transactionRef: "", amount: 0, currency: "BDT", method: "", clientId: "", projectId: "", notes: "" });
   const [submitting, setSubmitting] = useState(false);
@@ -26,6 +28,7 @@ export default function NewTransactionPage() {
         projectId: form.projectId ? (form.projectId as any) : undefined,
         notes: form.notes || undefined,
         createdBy: "",
+        token: getStoredToken()!,
       });
       toast.success("Transaction created");
       router.push("/admin/transactions");
@@ -44,11 +47,11 @@ export default function NewTransactionPage() {
         <input placeholder="Currency" value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
         <select value={form.clientId} onChange={(e) => setForm({ ...form, clientId: e.target.value })} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm">
           <option value="">No client</option>
-          {clients?.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
+          {clients?.map((c: any) => <option key={c._id} value={c._id}>{c.name}</option>)}
         </select>
         <select value={form.projectId} onChange={(e) => setForm({ ...form, projectId: e.target.value })} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm">
           <option value="">No project</option>
-          {projects?.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
+          {projects?.map((p: any) => <option key={p._id} value={p._id}>{p.name}</option>)}
         </select>
         <textarea placeholder="Notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" rows={2} />
         <button onClick={submit} disabled={submitting} className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background hover:opacity-90 disabled:opacity-50">

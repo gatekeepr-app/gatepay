@@ -25,15 +25,16 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function TransactionsPage() {
-  const transactions = useQuery(api.transactions.list);
-  const counts = useQuery(api.transactions.getStatusCounts);
+  const token = getStoredToken();
+  const transactions = useQuery(api.transactions.list, token ? { token } : "skip");
+  const counts = useQuery(api.transactions.getStatusCounts, token ? { token } : "skip");
   const updateStatus = useMutation(api.transactions.updateStatus);
   const [activeTab, setActiveTab] = useState<string>("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [batchStatus, setBatchStatus] = useState<string>("");
 
   const filtered = transactions?.filter(
-    (t) => activeTab === "all" || (t.status ?? "pending") === activeTab,
+    (t: any) => activeTab === "all" || (t.status ?? "pending") === activeTab,
   );
 
   const toggle = (id: string) => {
@@ -48,7 +49,7 @@ export default function TransactionsPage() {
     if (selected.size === filtered.length) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(filtered.map((t) => t._id)));
+      setSelected(new Set(filtered.map((t: any) => t._id)));
     }
   };
 
@@ -137,7 +138,7 @@ export default function TransactionsPage() {
 
       {/* Transaction list */}
       <div className="mt-4 space-y-2">
-        {filtered?.map((tx) => (
+        {filtered?.map((tx: any) => (
           <Link
             key={tx._id}
             href={`/admin/transactions/${tx._id}`}

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
+import { getStoredToken } from "@/integrations/convex/auth";
 import { toast } from "sonner";
 
 export default function NewClientPage() {
@@ -23,6 +24,7 @@ export default function NewClientPage() {
         businessName: form.businessName || undefined,
         phone: form.phone || undefined,
         createdBy: undefined,
+        token: getStoredToken()!,
       });
       toast.success("Client created");
       router.push("/admin/clients");

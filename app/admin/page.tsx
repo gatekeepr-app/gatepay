@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
+import { getStoredToken } from "@/integrations/convex/auth";
 import { Users, Briefcase, FileText, Wallet, ArrowRight } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/admin/format";
 import { DashboardBanner } from "@/components/dashboard/banner";
@@ -10,14 +11,15 @@ import { useUser } from "@/components/admin/UserProvider";
 
 export default function DashboardPage() {
   const user = useUser();
-  const clients = useQuery(api.clients.list);
-  const projects = useQuery(api.projects.list);
-  const invoices = useQuery(api.invoices.list);
-  const leads = useQuery(api.leads.list);
-  const transactions = useQuery(api.transactions.list);
+  const token = getStoredToken();
+  const clients = useQuery(api.clients.list, token ? { token } : "skip");
+  const projects = useQuery(api.projects.list, token ? { token } : "skip");
+  const invoices = useQuery(api.invoices.list, token ? { token } : "skip");
+  const leads = useQuery(api.leads.list, token ? { token } : "skip");
+  const transactions = useQuery(api.transactions.list, token ? { token } : "skip");
 
-  const unverifiedCount = transactions?.filter((t) => !t.verifiedAt).length ?? 0;
-  const totalRevenue = transactions?.reduce((sum, t) => sum + Number(t.amount), 0) ?? 0;
+  const unverifiedCount = transactions?.filter((t: any) => !t.verifiedAt).length ?? 0;
+  const totalRevenue = transactions?.reduce((sum: any, t: any) => sum + Number(t.amount), 0) ?? 0;
   const recentTransactions = transactions?.slice(0, 5) ?? [];
   const recentLeads = leads?.slice(0, 5) ?? [];
 
@@ -62,7 +64,7 @@ export default function DashboardPage() {
             <p className="mt-4 text-sm text-muted-foreground">No leads yet.</p>
           ) : (
             <ul className="mt-3 space-y-2">
-              {recentLeads.map((lead) => (
+              {recentLeads.map((lead: any) => (
                 <li key={lead._id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
                   <div>
                     <div className="font-medium">{lead.name}</div>
@@ -85,7 +87,7 @@ export default function DashboardPage() {
             <p className="mt-4 text-sm text-muted-foreground">No transactions yet.</p>
           ) : (
             <ul className="mt-3 divide-y divide-border">
-              {recentTransactions.map((tx) => (
+              {recentTransactions.map((tx: any) => (
                 <li key={tx._id}>
                   <Link href={`/admin/transactions/${tx._id}`} className="flex items-center justify-between py-3 text-sm hover:underline">
                     <div className="flex items-center gap-3">

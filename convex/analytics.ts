@@ -1,9 +1,11 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
+import { requireAdmin } from "./lib/auth";
 
 export const getApiLogStats = query({
-  args: { hours: v.optional(v.number()) },
+  args: { hours: v.optional(v.number()), token: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     const cutoff = Date.now() - (args.hours ?? 24) * 60 * 60 * 1000;
     const logs = await ctx.db
       .query("apiLogs")

@@ -5,15 +5,17 @@ import { requireAdmin } from "./lib/auth";
 // ─── Queries ──────────────────────────────────────────────
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     return await ctx.db.query("refunds").order("desc").take(100);
   },
 });
 
 export const getByTransaction = query({
-  args: { transactionId: v.id("transactions") },
+  args: { transactionId: v.id("transactions"), token: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     return await ctx.db
       .query("refunds")
       .withIndex("by_transaction", (q) => q.eq("transactionId", args.transactionId))
@@ -23,8 +25,9 @@ export const getByTransaction = query({
 });
 
 export const getById = query({
-  args: { id: v.id("refunds") },
+  args: { id: v.id("refunds"), token: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     return await ctx.db.get(args.id);
   },
 });

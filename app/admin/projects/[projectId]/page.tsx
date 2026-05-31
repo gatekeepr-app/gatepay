@@ -4,6 +4,7 @@ import { use, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
+import { getStoredToken } from "@/integrations/convex/auth";
 import { ArrowLeft, Copy, FileText, Pencil, Settings2 } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/admin/format";
 import { toast } from "sonner";
@@ -13,11 +14,12 @@ import {
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params);
-  const project = useQuery(api.projects.getById, { id: projectId as any });
-  const billing = useQuery(api.billing.getByProject, { projectId: projectId as any });
-  const invoices = useQuery(api.invoices.list);
-  const clients = useQuery(api.clients.list);
-  const projectInvoices = invoices?.filter((i) => i.projectId === projectId);
+  const token = getStoredToken();
+  const project = useQuery(api.projects.getById, token ? { id: projectId as any, token } : "skip");
+  const billing = useQuery(api.billing.getByProject, token ? { projectId: projectId as any } : "skip");
+  const invoices = useQuery(api.invoices.list, token ? { token } : "skip");
+  const clients = useQuery(api.clients.list, token ? { token } : "skip");
+  const projectInvoices = invoices?.filter((i: any) => i.projectId === projectId);
   const deleteProject = useMutation(api.projects.remove);
   const updateProject = useMutation(api.projects.update);
   const [editOpen, setEditOpen] = useState(false);
@@ -58,6 +60,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
         clientId: editForm.clientId ? (editForm.clientId as any) : undefined,
         status: editForm.status,
         tags: editForm.tags,
+        token: getStoredToken()!,
       });
       toast.success("Project updated");
       setEditOpen(false);
@@ -69,7 +72,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
 
   const setStatus = async (status: string) => {
     try {
-      await updateProject({ id: projectId as any, status });
+      await updateProject({ id: projectId as any, status, token: getStoredToken()! });
       toast.success("Updated");
     } catch (err: any) {
       toast.error(err?.message ?? "Failed");
@@ -78,7 +81,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
 
   const handleDelete = async () => {
     if (!confirm("Delete this project? This will also remove its billing and invoices.")) return;
-    await deleteProject({ id: projectId as any });
+    await deleteProject({ id: projectId as any, token: getStoredToken()! });
     toast.success("Deleted");
   };
 
@@ -96,7 +99,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
             <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs">{project.status}</span>
             {project.clientId && clients && (
               <Link href={`/admin/clients/${project.clientId}`} className="hover:underline">
-                {clients.find((c) => c._id === project.clientId)?.name ?? "—"}
+                {clients.find((c: any) => c._id === project.clientId)?.name ?? "—"}
               </Link>
             )}
             <span>· Created {formatDate(new Date(project._creationTime))}</span>
@@ -207,7 +210,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
           <p className="mt-4 text-sm text-muted-foreground">No invoices yet.</p>
         ) : (
           <ul className="mt-4 divide-y divide-border">
-            {projectInvoices.map((inv) => (
+            {projectInvoices.map((inv: any) => (
               <li key={inv._id} className="py-3">
                 <Link href={`/admin/invoices/${inv._id}`} className="flex items-center justify-between hover:underline">
                   <span>
@@ -250,7 +253,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
               <select value={editForm.clientId} onChange={(e) => setEditForm({ ...editForm, clientId: e.target.value })}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm">
                 <option value="">— None —</option>
-                {clients?.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
+                {clients?.map((c: any) => <option key={c._id} value={c._id}>{c.name}</option>)}
               </select>
             </label>
             <label className="block">

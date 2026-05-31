@@ -1,24 +1,28 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { generateInvoiceNumber } from "./lib/helpers";
+import { requireAdmin } from "./lib/auth";
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     return await ctx.db.query("invoices").order("desc").take(100);
   },
 });
 
 export const getById = query({
-  args: { id: v.id("invoices") },
+  args: { id: v.id("invoices"), token: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     return await ctx.db.get(args.id);
   },
 });
 
 export const getLineItems = query({
-  args: { invoiceId: v.id("invoices") },
+  args: { invoiceId: v.id("invoices"), token: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     return await ctx.db
       .query("invoiceLineItems")
       .withIndex("by_invoice", (q) => q.eq("invoiceId", args.invoiceId))
@@ -46,8 +50,10 @@ export const create = mutation({
         unitPrice: v.number(),
       }),
     ),
+    token: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     const now = Date.now();
     const invoiceNumber = await generateInvoiceNumber(ctx);
     const taxAmount = args.subtotal * (args.taxRate / 100);
@@ -94,16 +100,19 @@ export const update = mutation({
     status: v.optional(v.string()),
     notes: v.optional(v.string()),
     dueDate: v.optional(v.number()),
+    token: v.string(),
   },
   handler: async (ctx, args) => {
-    const { id, ...fields } = args;
+    await requireAdmin(ctx, args.token);
+    const { id, token: _, ...fields } = args;
     await ctx.db.patch(id, { ...fields, updatedAt: Date.now() } as any);
   },
 });
 
 export const remove = mutation({
-  args: { id: v.id("invoices") },
+  args: { id: v.id("invoices"), token: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     const items = await ctx.db
       .query("invoiceLineItems")
       .withIndex("by_invoice", (q) => q.eq("invoiceId", args.id))

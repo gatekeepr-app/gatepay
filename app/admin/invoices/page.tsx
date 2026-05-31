@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
+import { getStoredToken } from "@/integrations/convex/auth";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function InvoicesPage() {
-  const invoices = useQuery(api.invoices.list);
+  const token = getStoredToken();
+  const invoices = useQuery(api.invoices.list, token ? { token } : "skip");
 
   return (
     <div className="p-6">
@@ -18,7 +20,7 @@ export default function InvoicesPage() {
         </Link>
       </div>
       <div className="mt-4 space-y-2">
-        {invoices?.map((inv) => (
+        {invoices?.map((inv: any) => (
           <Link
             key={inv._id}
             href={`/admin/invoices/${inv._id}`}

@@ -4,25 +4,27 @@ import { use } from "react";
 import Link from "next/link";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
+import { getStoredToken } from "@/integrations/convex/auth";
 import { toast } from "sonner";
 
 export default function InvoiceDetailPage({ params }: { params: Promise<{ invoiceId: string }> }) {
   const { invoiceId } = use(params);
-  const invoice = useQuery(api.invoices.getById, { id: invoiceId as any });
-  const lineItems = useQuery(api.invoices.getLineItems, { invoiceId: invoiceId as any });
+  const token = getStoredToken();
+  const invoice = useQuery(api.invoices.getById, token ? { id: invoiceId as any, token } : "skip");
+  const lineItems = useQuery(api.invoices.getLineItems, token ? { invoiceId: invoiceId as any, token } : "skip");
   const updateInvoice = useMutation(api.invoices.update);
   const deleteInvoice = useMutation(api.invoices.remove);
 
   if (!invoice) return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
 
   const markPaid = async () => {
-    await updateInvoice({ id: invoiceId as any, status: "paid" });
+    await updateInvoice({ id: invoiceId as any, status: "paid", token: getStoredToken()! });
     toast.success("Marked as paid");
   };
 
   const handleDelete = async () => {
     if (!confirm("Delete this invoice?")) return;
-    await deleteInvoice({ id: invoiceId as any });
+    await deleteInvoice({ id: invoiceId as any, token: getStoredToken()! });
     toast.success("Invoice deleted");
   };
 
@@ -47,7 +49,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ invoic
         <div className="mt-4">
           <h3 className="text-sm font-medium">Line items</h3>
           <div className="mt-2 space-y-1 text-sm">
-            {lineItems.map((li) => (
+            {lineItems.map((li: any) => (
               <div key={li._id} className="flex justify-between rounded border border-border bg-card p-2">
                 <span>{li.description}</span>
                 <span>{li.quantity} × {li.unitPrice} = {li.amount}</span>

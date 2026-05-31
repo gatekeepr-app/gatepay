@@ -4,6 +4,7 @@ import { use, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
+import { getStoredToken } from "@/integrations/convex/auth";
 import { toast } from "sonner";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { formatDate } from "@/lib/admin/format";
@@ -13,8 +14,9 @@ import {
 
 export default function ClientDetailPage({ params }: { params: Promise<{ clientId: string }> }) {
   const { clientId } = use(params);
-  const client = useQuery(api.clients.getById, { id: clientId as any });
-  const projects = useQuery(api.projects.list);
+  const token = getStoredToken();
+  const client = useQuery(api.clients.getById, token ? { id: clientId as any, token } : "skip");
+  const projects = useQuery(api.projects.list, token ? { token } : "skip");
   const updateClient = useMutation(api.clients.update);
   const deleteClient = useMutation(api.clients.remove);
   const [editOpen, setEditOpen] = useState(false);
@@ -51,6 +53,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ clientI
         brandName: form.brandName.trim() || undefined,
         phone: form.phone.trim() || undefined,
         notes: form.notes.trim() || undefined,
+        token: getStoredToken()!,
       });
       toast.success("Client updated");
       setEditOpen(false);
@@ -62,7 +65,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ clientI
 
   const handleDelete = async () => {
     if (!confirm("Delete this client? This cannot be undone.")) return;
-    await deleteClient({ id: clientId as any });
+    await deleteClient({ id: clientId as any, token: getStoredToken()! });
     toast.success("Client deleted");
   };
 
@@ -107,7 +110,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ clientI
           <p className="mt-4 text-sm text-muted-foreground">No projects linked.</p>
         ) : (
           <ul className="mt-3 divide-y divide-border">
-            {clientProjects.map((p) => (
+            {clientProjects.map((p: any) => (
               <li key={p._id}>
                 <Link href={`/admin/projects/${p._id}`} className="flex items-center justify-between py-3 text-sm hover:underline">
                   <span>

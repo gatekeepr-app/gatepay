@@ -4,11 +4,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
+import { getStoredToken } from "@/integrations/convex/auth";
 import { toast } from "sonner";
 
 export default function NewInvoicePage() {
   const router = useRouter();
-  const projects = useQuery(api.projects.list);
+  const token = getStoredToken();
+  const projects = useQuery(api.projects.list, token ? { token } : "skip");
   const createInvoice = useMutation(api.invoices.create);
   const [form, setForm] = useState({
     projectId: "",
@@ -36,6 +38,7 @@ export default function NewInvoicePage() {
           quantity: li.quantity,
           unitPrice: li.unitPrice,
         })),
+        token: getStoredToken()!,
       });
       toast.success("Invoice created");
       router.push("/admin/invoices");
@@ -57,7 +60,7 @@ export default function NewInvoicePage() {
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/30"
           >
             <option value="">No project</option>
-            {projects?.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
+            {projects?.map((p: any) => <option key={p._id} value={p._id}>{p.name}</option>)}
           </select>
         </label>
 

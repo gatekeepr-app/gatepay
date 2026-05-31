@@ -16,7 +16,7 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ re
   const router = useRouter();
   const params = use(searchParams);
   const rawTarget = params.redirect || "/admin";
-  const target = rawTarget.startsWith("/") ? rawTarget : "/admin";
+  const target = /^\/(?!\/)/.test(rawTarget) ? rawTarget : "/admin";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

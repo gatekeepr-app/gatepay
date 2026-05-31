@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
+import { getStoredToken } from "@/integrations/convex/auth";
 import { toast } from "sonner";
 
 export default function UsersPage() {
-  const users = useQuery(api.users.list);
-  const invitations = useQuery(api.invitations.list);
+  const token = getStoredToken();
+  const users = useQuery(api.users.list, token ? { token } : "skip");
+  const invitations = useQuery(api.invitations.list, token ? { token } : "skip");
   const sendInvite = useMutation(api.invitations.create);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("member");
@@ -17,7 +19,7 @@ export default function UsersPage() {
     if (!email.trim()) return;
     setSubmitting(true);
     try {
-      await sendInvite({ email, role, invitedBy: undefined });
+      await sendInvite({ email, role, invitedBy: undefined, token: getStoredToken()! });
       toast.success("Invitation sent");
       setEmail("");
     } catch (err: any) {
@@ -31,7 +33,7 @@ export default function UsersPage() {
       <h1 className="text-2xl font-semibold">Users</h1>
 
       <div className="mt-4 space-y-2">
-        {users?.map((u) => (
+        {users?.map((u: any) => (
           <div key={u._id} className="rounded-lg border border-border bg-card p-4">
             <div className="font-medium">{u.email}</div>
             <div className="text-xs text-muted-foreground">Role: {u.role}</div>
@@ -55,7 +57,7 @@ export default function UsersPage() {
         <>
           <h2 className="mt-8 text-lg font-semibold">Pending invitations</h2>
           <div className="mt-2 space-y-2">
-            {invitations.filter((i) => i.status === "pending").map((inv) => (
+            {invitations.filter((i: any) => i.status === "pending").map((inv: any) => (
               <div key={inv._id} className="rounded-lg border border-border bg-card p-3 text-sm">
                 {inv.email} · {inv.role}
               </div>

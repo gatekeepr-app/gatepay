@@ -2,9 +2,11 @@
 
 import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
+import { getStoredToken } from "@/integrations/convex/auth";
 
 export default function AnalyticsPage() {
-  const stats = useQuery(api.analytics.getApiLogStats, { hours: 24 });
+  const token = getStoredToken();
+  const stats = useQuery(api.analytics.getApiLogStats, token ? { hours: 24, token } : "skip");
 
   return (
     <div className="p-6">
@@ -41,7 +43,7 @@ export default function AnalyticsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {stats.routeStats.map((r) => (
+                {stats.routeStats.map((r: any) => (
                   <tr key={r.path}>
                     <td className="px-3 py-2 font-mono text-xs">{r.path}</td>
                     <td className="px-3 py-2">{r.count}</td>
@@ -68,7 +70,7 @@ export default function AnalyticsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {stats.keyStats.map((k) => (
+                {stats.keyStats.map((k: any) => (
                   <tr key={k.prefix}>
                     <td className="px-3 py-2 font-mono text-xs">{k.prefix}</td>
                     <td className="px-3 py-2">{k.count}</td>

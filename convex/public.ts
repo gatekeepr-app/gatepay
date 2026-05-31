@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
 import { hmacSha256 } from "./lib/crypto";
+import { escapeHtml } from "./lib/helpers";
 import { requireAdmin } from "./lib/auth";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
@@ -349,15 +350,15 @@ export const triggerVerifyBatch = mutation({
                       body: JSON.stringify({
                         from: EMAIL_FROM,
                         to: [client.email],
-                        subject: `Payment Confirmed — ${project?.name ?? "GatePay"}`,
+                        subject: `Payment Confirmed — ${escapeHtml(project?.name ?? "GatePay")}`,
                         html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px;">
                           <h2 style="margin:0 0 16px;font-size:20px;">Payment Confirmed</h2>
                           <p style="color:#555;margin:0 0 24px;">Your payment has been verified by our team.</p>
                           <table style="width:100%;border-collapse:collapse;font-size:14px;">
-                            <tr><td style="padding:8px 0;color:#888;">Transaction ref</td><td style="padding:8px 0;font-family:monospace;">${t.transactionRef}</td></tr>
-                            <tr><td style="padding:8px 0;color:#888;">Amount</td><td style="padding:8px 0;">${t.currency} ${t.amount.toLocaleString()}</td></tr>
-                            ${period ? `<tr><td style="padding:8px 0;color:#888;">Period</td><td style="padding:8px 0;">${period}</td></tr>` : ""}
-                            ${project ? `<tr><td style="padding:8px 0;color:#888;">Project</td><td style="padding:8px 0;">${project.name} (${project.projectCode})</td></tr>` : ""}
+                            <tr><td style="padding:8px 0;color:#888;">Transaction ref</td><td style="padding:8px 0;font-family:monospace;">${escapeHtml(t.transactionRef)}</td></tr>
+                            <tr><td style="padding:8px 0;color:#888;">Amount</td><td style="padding:8px 0;">${escapeHtml(t.currency)} ${t.amount.toLocaleString()}</td></tr>
+                            ${period ? `<tr><td style="padding:8px 0;color:#888;">Period</td><td style="padding:8px 0;">${escapeHtml(period)}</td></tr>` : ""}
+                            ${project ? `<tr><td style="padding:8px 0;color:#888;">Project</td><td style="padding:8px 0;">${escapeHtml(project.name)} (${project.projectCode})</td></tr>` : ""}
                             <tr><td style="padding:8px 0;color:#888;">Verified at</td><td style="padding:8px 0;">${new Date(verifiedAt).toLocaleDateString()}</td></tr>
                           </table>
                           <p style="color:#888;font-size:12px;margin:24px 0 0;">GatePay — Payment Verification</p>

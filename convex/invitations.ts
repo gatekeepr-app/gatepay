@@ -1,10 +1,12 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { randomHex } from "./lib/crypto";
+import { requireAdmin } from "./lib/auth";
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     return await ctx.db.query("invitations").order("desc").take(100);
   },
 });
@@ -24,8 +26,10 @@ export const create = mutation({
     email: v.string(),
     role: v.string(),
     invitedBy: v.optional(v.id("users")),
+    token: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     const token = randomHex(24);
     const now = Date.now();
     const id = await ctx.db.insert("invitations", {

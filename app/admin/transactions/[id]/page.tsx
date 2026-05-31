@@ -34,20 +34,21 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 export default function TransactionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const tx = useQuery(api.transactions.getById, { id: id as any });
-  const history = useQuery(api.transactions.getHistory, { transactionId: id as any });
+  const token = getStoredToken();
+  const tx = useQuery(api.transactions.getById, token ? { id: id as any, token } : "skip");
+  const history = useQuery(api.transactions.getHistory, token ? { transactionId: id as any, token } : "skip");
   const invoice = useQuery(
     api.invoices.getById,
-    tx?.invoiceId ? { id: tx.invoiceId } : "skip",
+    token && tx?.invoiceId ? { id: tx.invoiceId, token } : "skip",
   );
   const project = useQuery(
     api.projects.getById,
-    tx?.projectId ? { id: tx.projectId } : "skip",
+    token && tx?.projectId ? { id: tx.projectId, token } : "skip",
   );
   const updateStatus = useMutation(api.transactions.updateStatus);
   const reimburse = useMutation(api.transactions.reimburse);
   const deleteTx = useMutation(api.transactions.remove);
-  const refunds = useQuery(api.refunds.getByTransaction, { transactionId: id as any });
+  const refunds = useQuery(api.refunds.getByTransaction, token ? { transactionId: id as any, token } : "skip");
   const initiateRefund = useMutation(api.refunds.initiateRefund);
   const [reimbOpen, setReimbOpen] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
@@ -90,7 +91,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
 
   const handleDelete = async () => {
     if (!confirm("Delete this transaction? This cannot be undone.")) return;
-    await deleteTx({ id: id as any });
+    await deleteTx({ id: id as any, token: getStoredToken()! });
     toast.success("Transaction deleted");
   };
 
@@ -325,7 +326,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
           </div>
           {refunds && refunds.length > 0 ? (
             <div className="mt-4 space-y-3">
-              {refunds.map((r) => (
+              {refunds.map((r: any) => (
                   <div key={r._id} className="flex items-center justify-between rounded-lg border border-border p-3">
                   <div>
                     <div className="text-sm font-medium">{formatMoney(r.amount, r.currency)} via {r.method}</div>
@@ -425,7 +426,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
         <section className="mt-4 rounded-xl border border-border bg-card p-5">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Status History</h2>
           <div className="mt-4 space-y-3">
-            {history.map((h) => (
+            {history.map((h: any) => (
               <div key={h._id} className="flex items-start gap-3 text-sm">
                 <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-muted-foreground" />
                 <div>

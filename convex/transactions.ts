@@ -1,7 +1,8 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { generateInvoiceNumber } from "./lib/helpers";
+import { generateInvoiceNumber, escapeHtml } from "./lib/helpers";
 import { hmacSha256 } from "./lib/crypto";
+import { requireAdmin } from "./lib/auth";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const EMAIL_FROM = "GatePay <pay@mail.darvizlabs.online>";
@@ -9,15 +10,17 @@ const EMAIL_FROM = "GatePay <pay@mail.darvizlabs.online>";
 // ─── Queries ──────────────────────────────────────────────
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     return await ctx.db.query("transactions").order("desc").take(100);
   },
 });
 
 export const getByStatus = query({
-  args: { status: v.union(v.literal("pending"), v.literal("verified"), v.literal("reimbursed"), v.literal("failed")) },
+  args: { status: v.union(v.literal("pending"), v.literal("verified"), v.literal("reimbursed"), v.literal("failed")), token: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     // Use index for O(log n) lookup instead of full table scan + JS filter
     const indexed = await ctx.db
       .query("transactions")
@@ -41,15 +44,17 @@ export const getByStatus = query({
 });
 
 export const getById = query({
-  args: { id: v.id("transactions") },
+  args: { id: v.id("transactions"), token: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     return await ctx.db.get(args.id);
   },
 });
 
 export const getByProject = query({
-  args: { projectId: v.id("projects") },
+  args: { projectId: v.id("projects"), token: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     return await ctx.db
       .query("transactions")
       .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
@@ -69,8 +74,9 @@ export const getByRef = query({
 });
 
 export const getHistory = query({
-  args: { transactionId: v.id("transactions") },
+  args: { transactionId: v.id("transactions"), token: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     return await ctx.db
       .query("statusHistory")
       .withIndex("by_transaction", (q) => q.eq("transactionId", args.transactionId))
@@ -80,8 +86,9 @@ export const getHistory = query({
 });
 
 export const getUnverified = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     return await ctx.db
       .query("transactions")
       .withIndex("by_verified_at", (q) => q.eq("verifiedAt", undefined))
@@ -90,8 +97,9 @@ export const getUnverified = query({
 });
 
 export const getStatusCounts = query({
-  args: {},
-  handler: async (ctx) => {
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     // Bounded queries using indexes instead of loading entire table
     const pending = await ctx.db
       .query("transactions")
@@ -225,14 +233,14 @@ async function sendStatusEmail(
           body: JSON.stringify({
             from: EMAIL_FROM,
             to: [admin.email],
-            subject: `New Payment — ${tx.transactionRef}`,
+            subject: `New Payment — ${escapeHtml(tx.transactionRef)}`,
             html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px;">
               <h2 style="margin:0 0 16px;font-size:20px;">New Payment Received</h2>
               <table style="width:100%;border-collapse:collapse;font-size:14px;">
-                <tr><td style="padding:8px 0;color:#888;">Transaction</td><td style="padding:8px 0;font-family:monospace;">${tx.transactionRef}</td></tr>
-                <tr><td style="padding:8px 0;color:#888;">Amount</td><td style="padding:8px 0;">${tx.currency} ${tx.amount.toLocaleString()}</td></tr>
-                <tr><td style="padding:8px 0;color:#888;">Method</td><td style="padding:8px 0;">${tx.method ?? "—"}</td></tr>
-                ${project ? `<tr><td style="padding:8px 0;color:#888;">Project</td><td style="padding:8px 0;">${project.name}</td></tr>` : ""}
+                <tr><td style="padding:8px 0;color:#888;">Transaction</td><td style="padding:8px 0;font-family:monospace;">${escapeHtml(tx.transactionRef)}</td></tr>
+                <tr><td style="padding:8px 0;color:#888;">Amount</td><td style="padding:8px 0;">${escapeHtml(tx.currency)} ${tx.amount.toLocaleString()}</td></tr>
+                <tr><td style="padding:8px 0;color:#888;">Method</td><td style="padding:8px 0;">${escapeHtml(tx.method ?? "—")}</td></tr>
+                ${project ? `<tr><td style="padding:8px 0;color:#888;">Project</td><td style="padding:8px 0;">${escapeHtml(project.name)}</td></tr>` : ""}
               </table>
               <p style="color:#888;font-size:12px;margin:24px 0 0;">GatePay — Payment Verification</p>
             </div>`,
@@ -249,40 +257,40 @@ async function sendStatusEmail(
   let body = "";
 
   if (newStatus === "verified") {
-    subject = `Payment Confirmed — ${project?.name ?? "GatePay"}`;
+    subject = `Payment Confirmed — ${escapeHtml(project?.name ?? "GatePay")}`;
     body = `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px;">
       <h2 style="margin:0 0 16px;font-size:20px;">Payment Confirmed</h2>
       <p style="color:#555;margin:0 0 24px;">Your payment has been verified by our team.</p>
       <table style="width:100%;border-collapse:collapse;font-size:14px;">
-        <tr><td style="padding:8px 0;color:#888;">Transaction ref</td><td style="padding:8px 0;font-family:monospace;">${tx.transactionRef}</td></tr>
-        <tr><td style="padding:8px 0;color:#888;">Amount</td><td style="padding:8px 0;">${tx.currency} ${tx.amount.toLocaleString()}</td></tr>
-        ${period ? `<tr><td style="padding:8px 0;color:#888;">Period</td><td style="padding:8px 0;">${period}</td></tr>` : ""}
-        ${project ? `<tr><td style="padding:8px 0;color:#888;">Project</td><td style="padding:8px 0;">${project.name} (${project.projectCode})</td></tr>` : ""}
+        <tr><td style="padding:8px 0;color:#888;">Transaction ref</td><td style="padding:8px 0;font-family:monospace;">${escapeHtml(tx.transactionRef)}</td></tr>
+        <tr><td style="padding:8px 0;color:#888;">Amount</td><td style="padding:8px 0;">${escapeHtml(tx.currency)} ${tx.amount.toLocaleString()}</td></tr>
+        ${period ? `<tr><td style="padding:8px 0;color:#888;">Period</td><td style="padding:8px 0;">${escapeHtml(period)}</td></tr>` : ""}
+        ${project ? `<tr><td style="padding:8px 0;color:#888;">Project</td><td style="padding:8px 0;">${escapeHtml(project.name)} (${project.projectCode})</td></tr>` : ""}
       </table>
       <p style="color:#888;font-size:12px;margin:24px 0 0;">GatePay — Payment Verification</p>
     </div>`;
   } else if (newStatus === "reimbursed") {
-    subject = `Payment Reimbursed — ${project?.name ?? "GatePay"}`;
+    subject = `Payment Reimbursed — ${escapeHtml(project?.name ?? "GatePay")}`;
     body = `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px;">
       <h2 style="margin:0 0 16px;font-size:20px;">Payment Reimbursed</h2>
       <p style="color:#555;margin:0 0 24px;">Your payment has been reimbursed.</p>
       <table style="width:100%;border-collapse:collapse;font-size:14px;">
-        <tr><td style="padding:8px 0;color:#888;">Transaction ref</td><td style="padding:8px 0;font-family:monospace;">${tx.transactionRef}</td></tr>
-        <tr><td style="padding:8px 0;color:#888;">Original amount</td><td style="padding:8px 0;">${tx.currency} ${tx.amount.toLocaleString()}</td></tr>
-        <tr><td style="padding:8px 0;color:#888;">Reimbursed</td><td style="padding:8px 0;">${tx.currency} ${(tx.reimbursementAmount ?? tx.amount).toLocaleString()}</td></tr>
-        ${tx.reimbursementMethod ? `<tr><td style="padding:8px 0;color:#888;">Method</td><td style="padding:8px 0;">${tx.reimbursementMethod}</td></tr>` : ""}
-        ${tx.reimbursementRef ? `<tr><td style="padding:8px 0;color:#888;">Reference</td><td style="padding:8px 0;font-family:monospace;">${tx.reimbursementRef}</td></tr>` : ""}
+        <tr><td style="padding:8px 0;color:#888;">Transaction ref</td><td style="padding:8px 0;font-family:monospace;">${escapeHtml(tx.transactionRef)}</td></tr>
+        <tr><td style="padding:8px 0;color:#888;">Original amount</td><td style="padding:8px 0;">${escapeHtml(tx.currency)} ${tx.amount.toLocaleString()}</td></tr>
+        <tr><td style="padding:8px 0;color:#888;">Reimbursed</td><td style="padding:8px 0;">${escapeHtml(tx.currency)} ${(tx.reimbursementAmount ?? tx.amount).toLocaleString()}</td></tr>
+        ${tx.reimbursementMethod ? `<tr><td style="padding:8px 0;color:#888;">Method</td><td style="padding:8px 0;">${escapeHtml(tx.reimbursementMethod)}</td></tr>` : ""}
+        ${tx.reimbursementRef ? `<tr><td style="padding:8px 0;color:#888;">Reference</td><td style="padding:8px 0;font-family:monospace;">${escapeHtml(tx.reimbursementRef)}</td></tr>` : ""}
       </table>
       <p style="color:#888;font-size:12px;margin:24px 0 0;">GatePay — Payment Verification</p>
     </div>`;
   } else if (newStatus === "failed") {
-    subject = `Payment Failed — ${tx.transactionRef}`;
+    subject = `Payment Failed — ${escapeHtml(tx.transactionRef)}`;
     body = `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px;">
       <h2 style="margin:0 0 16px;font-size:20px;">Payment Failed</h2>
       <p style="color:#555;margin:0 0 24px;">A payment has been marked as failed.</p>
       <table style="width:100%;border-collapse:collapse;font-size:14px;">
-        <tr><td style="padding:8px 0;color:#888;">Transaction</td><td style="padding:8px 0;font-family:monospace;">${tx.transactionRef}</td></tr>
-        <tr><td style="padding:8px 0;color:#888;">Amount</td><td style="padding:8px 0;">${tx.currency} ${tx.amount.toLocaleString()}</td></tr>
+        <tr><td style="padding:8px 0;color:#888;">Transaction</td><td style="padding:8px 0;font-family:monospace;">${escapeHtml(tx.transactionRef)}</td></tr>
+        <tr><td style="padding:8px 0;color:#888;">Amount</td><td style="padding:8px 0;">${escapeHtml(tx.currency)} ${tx.amount.toLocaleString()}</td></tr>
       </table>
       <p style="color:#888;font-size:12px;margin:24px 0 0;">GatePay — Payment Verification</p>
     </div>`;
@@ -397,8 +405,10 @@ export const create = mutation({
     verifiedSource: v.optional(v.string()),
     notes: v.optional(v.string()),
     createdBy: v.string(),
+    token: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     const now = Date.now();
     const id = await ctx.db.insert("transactions", {
       transactionRef: args.transactionRef.toLowerCase(),
@@ -434,6 +444,7 @@ export const updateStatus = mutation({
     token: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     const tx = await ctx.db.get(args.id);
     if (!tx) throw new Error("not_found");
 
@@ -477,6 +488,7 @@ export const reimburse = mutation({
     token: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     const tx = await ctx.db.get(args.id);
     if (!tx) throw new Error("not_found");
     if ((tx.status ?? "pending") === "reimbursed") throw new Error("already_reimbursed");
@@ -515,6 +527,7 @@ export const reimburse = mutation({
 export const backfillStatus = mutation({
   args: { token: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     // Batched: process 100 at a time instead of unbounded collect
     let totalBackfilled = 0;
     let hasMore = true;
@@ -559,16 +572,19 @@ export const update = mutation({
     verifiedSource: v.optional(v.string()),
     verifiedAt: v.optional(v.number()),
     notes: v.optional(v.string()),
+    token: v.string(),
   },
   handler: async (ctx, args) => {
-    const { id, ...fields } = args;
+    await requireAdmin(ctx, args.token);
+    const { id, token: _, ...fields } = args;
     await ctx.db.patch(id, { ...fields, updatedAt: Date.now() });
   },
 });
 
 export const verifyByCallback = mutation({
-  args: { ids: v.array(v.id("transactions")), source: v.optional(v.string()) },
+  args: { ids: v.array(v.id("transactions")), source: v.optional(v.string()), token: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     const now = Date.now();
     for (const id of args.ids) {
       await ctx.db.patch(id, {
@@ -592,8 +608,9 @@ export const verifyByCallback = mutation({
 });
 
 export const remove = mutation({
-  args: { id: v.id("transactions") },
+  args: { id: v.id("transactions"), token: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     await ctx.db.delete(args.id);
   },
 });

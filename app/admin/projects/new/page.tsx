@@ -4,11 +4,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
+import { getStoredToken } from "@/integrations/convex/auth";
 import { toast } from "sonner";
 
 export default function NewProjectPage() {
   const router = useRouter();
-  const clients = useQuery(api.clients.list);
+  const token = getStoredToken();
+  const clients = useQuery(api.clients.list, token ? { token } : "skip");
   const createProject = useMutation(api.projects.create);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({ name: "", description: "", clientId: "", tags: "" });
@@ -23,6 +25,7 @@ export default function NewProjectPage() {
         clientId: form.clientId ? (form.clientId as any) : undefined,
         tags: form.tags ? form.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
         createdBy: undefined,
+        token: getStoredToken()!,
       });
       toast.success("Project created");
       router.push("/admin/projects");
@@ -42,7 +45,7 @@ export default function NewProjectPage() {
             <textarea placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" rows={3} />
             <select value={form.clientId} onChange={(e) => setForm({ ...form, clientId: e.target.value })} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm">
               <option value="">No client</option>
-              {clients?.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
+              {clients?.map((c: any) => <option key={c._id} value={c._id}>{c.name}</option>)}
             </select>
             <button onClick={() => setStep(1)} disabled={!form.name.trim()} className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background hover:opacity-90 disabled:opacity-50">
               Next

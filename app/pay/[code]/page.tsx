@@ -4,6 +4,7 @@ import { use, useMemo, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { formatMoney } from "@/lib/admin/format";
+import { getStoredToken } from "@/integrations/convex/auth";
 import { toast } from "sonner";
 import { CheckCircle2, Lock } from "lucide-react";
 import { payCodeSchema, paymentSubmissionSchema } from "@/lib/validation";
@@ -65,6 +66,7 @@ function computeDue(billing: any, txs: any[]) {
 
 export default function PayCodePage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
+  const payToken = getStoredToken();
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [submittedRef, setSubmittedRef] = useState<string | null>(null);
@@ -81,7 +83,7 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
   );
   const txs = useQuery(
     api.transactions.getByProject,
-    project ? { projectId: project._id } : "skip",
+    payToken && project ? { projectId: project._id, token: payToken } : "skip",
   );
 
   const submitPay = useMutation(api.transactions.submitPayPayment);
