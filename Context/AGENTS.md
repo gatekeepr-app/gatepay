@@ -21,10 +21,9 @@ Convex agent skills for common tasks can be installed by running
 
 ## Architecture
 
-- **Frontend**: Next.js 15 (App Router), React 19, Tailwind CSS v4, `convex/react` for client-side data.
+- **Frontend**: Next.js 16 (App Router + Turbopack), React 19, Tailwind CSS v4, `convex/react` for client-side data.
 - **Backend**: Convex (`convex/` directory) — schema, mutations, queries, HTTP actions. Rate limiting is DB-based (no `setInterval`/`setTimeout`).
-- **API Routes**: Next.js Route Handlers in `app/api/v1/public/` — submit, verify, health, openapi. All use `ConvexHttpClient` server-side.
-- **Legacy**: Old TanStack Router + Vite files in `src/routes/` are excluded from build. Not yet migrated to `app/`.
+- **API Routes**: Next.js Route Handlers in `app/api/v1/public/` — submit, verify, review, refund, health, openapi. All use `ConvexHttpClient` server-side.
 
 ## Useful Commands
 
@@ -41,6 +40,8 @@ Convex agent skills for common tasks can be installed by running
 | `app/api/v1/public/*/route.ts` | Public API route handlers |
 | `app/docs/payments-api/page.tsx` | Public API docs page |
 | `convex/` | Convex backend (schema, mutations, queries, HTTP actions) |
+| `convex/schema.ts` | 16 tables (users, clients, projects, billing, invoices, transactions, refunds, apiKeys, adminLogs, etc.) |
+| `convex/admin_logs.ts` | Admin activity audit trail |
 | `src/integrations/convex/provider.tsx` | ConvexReactClient client wrapper |
 | `src/integrations/convex/server.ts` | ConvexHttpClient for server-side |
 | `src/lib/api/helpers.ts` | Shared API helpers (CORS, rate limit, logging, etc.) |

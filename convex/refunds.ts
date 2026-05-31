@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireAdmin } from "./lib/auth";
+import { logAdminAction } from "./lib/helpers";
 
 // ─── Queries ──────────────────────────────────────────────
 
@@ -45,7 +46,7 @@ export const initiateRefund = mutation({
     token: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+    const admin = await requireAdmin(ctx, args.token);
 
     const tx = await ctx.db.get(args.transactionId);
     if (!tx) throw new Error("transaction_not_found");
@@ -76,6 +77,15 @@ export const initiateRefund = mutation({
       changedBy: args.token,
       changedAt: now,
       notes: `Refund initiated: ${tx.currency} ${args.amount} via ${args.method}${args.receiverName ? ` to ${args.receiverName}` : ""}${args.receiverNumber ? ` (${args.receiverNumber})` : ""}${args.notes ? ` — ${args.notes}` : ""}`,
+    });
+
+    await logAdminAction(ctx, {
+      action: "refund.initiate",
+      entityType: "refunds",
+      entityId: refundId,
+      details: `Initiated refund ${tx.currency} ${args.amount} via ${args.method} for tx ${tx.transactionRef}`,
+      userId: admin._id,
+      userEmail: admin.email,
     });
 
     return { refundId, ok: true };

@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
@@ -34,6 +35,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 export default function TransactionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
   const token = getStoredToken();
   const tx = useQuery(api.transactions.getById, token ? { id: id as any, token } : "skip");
   const history = useQuery(api.transactions.getHistory, token ? { transactionId: id as any, token } : "skip");
@@ -93,6 +95,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
     if (!confirm("Delete this transaction? This cannot be undone.")) return;
     await deleteTx({ id: id as any, token: getStoredToken()! });
     toast.success("Transaction deleted");
+    router.push("/admin/transactions");
   };
 
   const handleInitiateRefund = async () => {

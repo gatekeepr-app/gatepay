@@ -51,7 +51,7 @@ export default function ApiKeysPage() {
     }
     setLoadingReveal((prev) => ({ ...prev, [id]: true }));
     try {
-      const data = await convex.query(api.api_keys.revealKey, { id, token: getStoredToken() ?? "" });
+      const data = await convex.query(api.api_keys.revealKey, { id: id as any, token: getStoredToken() ?? "" });
       setRevealed((prev) => ({ ...prev, [id]: data }));
     } catch (err: any) {
       toast.error(err?.message ?? "Failed");

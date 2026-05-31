@@ -278,4 +278,20 @@ export default defineSchema({
     .index("by_request_id", ["requestId"])
     .index("by_created_at", ["createdAt"])
     .index("by_api_key_prefix", ["apiKeyPrefix"]),
+
+  // Admin activity log
+  adminLogs: defineTable({
+    action: v.string(),
+    entityType: v.optional(v.string()),
+    entityId: v.optional(v.string()),
+    details: v.optional(v.string()),
+    userId: v.optional(v.string()),
+    userEmail: v.optional(v.string()),
+    ip: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_created_at", ["createdAt"])
+    .index("by_action", ["action"])
+    .index("by_user", ["userId"])
+    .index("by_entity", ["entityType", "entityId"]),
 });

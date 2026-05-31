@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Briefcase, FileText, UserCog, LogOut, Wallet, Code2, KeyRound, BarChart3, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, FileText, UserCog, LogOut, Wallet, Code2, KeyRound, BarChart3, Menu, X, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 
@@ -15,6 +15,7 @@ const items = [
   { to: "/admin/api-keys", label: "API Keys", icon: KeyRound },
   { to: "/admin/api-docs", label: "API Docs", icon: Code2 },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/admin/activity-log", label: "Activity Log", icon: History },
 ];
 
 function SidebarContent({

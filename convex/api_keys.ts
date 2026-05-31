@@ -3,6 +3,7 @@ import { mutation, query } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { sha256, randomToken } from "./lib/crypto";
 import { requireAdmin } from "./lib/auth";
+import { logAdminAction } from "./lib/helpers";
 
 export const list = query({
   args: { token: v.string() },
@@ -24,12 +25,13 @@ export const list = query({
 });
 
 export const revealKey = query({
-  args: { id: v.string(), token: v.string() },
+  args: { id: v.id("apiKeys"), token: v.string() },
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.token);
-    const key = await ctx.db.get(args.id as any) as Doc<"apiKeys"> | null;
+    const key = await ctx.db.get(args.id);
     if (!key) throw new Error("not_found");
-    return { keyToken: key.keyToken!, signingSecret: key.signingSecret! };
+    if (!key.signingSecret) throw new Error("Key has no signing secret");
+    return { keyToken: key.keyToken!, signingSecret: key.signingSecret };
   },
 });
 
@@ -52,7 +54,7 @@ export const create = mutation({
     token: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+    const admin = await requireAdmin(ctx, args.token);
     const apiToken = `gk_${randomToken(32)}`;
     const prefix = apiToken.slice(0, 8);
     const hash = await sha256(apiToken);
@@ -69,6 +71,15 @@ export const create = mutation({
       createdAt: Date.now(),
     });
 
+    await logAdminAction(ctx, {
+      action: "api_key.create",
+      entityType: "apiKeys",
+      entityId: id,
+      details: `Created API key "${args.name}"`,
+      userId: admin._id,
+      userEmail: admin.email,
+    });
+
     return { id, token: apiToken, signingSecret };
   },
 });
@@ -76,8 +87,17 @@ export const create = mutation({
 export const revoke = mutation({
   args: { id: v.id("apiKeys"), token: v.string() },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+    const admin = await requireAdmin(ctx, args.token);
+    const key = await ctx.db.get(args.id);
     await ctx.db.patch(args.id, { revokedAt: Date.now() });
+    await logAdminAction(ctx, {
+      action: "api_key.revoke",
+      entityType: "apiKeys",
+      entityId: args.id,
+      details: `Revoked API key "${key?.name ?? "unknown"}"`,
+      userId: admin._id,
+      userEmail: admin.email,
+    });
   },
 });
 

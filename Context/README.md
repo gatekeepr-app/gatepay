@@ -47,16 +47,19 @@ app/                    # Next.js App Router pages
 └── page.tsx            # Marketing homepage
 
 convex/                 # Convex backend
-├── schema.ts           # 11 tables
+├── schema.ts           # 16 tables
 ├── auth.ts             # signUp, signIn, getMe
 ├── transactions.ts     # CRUD + submitPayPayment (auto-generates invoice)
 ├── invoices.ts         # CRUD + line items
 ├── projects.ts         # CRUD + pay code lookup
 ├── billing.ts          # Billing config per project
-├── clients.ts, users.ts, api_keys.ts, invitations.ts, leads.ts
+├── clients.ts, users.ts, api_keys.ts, invitations.ts
+├── refunds.ts          # Refund lifecycle (initiate, update status)
 ├── public.ts           # verifyTransaction + submitTransaction + triggerVerifyBatch (sends GatePay confirmation emails)
 ├── rate_limit.ts       # DB-based rate limiter
-└── seed.ts             # Initial admin seeding
+├── api_logs.ts         # Public API request logging
+├── admin_logs.ts       # Admin activity audit trail
+├── seed.ts             # Initial admin seeding
 
 src/                    # Shared client code
 ├── components/
@@ -76,7 +79,7 @@ src/                    # Shared client code
 | `/invite/:token` | Accept team invitation |
 | `/pay/:code` | Client payment page with bKash |
 | `/docs/payments-api` | Public API docs |
-| `/admin` | Dashboard, clients, projects, invoices, transactions, users, API keys, leads, analytics |
+| `/admin` | Dashboard, clients, projects, invoices, transactions, users, API keys, activity log, analytics |
 | `/api/v1/public/*` | Partner API (verify, submit, review, health, openapi) |
 
 ## Public API
@@ -99,7 +102,10 @@ src/                    # Shared client code
 - **GatePay branding**: All UI, API headers (`X-GatePay-Signature`), and docs use GatePay name
 - **Client editing**: Full CRUD on clients with edit dialog and linked projects
 - **Transaction details**: Receiving data, status history timeline, verification info, linked invoice/project
-- **Dashboard**: Revenue stats, status counts, recent transactions/leads
+- **Dashboard**: Revenue stats, status counts, recent transactions
+- **Admin activity log**: Full audit trail of all admin actions (user management, API keys, transactions, CRUD)
+- **Invitation email**: Resend sends invite link when admin invites a user
+- **Security hardened**: `requireAdmin` on 30+ functions, HTML escaping, open redirect protection, auto-generated signing secrets
 - **Performance optimized**: DB-backed counters, bounded queries, indexed lookups, pagination on all lists
 
 ## Environment Variables

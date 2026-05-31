@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { generateInvoiceNumber } from "./lib/helpers";
+import { generateInvoiceNumber, logAdminAction } from "./lib/helpers";
 import { requireAdmin } from "./lib/auth";
 
 export const list = query({
@@ -53,7 +53,7 @@ export const create = mutation({
     token: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+    const admin = await requireAdmin(ctx, args.token);
     const now = Date.now();
     const invoiceNumber = await generateInvoiceNumber(ctx);
     const taxAmount = args.subtotal * (args.taxRate / 100);
@@ -90,6 +90,15 @@ export const create = mutation({
       });
     }
 
+    await logAdminAction(ctx, {
+      action: "invoice.create",
+      entityType: "invoices",
+      entityId: invoiceId,
+      details: `Created invoice ${invoiceNumber} (${args.currency} ${total})`,
+      userId: admin._id,
+      userEmail: admin.email,
+    });
+
     return invoiceId;
   },
 });
@@ -103,16 +112,26 @@ export const update = mutation({
     token: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+    const admin = await requireAdmin(ctx, args.token);
     const { id, token: _, ...fields } = args;
+    const invoice = await ctx.db.get(id);
     await ctx.db.patch(id, { ...fields, updatedAt: Date.now() } as any);
+    await logAdminAction(ctx, {
+      action: "invoice.update",
+      entityType: "invoices",
+      entityId: id,
+      details: `Updated invoice ${invoice?.invoiceNumber ?? "unknown"}`,
+      userId: admin._id,
+      userEmail: admin.email,
+    });
   },
 });
 
 export const remove = mutation({
   args: { id: v.id("invoices"), token: v.string() },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+    const admin = await requireAdmin(ctx, args.token);
+    const invoice = await ctx.db.get(args.id);
     const items = await ctx.db
       .query("invoiceLineItems")
       .withIndex("by_invoice", (q) => q.eq("invoiceId", args.id))
@@ -121,5 +140,13 @@ export const remove = mutation({
       await ctx.db.delete(item._id);
     }
     await ctx.db.delete(args.id);
+    await logAdminAction(ctx, {
+      action: "invoice.remove",
+      entityType: "invoices",
+      entityId: args.id,
+      details: `Removed invoice ${invoice?.invoiceNumber ?? "unknown"}`,
+      userId: admin._id,
+      userEmail: admin.email,
+    });
   },
 });

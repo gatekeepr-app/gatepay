@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { CheckCircle2, Lock } from "lucide-react";
 import { payCodeSchema, paymentSubmissionSchema } from "@/lib/validation";
 import gatepayLogo from "@/assets/gatepay-logo.png";
+import bkashPayment from "@/assets/bkash-payment.jpg";
 
 const BKASH_NUMBER = "01790176253";
 
@@ -166,9 +167,12 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
   return (
     <main className="min-h-screen bg-muted/30 px-4 py-10">
       <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-2">
-        {/* Left: Pay with bKash */}
+        {/* Left: bKash instructions with image */}
         <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
           <h2 className="text-xl font-semibold">Pay with bKash</h2>
+          <div className="mt-4 overflow-hidden rounded-xl">
+            <img src={bkashPayment.src} alt="bKash payment instructions" className="w-full object-contain" />
+          </div>
           <div className="mt-4 rounded-lg bg-muted px-4 py-3 text-center">
             <div className="text-xs uppercase tracking-wide text-muted-foreground">bKash number</div>
             <div className="mt-1 font-mono text-lg font-semibold">{BKASH_NUMBER}</div>

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { generateInvoiceNumber, escapeHtml } from "./lib/helpers";
+import { generateInvoiceNumber, escapeHtml, logAdminAction } from "./lib/helpers";
 import { hmacSha256 } from "./lib/crypto";
 import { requireAdmin } from "./lib/auth";
 
@@ -444,7 +444,7 @@ export const updateStatus = mutation({
     token: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+    const admin = await requireAdmin(ctx, args.token);
     const tx = await ctx.db.get(args.id);
     if (!tx) throw new Error("not_found");
 
@@ -474,6 +474,15 @@ export const updateStatus = mutation({
 
     await sendStatusEmail(ctx, tx, args.status, oldStatus);
 
+    await logAdminAction(ctx, {
+      action: `transaction.${args.status}`,
+      entityType: "transactions",
+      entityId: args.id,
+      details: `Changed transaction ${tx.transactionRef} from ${oldStatus} to ${args.status}`,
+      userId: admin._id,
+      userEmail: admin.email,
+    });
+
     return { ok: true, from: oldStatus, to: args.status };
   },
 });
@@ -488,7 +497,7 @@ export const reimburse = mutation({
     token: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx, args.token);
+    const admin = await requireAdmin(ctx, args.token);
     const tx = await ctx.db.get(args.id);
     if (!tx) throw new Error("not_found");
     if ((tx.status ?? "pending") === "reimbursed") throw new Error("already_reimbursed");
@@ -519,6 +528,15 @@ export const reimburse = mutation({
 
     await fireCallback(ctx, tx, "reimbursed");
     await sendStatusEmail(ctx, tx, "reimbursed", oldStatus);
+
+    await logAdminAction(ctx, {
+      action: "transaction.reimburse",
+      entityType: "transactions",
+      entityId: args.id,
+      details: `Reimbursed ${tx.currency} ${args.amount} via ${args.method} for ${tx.transactionRef}`,
+      userId: admin._id,
+      userEmail: admin.email,
+    });
 
     return { ok: true };
   },

@@ -11,6 +11,7 @@ export default function UsersPage() {
   const users = useQuery(api.users.list, token ? { token } : "skip");
   const invitations = useQuery(api.invitations.list, token ? { token } : "skip");
   const sendInvite = useMutation(api.invitations.create);
+  const deleteUser = useMutation(api.users.remove);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("member");
   const [submitting, setSubmitting] = useState(false);
@@ -34,9 +35,25 @@ export default function UsersPage() {
 
       <div className="mt-4 space-y-2">
         {users?.map((u: any) => (
-          <div key={u._id} className="rounded-lg border border-border bg-card p-4">
-            <div className="font-medium">{u.email}</div>
-            <div className="text-xs text-muted-foreground">Role: {u.role}</div>
+          <div key={u._id} className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
+            <div>
+              <div className="font-medium">{u.email}</div>
+              <div className="text-xs text-muted-foreground">Role: {u.role}</div>
+            </div>
+            <button
+              onClick={async () => {
+                if (!confirm(`Remove user ${u.email}?`)) return;
+                try {
+                  await deleteUser({ userId: u._id, token: getStoredToken()! });
+                  toast.success("User removed");
+                } catch (err: any) {
+                  toast.error(err?.message ?? "Failed");
+                }
+              }}
+              className="rounded bg-destructive/10 px-3 py-1 text-xs text-destructive hover:bg-destructive/20"
+            >
+              Remove
+            </button>
           </div>
         ))}
       </div>

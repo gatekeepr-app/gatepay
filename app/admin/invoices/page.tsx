@@ -16,7 +16,7 @@ export default function InvoicesPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Invoices</h1>
         <Link href="/admin/invoices/new">
-          <Button><Plus className="mr-2 h-4 w-4" />New invoice</Button>
+          <Button className="text-black dark:text-white"><Plus className="mr-2 h-4 w-4" />New invoice</Button>
         </Link>
       </div>
       <div className="mt-4 space-y-2">

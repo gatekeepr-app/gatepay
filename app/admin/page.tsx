@@ -15,13 +15,11 @@ export default function DashboardPage() {
   const clients = useQuery(api.clients.list, token ? { token } : "skip");
   const projects = useQuery(api.projects.list, token ? { token } : "skip");
   const invoices = useQuery(api.invoices.list, token ? { token } : "skip");
-  const leads = useQuery(api.leads.list, token ? { token } : "skip");
   const transactions = useQuery(api.transactions.list, token ? { token } : "skip");
 
   const unverifiedCount = transactions?.filter((t: any) => !t.verifiedAt).length ?? 0;
   const totalRevenue = transactions?.reduce((sum: any, t: any) => sum + Number(t.amount), 0) ?? 0;
   const recentTransactions = transactions?.slice(0, 5) ?? [];
-  const recentLeads = leads?.slice(0, 5) ?? [];
 
   return (
     <div className="p-6">
@@ -52,29 +50,6 @@ export default function DashboardPage() {
           </div>
           <div className="mt-3 text-3xl font-semibold">{formatMoney(totalRevenue)}</div>
           <div className="mt-1 text-xs text-muted-foreground">{transactions?.length ?? 0} transactions</div>
-        </div>
-
-        {/* Recent leads */}
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent leads</h2>
-            <Link href="/admin/leads" className="text-xs text-primary hover:underline">View all</Link>
-          </div>
-          {recentLeads.length === 0 ? (
-            <p className="mt-4 text-sm text-muted-foreground">No leads yet.</p>
-          ) : (
-            <ul className="mt-3 space-y-2">
-              {recentLeads.map((lead: any) => (
-                <li key={lead._id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
-                  <div>
-                    <div className="font-medium">{lead.name}</div>
-                    <div className="text-xs text-muted-foreground">{lead.email}</div>
-                  </div>
-                  <span className={`rounded-full px-2 py-0.5 text-xs ${lead.status === "new" ? "bg-blue-100 text-blue-700" : "bg-muted"}`}>{lead.status}</span>
-                </li>
-              ))}
-            </ul>
-          )}
         </div>
 
         {/* Recent transactions */}

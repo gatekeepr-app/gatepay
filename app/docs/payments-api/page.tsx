@@ -243,7 +243,8 @@ export default function PublicApiDocsPage() {
             <p>
               All endpoints require an API key via the <Inline>Authorization: Bearer</Inline>{" "}
               header (except health &amp; OpenAPI spec). Manage keys from{" "}
-              <strong>Admin → API Keys</strong>. The full token is shown only once on creation.
+              <strong>Admin → API Keys</strong>. The signing secret is auto-generated
+              on creation and can be re-viewed anytime by clicking the eye icon.
             </p>
           </Section>
 
