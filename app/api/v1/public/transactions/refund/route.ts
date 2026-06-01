@@ -91,7 +91,12 @@ export async function POST(request: NextRequest) {
       receiver_number: input.receiver_number,
     });
   } catch (e: any) {
-    const msg = e?.message ?? "";
+    const code = e?.data?.code;
+    if (code === "invalid_api_key") return respond(401, { error: "invalid_api_key" }, "invalid_api_key");
+    if (code === "key_missing_business_name") return respond(400, { error: "key_missing_business_name" }, "key_missing_business_name");
+    if (code === "transaction_not_found") return respond(404, { error: "transaction_not_found" }, "transaction_not_found");
+    if (code === "transaction_not_verified") return respond(409, { error: "transaction_not_verified" }, "transaction_not_verified");
+    const msg = (e?.message ?? JSON.stringify(e)).slice(0, 500);
     if (msg.includes("invalid_api_key")) return respond(401, { error: "invalid_api_key" }, "invalid_api_key");
     if (msg.includes("key_missing_business_name")) return respond(400, { error: "key_missing_business_name" }, "key_missing_business_name");
     if (msg.includes("transaction_not_found")) return respond(404, { error: "transaction_not_found" }, "transaction_not_found");

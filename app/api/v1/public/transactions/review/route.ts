@@ -79,6 +79,9 @@ export async function POST(request: NextRequest) {
     }
     return respond(200, { reviewed: false, reason: result.reason });
   } catch (e: any) {
+    const code = e?.data?.code;
+    if (code === "invalid_api_key") return respond(401, { error: "invalid_api_key" }, "invalid_api_key");
+    if (code === "key_missing_business_name") return respond(400, { error: "key_missing_business_name" }, "key_missing_business_name");
     const msg = e?.message ?? "";
     if (msg.includes("invalid_api_key")) return respond(401, { error: "invalid_api_key" }, "invalid_api_key");
     if (msg.includes("key_missing_business_name")) return respond(400, { error: "key_missing_business_name" }, "key_missing_business_name");

@@ -103,7 +103,13 @@ export async function POST(request: NextRequest) {
       status: "unverified",
     });
   } catch (e: any) {
-    const msg = e?.message ?? "";
+    const code = e?.data?.code;
+    if (code === "invalid_api_key") return respond(401, { error: "invalid_api_key" }, "invalid_api_key");
+    if (code === "missing_business_name") return respond(400, { error: "missing_business_name" }, "missing_business_name");
+    if (code === "duplicate_ref") {
+      return respond(409, { error: "duplicate_ref", transaction_ref: "" }, "duplicate_ref");
+    }
+    const msg = (e?.message ?? JSON.stringify(e)).slice(0, 500);
     if (msg.includes("invalid_api_key")) return respond(401, { error: "invalid_api_key" }, "invalid_api_key");
     if (msg.includes("missing_business_name")) return respond(400, { error: "missing_business_name" }, "missing_business_name");
     if (msg.includes("duplicate_ref")) {

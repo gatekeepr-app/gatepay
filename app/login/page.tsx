@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -55,10 +55,17 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ re
     setSubmitting(false);
   };
 
-  if (getStoredToken()) {
-    router.push(target);
-    return null;
-  }
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    if (getStoredToken()) {
+      router.push(target);
+    } else {
+      setChecking(false);
+    }
+  }, []);
+
+  if (checking) return null;
 
   return (
     <main className="grid min-h-screen place-items-center bg-background px-6 text-foreground">

@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { mutation } from "./_generated/server";
 import { hmacSha256 } from "./lib/crypto";
 import { escapeHtml } from "./lib/helpers";
@@ -28,10 +28,10 @@ export const submitTransaction = mutation({
       .withIndex("by_key_hash", (q) => q.eq("keyHash", args.keyHash))
       .first();
 
-    if (!key || key.revokedAt) throw new Error("invalid_api_key");
+    if (!key || key.revokedAt) throw new ConvexError({ code: "invalid_api_key" });
 
     const businessName = args.businessName ?? key.businessName;
-    if (!businessName) throw new Error("missing_business_name");
+    if (!businessName) throw new ConvexError({ code: "missing_business_name" });
 
     // Idempotency check
     if (args.idempotencyKey) {
@@ -56,7 +56,7 @@ export const submitTransaction = mutation({
       .first();
 
     if (existing) {
-      throw new Error("duplicate_ref");
+      throw new ConvexError({ code: "duplicate_ref" });
     }
 
     const now = Date.now();
@@ -100,8 +100,8 @@ export const verifyTransaction = mutation({
       .withIndex("by_key_hash", (q) => q.eq("keyHash", args.keyHash))
       .first();
 
-    if (!key || key.revokedAt) throw new Error("invalid_api_key");
-    if (!key.businessName) throw new Error("key_missing_business_name");
+    if (!key || key.revokedAt) throw new ConvexError({ code: "invalid_api_key" });
+    if (!key.businessName) throw new ConvexError({ code: "key_missing_business_name" });
 
     // Per-key scoping: only query transactions matching this key's business_name
     const tx = await ctx.db
@@ -175,8 +175,8 @@ export const reviewTransaction = mutation({
       .withIndex("by_key_hash", (q) => q.eq("keyHash", args.keyHash))
       .first();
 
-    if (!key || key.revokedAt) throw new Error("invalid_api_key");
-    if (!key.businessName) throw new Error("key_missing_business_name");
+    if (!key || key.revokedAt) throw new ConvexError({ code: "invalid_api_key" });
+    if (!key.businessName) throw new ConvexError({ code: "key_missing_business_name" });
 
     const tx = await ctx.db.get(args.transactionId);
     if (!tx) return { reviewed: false, reason: "not_found" };
@@ -423,20 +423,20 @@ export const requestRefund = mutation({
       .withIndex("by_key_hash", (q) => q.eq("keyHash", args.keyHash))
       .first();
 
-    if (!key || key.revokedAt) throw new Error("invalid_api_key");
-    if (!key.businessName) throw new Error("key_missing_business_name");
+    if (!key || key.revokedAt) throw new ConvexError({ code: "invalid_api_key" });
+    if (!key.businessName) throw new ConvexError({ code: "key_missing_business_name" });
 
     const tx = await ctx.db
       .query("transactions")
       .withIndex("by_transaction_ref", (q) => q.eq("transactionRef", args.transactionRef.toLowerCase()))
       .first();
 
-    if (!tx) throw new Error("transaction_not_found");
+    if (!tx) throw new ConvexError({ code: "transaction_not_found" });
     if (tx.verifiedExternalName !== key.businessName) {
-      throw new Error("transaction_not_found");
+      throw new ConvexError({ code: "transaction_not_found" });
     }
     if ((tx.status ?? "pending") !== "verified") {
-      throw new Error("transaction_not_verified");
+      throw new ConvexError({ code: "transaction_not_verified" });
     }
 
     const now = Date.now();

@@ -84,6 +84,38 @@ export const create = mutation({
   },
 });
 
+export const update = mutation({
+  args: {
+    id: v.id("apiKeys"),
+    name: v.optional(v.string()),
+    businessName: v.optional(v.string()),
+    callbackUrl: v.optional(v.string()),
+    token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const admin = await requireAdmin(ctx, args.token);
+    const { id, token: _, ...fields } = args;
+    const key = await ctx.db.get(id);
+    if (!key) throw new Error("not_found");
+
+    const patch: Record<string, any> = {};
+    if (fields.name !== undefined) patch.name = fields.name;
+    if (fields.businessName !== undefined) patch.businessName = fields.businessName;
+    if (fields.callbackUrl !== undefined) patch.callbackUrl = fields.callbackUrl;
+
+    await ctx.db.patch(id, patch);
+
+    await logAdminAction(ctx, {
+      action: "api_key.update",
+      entityType: "apiKeys",
+      entityId: id,
+      details: `Updated API key "${key.name}"`,
+      userId: admin._id,
+      userEmail: admin.email,
+    });
+  },
+});
+
 export const revoke = mutation({
   args: { id: v.id("apiKeys"), token: v.string() },
   handler: async (ctx, args) => {
