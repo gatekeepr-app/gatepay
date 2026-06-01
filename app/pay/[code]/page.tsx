@@ -8,6 +8,7 @@ import { getStoredToken } from "@/integrations/convex/auth";
 import { toast } from "sonner";
 import { CheckCircle2, Lock } from "lucide-react";
 import { payCodeSchema, paymentSubmissionSchema } from "@/lib/validation";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import gatepayLogo from "@/assets/gatepay-logo.png";
 import bkashPayment from "@/assets/bkash-payment.jpg";
 
@@ -73,6 +74,7 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
   const [submittedRef, setSubmittedRef] = useState<string | null>(null);
   const [submittedAmount, setSubmittedAmount] = useState<{ amount: number; currency: string } | null>(null);
   const [form, setForm] = useState({ payer_name: "", transaction_ref: "", notes: "" });
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
 
   const parsedCode = payCodeSchema.safeParse(code);
   const validCode = parsedCode.success ? parsedCode.data : null;
@@ -93,6 +95,26 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
     () => (billing && txs ? computeDue(billing, txs) : null),
     [billing, txs],
   );
+
+  const monthOptions = useMemo(() => {
+    if (!billing || billing.billingType !== "monthly") return [];
+    const start = billing.startDate ? new Date(billing.startDate) : new Date();
+    const totalMonths = billing.monthsCount ?? Infinity;
+    const now = new Date();
+    const elapsed = Math.min(monthsBetween(start, now), totalMonths);
+    const paidMonths = computed?.paidMonths ?? 0;
+    const months = [];
+    for (let i = 0; i < elapsed; i++) {
+      months.push({ index: i, label: monthLabel(start, i), paid: i < paidMonths });
+    }
+    return months;
+  }, [billing, computed]);
+
+  const activeMonth = selectedMonth !== null ? monthOptions[selectedMonth] ?? null : null;
+  const fallbackMonth = monthOptions.find((m) => !m.paid) ?? monthOptions[0] ?? null;
+  const resolvedMonth = activeMonth ?? fallbackMonth;
+  const activePeriod = resolvedMonth?.label ?? computed?.period ?? "";
+  const activeAmount = resolvedMonth !== null ? (billing?.amount ?? 0) : computed?.due ?? 0;
 
   if (!validCode) {
     return (
@@ -131,6 +153,7 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!computed || computed.due <= 0) return;
+    if (activeAmount <= 0) return;
     const parsed = paymentSubmissionSchema.safeParse({ ...form, method: "bKash" });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Please check your inputs.");
@@ -140,18 +163,18 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
     try {
       await submitPay({
         transactionRef: parsed.data.transaction_ref,
-        amount: computed.due,
+        amount: activeAmount,
         currency: computed.currency,
         method: "bKash",
         projectId: project._id,
         clientId: project.clientId ?? undefined,
-        periodLabel: computed.period,
+        periodLabel: activePeriod,
         payerName: parsed.data.payer_name,
         notes: parsed.data.notes,
         createdBy: "00000000-0000-0000-0000-000000000001",
       });
       setSubmittedRef(parsed.data.transaction_ref);
-      setSubmittedAmount({ amount: computed.due, currency: computed.currency });
+      setSubmittedAmount({ amount: activeAmount, currency: computed.currency });
       setDone(true);
     } catch (err: any) {
       const msg = String(err?.message ?? "");
@@ -257,14 +280,35 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
             <>
               <div className="mt-6 rounded-xl bg-muted p-5">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">Amount due</div>
-                <div className="mt-1 text-3xl font-semibold">{formatMoney(computed.due, computed.currency)}</div>
-                <p className="mt-2 text-sm text-muted-foreground">for {computed.period}</p>
+                <div className="mt-1 text-3xl font-semibold">{formatMoney(activeAmount, computed.currency)}</div>
+                <p className="mt-2 text-sm text-muted-foreground">for {activePeriod}</p>
                 {billing.billingType === "monthly" && computed.remainingTotal !== undefined && computed.remainingTotal > computed.due && (
                   <p className="mt-1 text-xs text-muted-foreground">
                     Total outstanding across all months: {formatMoney(computed.remainingTotal, computed.currency)}
                   </p>
                 )}
               </div>
+
+              {billing.billingType === "monthly" && monthOptions.length > 0 && (
+                <div className="mt-4">
+                  <label className="mb-1.5 block text-xs font-medium text-muted-foreground">Pay for month</label>
+                  <Select
+                    value={String(resolvedMonth.index)}
+                    onValueChange={(v) => setSelectedMonth(Number(v))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {monthOptions.map((m) => (
+                        <SelectItem key={m.index} value={String(m.index)} disabled={m.paid}>
+                          {m.label}{m.paid ? " (Paid)" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <form onSubmit={submit} className="mt-6 space-y-4">
                 <p className="text-sm text-muted-foreground">
@@ -307,7 +351,7 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
                 >
                   {submitting
                     ? "Submitting…"
-                    : `Confirm payment of ${formatMoney(computed.due, computed.currency)}`}
+                    : `Confirm payment of ${formatMoney(activeAmount, computed.currency)}`}
                 </button>
               </form>
             </>
