@@ -14,6 +14,7 @@ export default function ApiKeysPage() {
   const createKey = useMutation(api.api_keys.create);
   const updateKey = useMutation(api.api_keys.update);
   const revokeKey = useMutation(api.api_keys.revoke);
+  const removeKey = useMutation(api.api_keys.remove);
   const [newCredentials, setNewCredentials] = useState<{ token: string; signingSecret: string } | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", businessName: "", callbackUrl: "" });
@@ -158,8 +159,13 @@ export default function ApiKeysPage() {
                     {loadingReveal[key._id] ? "…" : isRevealed ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                   </button>
                   {!key.revokedAt && (
-                    <button onClick={() => revokeKey({ id: key._id, token: getStoredToken() ?? "" })} className="rounded bg-destructive/10 px-3 py-1 text-xs text-destructive">
+                    <button onClick={() => revokeKey({ id: key._id, token: getStoredToken() ?? "" }).then(() => toast.success("Revoked"))} className="rounded bg-destructive/10 px-3 py-1 text-xs text-destructive">
                       Revoke
+                    </button>
+                  )}
+                  {key.revokedAt && (
+                    <button onClick={() => { if (window.confirm("Permanently delete this API key?")) removeKey({ id: key._id, token: getStoredToken() ?? "" }).then(() => toast.success("Deleted")) }} className="rounded bg-destructive/10 px-3 py-1 text-xs text-destructive">
+                      Remove
                     </button>
                   )}
                 </div>
