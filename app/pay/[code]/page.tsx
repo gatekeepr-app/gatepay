@@ -92,7 +92,7 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
   const submitPay = useMutation(api.transactions.submitPayPayment);
 
   const computed = useMemo(
-    () => (billing && txs ? computeDue(billing, txs) : null),
+    () => (billing ? computeDue(billing, txs ?? []) : null),
     [billing, txs],
   );
 
