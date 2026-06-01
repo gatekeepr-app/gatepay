@@ -9,9 +9,9 @@
 
 ## 1. Executive Summary
 
-GatePay is a payment verification and audit platform that sits between businesses and their payment gateways (SSLCommerz, EPS, bKash, Nagad, etc.). It does not process payments — it **verifies, identifies, and audits** every transaction that flows through a business's payment infrastructure.
+GatePay is a payment verification and audit platform that sits between businesses and their payment gateways. It does not process payments — it **verifies, identifies, and audits** every transaction that flows through a business's payment infrastructure.
 
-When a customer pays via SSLCommerz or EPS, the payment gateway confirms the money moved. But the business still needs to answer: *Who paid? Is this transaction real? Which client does it belong to? Has it been reimbursed?* GatePay answers these questions.
+When a customer pays, the payment gateway confirms the money moved. But the business still needs to answer: *Who paid? Is this transaction real? Which client does it belong to? Has it been reimbursed?* GatePay answers these questions.
 
 **Core value proposition:** Every successful payment gateway transaction gets a verified client identity, a cryptographic signature check, and a full audit trail — before it enters the business's records.
 
@@ -21,7 +21,7 @@ When a customer pays via SSLCommerz or EPS, the payment gateway confirms the mon
 
 ### The Gap After Payment Gateways
 
-Payment gateways like SSLCommerz and EPS handle the money movement. They confirm "payment succeeded." But they leave critical gaps:
+Payment gateways handle the money movement. They confirm "payment succeeded." But they leave critical gaps:
 
 | What the gateway provides | What the business still needs |
 |---------------------------|-------------------------------|
@@ -32,7 +32,7 @@ Payment gateways like SSLCommerz and EPS handle the money movement. They confirm
 
 ### Current Pain Points
 
-1. **No client identity on transactions** — When SSLCommerz sends a callback, the business gets a transaction ID but not which client paid. Manual reconciliation is required.
+1. **No client identity on transactions** — When a gateway sends a callback, the business gets a transaction ID but not which client paid. Manual reconciliation is required.
 
 2. **Callback forgery** — Anyone can POST to a callback URL with a fake payload. Without cryptographic validation, businesses accept fraudulent "payment confirmed" callbacks.
 
@@ -143,7 +143,7 @@ Clients can submit payments via a branded payment page:
 
 ### 4.1 No Direct Payment Gateway Integration
 
-GatePay currently requires businesses to manually submit transactions. It does not connect directly to SSLCommerz, EPS, or other gateways. This means:
+GatePay currently requires businesses to manually submit transactions. It does not connect directly to payment gateways. This means:
 
 - Transactions must be submitted via API after the gateway confirms payment
 - There's a gap between "payment succeeded" (gateway) and "transaction recorded" (GatePay)
@@ -151,9 +151,9 @@ GatePay currently requires businesses to manually submit transactions. It does n
 
 ### 4.2 No Real-Time Payment Gateway Callbacks
 
-When SSLCommerz confirms a payment, it sends a callback to the business's server. GatePay currently does not receive or process these callbacks directly. The business must:
+When a payment gateway confirms a payment, it sends a callback to the business's server. GatePay currently does not receive or process these callbacks directly. The business must:
 
-1. Receive the SSLCommerz callback
+1. Receive the gateway callback
 2. Extract the transaction details
 3. Submit them to GatePay via API
 
@@ -161,7 +161,7 @@ This creates latency and potential for missed transactions.
 
 ### 4.3 No Payment Method-Specific Verification
 
-GatePay treats all payment methods uniformly. It does not verify against the payment gateway's own records (e.g., checking SSLCommerz's transaction status API). Verification is based on GatePay's internal records only.
+GatePay treats all payment methods uniformly. It does not verify against the payment gateway's own records. Verification is based on GatePay's internal records only.
 
 ### 4.4 Limited Refund/Reimbursement Integration
 
@@ -179,26 +179,23 @@ GatePay records transactions in multiple currencies but does not handle currency
 
 ## 5. Payment Gateway Integration Benefits
 
-### 5.1 SSLCommerz Integration
-
-SSLCommerz is Bangladesh's largest payment gateway, supporting bKash, Nagad, Rocket, cards, and internet banking.
+### 5.1 Payment Gateway Integration
 
 **What integration provides:**
 
 | Feature | Benefit |
 |---------|---------|
-| Auto-capture callbacks | No manual transaction submission — SSLCommerz callbacks flow directly to GatePay |
-| Transaction verification against SSLCommerz | Verify that a transaction ID actually exists in SSLCommerz's records |
-| Refund initiation | Process refunds through SSLCommerz's API, not manually |
-| Real-time status sync | Transaction status updates automatically when SSLCommerz confirms/ denies |
-| Multi-method support | bKash, Nagad, Rocket, cards — all handled through one integration |
+| Auto-capture callbacks | No manual transaction submission — gateway callbacks flow directly to GatePay |
+| Transaction verification against gateway | Verify that a transaction ID actually exists in the gateway's records |
+| Refund initiation | Process refunds through the gateway's API, not manually |
+| Real-time status sync | Transaction status updates automatically when gateway confirms/ denies |
 
-**With SSLCommerz + GatePay:**
+**With payment gateway + GatePay:**
 
 ```
-Customer pays via bKash
-  → SSLCommerz confirms payment
-  → SSLCommerz sends callback to GatePay
+Customer pays
+  → Gateway confirms payment
+  → Gateway sends callback to GatePay
   → GatePay validates signing secret
   → GatePay identifies the client (via API key → business name → client record)
   → GatePay marks transaction as "Verified"
@@ -207,11 +204,7 @@ Customer pays via bKash
   → Partner receives verified transaction with client identity
 ```
 
-### 5.2 EPS (Electronic Payment System) Integration
-
-EPS provides similar gateway services. Integration benefits mirror SSLCommerz but with EPS-specific APIs.
-
-### 5.3 Combined Gateway Benefits
+### 5.2 Combined Gateway Benefits
 
 | Benefit | Without GatePay | With GatePay |
 |---------|----------------|--------------|
@@ -232,11 +225,11 @@ EPS provides similar gateway services. Integration benefits mirror SSLCommerz bu
 Payment gateways return transaction IDs. GatePay returns **who paid**.
 
 ```
-SSLCommerz callback:
-  { "transaction_id": "SSL_12345", "amount": 2500, "status": "success" }
+Gateway callback:
+  { "transaction_id": "GTW_12345", "amount": 2500, "status": "success" }
 
 GatePay enrichment:
-  { "transaction_ref": "SSL_12345", "amount": 2500, "client": "Acme Corp", "client_email": "billing@acme.com", "verified": true }
+  { "transaction_ref": "GTW_12345", "amount": 2500, "client": "Acme Corp", "client_email": "billing@acme.com", "verified": true }
 ```
 
 Every successful gateway transaction gets a human-readable client name, not just a machine ID.
@@ -285,9 +278,8 @@ GatePay provides multiple security layers that payment gateways alone do not:
 
 ### Phase 1: Gateway Integration (Priority: High)
 
-- [ ] SSLCommerz callback receiver endpoint
-- [ ] SSLCommerz transaction verification API integration
-- [ ] EPS callback receiver endpoint
+- [ ] Payment gateway callback receiver endpoint
+- [ ] Payment gateway transaction verification API integration
 - [ ] Auto-capture: transactions created automatically from gateway callbacks
 - [ ] Transaction deduplication across gateway and GatePay
 
@@ -301,7 +293,7 @@ GatePay provides multiple security layers that payment gateways alone do not:
 
 ### Phase 3: Financial Operations (Priority: Medium)
 
-- [ ] Refund initiation through SSLCommerz/EPS APIs
+- [ ] Refund initiation through payment gateway APIs
 - [ ] Multi-currency settlement reporting
 - [ ] Automated reconciliation reports
 - [ ] Invoice generation from verified transactions

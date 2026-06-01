@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Briefcase, FileText, UserCog, LogOut, Wallet, Code2, KeyRound, BarChart3, Menu, X, History } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, FileText, UserCog, LogOut, Wallet, Code2, KeyRound, BarChart3, Menu, X, History, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 
@@ -12,6 +12,7 @@ const items = [
   { to: "/admin/projects", label: "Projects", icon: Briefcase },
   { to: "/admin/invoices", label: "Invoices", icon: FileText },
   { to: "/admin/transactions", label: "Transactions", icon: Wallet },
+  { to: "/admin/refunds", label: "Refunds", icon: RotateCcw },
   { to: "/admin/api-keys", label: "API Keys", icon: KeyRound },
   { to: "/admin/api-docs", label: "API Docs", icon: Code2 },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },

@@ -80,13 +80,14 @@ src/                    # Shared client code
 | `/pay/:code` | Client payment page with bKash |
 | `/docs/payments-api` | Public API docs |
 | `/admin` | Dashboard, clients, projects, invoices, transactions, users, API keys, activity log, analytics |
-| `/api/v1/public/*` | Partner API (verify, submit, review, health, openapi) |
+| `/api/v1/public/*` | Partner API (verify, submit, review, refund, health, openapi) |
 
 ## Public API
 
 - `POST /api/v1/public/transactions/verify` — Verify a transaction (Bearer auth)
 - `POST /api/v1/public/transactions/submit` — Submit unverified transaction
 - `POST /api/v1/public/transactions/review` — Client review of transaction
+- `POST /api/v1/public/transactions/refund` — Request a refund for a verified transaction
 - `GET /api/v1/public/health` — Health check
 - `GET /api/v1/public/openapi` — OpenAPI spec
 

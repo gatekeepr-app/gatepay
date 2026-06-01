@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, Clock, FileText, ExternalLink, RotateCcw } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, FileText, ExternalLink, RotateCcw, RefreshCw, XCircle, Ban } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/admin/format";
 import { getStoredToken } from "@/integrations/convex/auth";
 
@@ -52,6 +52,8 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
   const deleteTx = useMutation(api.transactions.remove);
   const refunds = useQuery(api.refunds.getByTransaction, token ? { transactionId: id as any, token } : "skip");
   const initiateRefund = useMutation(api.refunds.initiateRefund);
+  const updateRefundStatus = useMutation(api.refunds.updateRefundStatus);
+  const cancelRefund = useMutation(api.refunds.cancelRefund);
   const [reimbOpen, setReimbOpen] = useState(false);
   const [refundOpen, setRefundOpen] = useState(false);
   const [refundForm, setRefundForm] = useState({ amount: 0, method: "bank_transfer", receiverName: "", receiverNumber: "", notes: "" });
@@ -86,6 +88,34 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
       toast.success("Payment reimbursed");
       setReimbOpen(false);
       setReimbForm({ amount: 0, method: "bank_transfer", reimbursementRef: "", notes: "" });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed");
+    }
+  };
+
+  const handleUpdateRefundStatus = async (refundId: any, status: string) => {
+    let gatewayRef: string | undefined;
+    if (status === "completed") {
+      gatewayRef = window.prompt("Gateway reference (optional):") || undefined;
+    }
+    try {
+      await updateRefundStatus({
+        id: refundId,
+        status: status as any,
+        gatewayRef,
+        token: getStoredToken() ?? "",
+      });
+      toast.success(`Refund ${status}`);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed");
+    }
+  };
+
+  const handleCancelRefund = async (refundId: any) => {
+    if (!confirm("Cancel this refund?")) return;
+    try {
+      await cancelRefund({ id: refundId, token: getStoredToken() ?? "" });
+      toast.success("Refund cancelled");
     } catch (err: any) {
       toast.error(err?.message ?? "Failed");
     }
@@ -330,21 +360,57 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
           {refunds && refunds.length > 0 ? (
             <div className="mt-4 space-y-3">
               {refunds.map((r: any) => (
-                  <div key={r._id} className="flex items-center justify-between rounded-lg border border-border p-3">
-                  <div>
-                    <div className="text-sm font-medium">{formatMoney(r.amount, r.currency)} via {r.method}</div>
-                    <div className="text-xs text-muted-foreground">{formatDate(new Date(r.createdAt))} — {r.status}</div>
-                    {r.receiverName && <div className="text-xs text-muted-foreground">To: {r.receiverName} ({r.receiverNumber})</div>}
-                    {r.gatewayRef && <div className="text-xs text-muted-foreground font-mono">{r.gatewayRef}</div>}
+                <div key={r._id} className="rounded-lg border border-border p-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium">{formatMoney(r.amount, r.currency)} via {r.method}</div>
+                      <div className="text-xs text-muted-foreground">{formatDate(new Date(r.createdAt))} — {r.status}</div>
+                      {r.receiverName && <div className="text-xs text-muted-foreground">To: {r.receiverName} ({r.receiverNumber})</div>}
+                      {r.gatewayRef && <div className="text-xs text-muted-foreground font-mono">{r.gatewayRef}</div>}
+                    </div>
+                    <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${
+                      r.status === "completed" ? "bg-green-100 text-green-700" :
+                      r.status === "failed" ? "bg-red-100 text-red-700" :
+                      r.status === "cancelled" ? "bg-gray-100 text-gray-700" :
+                      "bg-yellow-100 text-yellow-700"
+                    }`}>
+                      {r.status}
+                    </span>
                   </div>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                    r.status === "completed" ? "bg-green-100 text-green-700" :
-                    r.status === "failed" ? "bg-red-100 text-red-700" :
-                    r.status === "cancelled" ? "bg-gray-100 text-gray-700" :
-                    "bg-yellow-100 text-yellow-700"
-                  }`}>
-                    {r.status}
-                  </span>
+                  {(r.status === "pending" || r.status === "processing") && (
+                    <div className="mt-2 flex gap-1.5 border-t border-border pt-2">
+                      {r.status === "pending" && (
+                        <button
+                          onClick={() => handleUpdateRefundStatus(r._id, "processing")}
+                          className="flex items-center gap-1 rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:opacity-90"
+                        >
+                          <RefreshCw className="h-3 w-3" /> Process
+                        </button>
+                      )}
+                      {r.status === "processing" && (
+                        <>
+                          <button
+                            onClick={() => handleUpdateRefundStatus(r._id, "completed")}
+                            className="flex items-center gap-1 rounded-full bg-green-600 px-3 py-1 text-xs font-medium text-white hover:opacity-90"
+                          >
+                            <CheckCircle2 className="h-3 w-3" /> Complete
+                          </button>
+                          <button
+                            onClick={() => handleUpdateRefundStatus(r._id, "failed")}
+                            className="flex items-center gap-1 rounded-full bg-red-600 px-3 py-1 text-xs font-medium text-white hover:opacity-90"
+                          >
+                            <XCircle className="h-3 w-3" /> Fail
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => handleCancelRefund(r._id)}
+                        className="flex items-center gap-1 rounded-full border border-border px-3 py-1 text-xs font-medium hover:bg-muted"
+                      >
+                        <Ban className="h-3 w-3" /> Cancel
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -359,7 +425,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
         <section className="mt-4 rounded-xl border border-red-200 bg-red-50 p-5 dark:border-red-800 dark:bg-red-950/30">
           <h2 className="text-sm font-semibold">Initiate Refund</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            Process a refund through the payment gateway (SSLCommerz).
+            Record a refund against this transaction.
           </p>
           <div className="mt-4 space-y-3">
             <label className="block">

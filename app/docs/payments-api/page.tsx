@@ -429,7 +429,7 @@ User-Agent: GatePay-Verify/1.0
             <h3 className="mb-2 mt-5 text-sm font-medium">Lifecycle</h3>
             <ol className="ml-5 list-decimal space-y-2 text-sm text-foreground/80">
               <li><strong>Initiate</strong> — admin clicks &quot;Initiate Refund&quot; on a verified transaction, enters amount, method, and optional reference. Creates a refund record with status <Inline>pending</Inline>.</li>
-              <li><strong>Process</strong> — system calls the payment gateway (SSLCommerz) refund API. Refund status moves to <Inline>processing</Inline>.</li>
+              <li><strong>Process</strong> — system processes the refund through the payment gateway. Refund status moves to <Inline>processing</Inline>.</li>
               <li><strong>Complete</strong> — on gateway confirmation, refund status becomes <Inline>completed</Inline> and the transaction status moves to <Inline>reimbursed</Inline>.</li>
               <li><strong>Cancel</strong> — admin can cancel a pending or processing refund. Cancellation is not allowed once completed.</li>
             </ol>

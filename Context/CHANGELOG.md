@@ -27,12 +27,10 @@
 ## 2.4.0 (2026-05-30)
 
 ### Added
-- **Refund system**: Initiate refunds through payment gateways (SSLCommerz sandbox + production)
+- **Refund system**: Initiate refunds through payment gateways (sandbox + production)
 - **Refund tracking**: `refunds` table with status (pending/processing/completed/failed/cancelled), gateway reference, and response
 - **Refund UI**: Transaction detail page shows refund history and "Initiate Refund" button
-- **Gateway integration**: SSLCommerz refund API integration (sandbox simulation + production endpoint)
 - **Refund status history**: Every refund action logged in status history
-- **PRD**: Product requirements document covering current features, shortcomings, and gateway integration benefits
 
 ### Security
 - **Reverted CORS relaxation**: API locked back to `pay.darvizlabs.com` origin only
@@ -40,19 +38,6 @@
 - **Widget removed**: Dropped for now due to API key exposure risk — requires server-side proxy for secure integration
 
 ## 2.3.0 (2026-05-29)
-
-### Added
-- **Refund system**: Initiate refunds through payment gateways (SSLCommerz sandbox + production)
-- **Refund tracking**: `refunds` table with status (pending/processing/completed/failed/cancelled), gateway reference, and response
-- **Refund UI**: Transaction detail page shows refund history and "Initiate Refund" button
-- **Gateway integration**: SSLCommerz refund API integration (sandbox simulation + production endpoint)
-- **Refund status history**: Every refund action logged in status history
-- **PRD**: Product requirements document covering current features, shortcomings, and gateway integration benefits
-
-### Security
-- **Reverted CORS relaxation**: API locked back to `pay.darvizlabs.com` origin only
-- **Reverted CSRF relaxation**: Origin validation restored
-- **Widget removed**: Dropped for now due to API key exposure risk — requires server-side proxy for secure integration
 
 ### Added
 - **Transaction status lifecycle**: Pending → Verified → Reimbursed / Failed, with DB-backed status history
