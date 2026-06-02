@@ -366,7 +366,9 @@ export const submitPayPayment = mutation({
       clientId: args.clientId,
       projectId: args.projectId,
       invoiceId,
-      status: "pending" as const,
+      status: "verified" as const,
+      verifiedAt: now,
+      verifiedSource: "subscription",
       createdBy: args.createdBy,
       createdAt: now,
       updatedAt: now,
@@ -377,14 +379,14 @@ export const submitPayPayment = mutation({
     await ctx.db.insert("statusHistory", {
       transactionId,
       fromStatus: "pending",
-      toStatus: "pending",
+      toStatus: "verified",
       changedBy: args.createdBy,
       changedAt: now,
-      notes: "Payment submitted via pay link",
+      notes: "Payment submitted via pay link — auto-verified",
     });
 
     // Reconstruct tx object from args instead of re-reading from DB
-    await sendStatusEmail(ctx, txData, "pending", "pending");
+    await sendStatusEmail(ctx, txData, "pending", "verified");
 
     return { transactionId, invoiceId, invoiceNumber };
   },
