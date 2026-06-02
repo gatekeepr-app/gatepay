@@ -33,6 +33,17 @@ export const submitTransaction = mutation({
     const businessName = args.businessName ?? key.businessName;
     if (!businessName) throw new ConvexError({ code: "missing_business_name" });
 
+    // Resolve project + client from API key's linked project
+    let resolvedProjectId: typeof args.keyHash | undefined;
+    let resolvedClientId: typeof args.keyHash | undefined;
+    if (key.projectId) {
+      const project = await ctx.db.get(key.projectId);
+      if (project) {
+        resolvedProjectId = key.projectId;
+        resolvedClientId = project.clientId;
+      }
+    }
+
     // Idempotency check
     if (args.idempotencyKey) {
       const existingIdempotent = await ctx.db
@@ -66,6 +77,8 @@ export const submitTransaction = mutation({
       currency: args.currency ?? "BDT",
       occurredAt: args.occurredAt ?? now,
       method: args.method,
+      projectId: resolvedProjectId,
+      clientId: resolvedClientId,
       status: "pending",
       verifiedExternalName: businessName,
       verifiedExternalUserId: args.externalUserId,
@@ -124,11 +137,24 @@ export const verifyTransaction = mutation({
       return { verified: false, reason: "amount_mismatch" };
     }
 
+    // Resolve project + client from API key's linked project
+    let resolvedProjectId: typeof args.keyHash | undefined;
+    let resolvedClientId: typeof args.keyHash | undefined;
+    if (key.projectId) {
+      const project = await ctx.db.get(key.projectId);
+      if (project) {
+        resolvedProjectId = key.projectId;
+        resolvedClientId = project.clientId;
+      }
+    }
+
     await ctx.db.patch(tx._id, {
       verifiedExternalName: args.businessName,
       verifiedExternalUserId: args.externalUserId,
       verifiedSource: args.source,
       verifiedAt: Date.now(),
+      ...(resolvedProjectId && !tx.projectId ? { projectId: resolvedProjectId } : {}),
+      ...(resolvedClientId && !tx.clientId ? { clientId: resolvedClientId } : {}),
       updatedAt: Date.now(),
     });
 

@@ -16,6 +16,7 @@ export const list = query({
       keyPrefix: k.keyPrefix,
       businessName: k.businessName,
       callbackUrl: k.callbackUrl,
+      projectId: k.projectId,
       createdBy: k.createdBy,
       lastUsedAt: k.lastUsedAt,
       revokedAt: k.revokedAt,
@@ -50,6 +51,7 @@ export const create = mutation({
     name: v.string(),
     businessName: v.optional(v.string()),
     callbackUrl: v.optional(v.string()),
+    projectId: v.optional(v.id("projects")),
     createdBy: v.optional(v.id("users")),
     token: v.string(),
   },
@@ -67,6 +69,7 @@ export const create = mutation({
       keyToken: apiToken,
       businessName: args.businessName,
       callbackUrl: args.callbackUrl,
+      projectId: args.projectId,
       signingSecret,
       createdAt: Date.now(),
     });
@@ -90,6 +93,7 @@ export const update = mutation({
     name: v.optional(v.string()),
     businessName: v.optional(v.string()),
     callbackUrl: v.optional(v.string()),
+    projectId: v.optional(v.id("projects")),
     token: v.string(),
   },
   handler: async (ctx, args) => {
@@ -102,6 +106,7 @@ export const update = mutation({
     if (fields.name !== undefined) patch.name = fields.name;
     if (fields.businessName !== undefined) patch.businessName = fields.businessName;
     if (fields.callbackUrl !== undefined) patch.callbackUrl = fields.callbackUrl;
+    if (fields.projectId !== undefined) patch.projectId = fields.projectId;
 
     await ctx.db.patch(id, patch);
 

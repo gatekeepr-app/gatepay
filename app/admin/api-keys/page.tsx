@@ -11,17 +11,18 @@ export default function ApiKeysPage() {
   const token = getStoredToken() ?? "";
   const convex = useConvex();
   const keys = useQuery(api.api_keys.list, token ? { token } : "skip");
+  const projects = useQuery(api.projects.list, token ? { token } : "skip");
   const createKey = useMutation(api.api_keys.create);
   const updateKey = useMutation(api.api_keys.update);
   const revokeKey = useMutation(api.api_keys.revoke);
   const removeKey = useMutation(api.api_keys.remove);
   const [newCredentials, setNewCredentials] = useState<{ token: string; signingSecret: string } | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", businessName: "", callbackUrl: "" });
+  const [form, setForm] = useState({ name: "", businessName: "", callbackUrl: "", projectId: "" });
   const [revealed, setRevealed] = useState<Record<string, { keyToken: string; signingSecret: string }>>({});
   const [loadingReveal, setLoadingReveal] = useState<Record<string, boolean>>({});
   const [editing, setEditing] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", businessName: "", callbackUrl: "" });
+  const [editForm, setEditForm] = useState({ name: "", businessName: "", callbackUrl: "", projectId: "" });
 
   const handleCreate = async () => {
     try {
@@ -29,11 +30,12 @@ export default function ApiKeysPage() {
         name: form.name,
         businessName: form.businessName || undefined,
         callbackUrl: form.callbackUrl || undefined,
+        projectId: (form.projectId as any) || undefined,
         token: getStoredToken() ?? "",
       });
       setNewCredentials({ token: result.token, signingSecret: result.signingSecret });
       setShowForm(false);
-      setForm({ name: "", businessName: "", callbackUrl: "" });
+      setForm({ name: "", businessName: "", callbackUrl: "", projectId: "" });
     } catch (err: any) {
       toast.error(err?.message ?? "Failed");
     }
@@ -101,6 +103,12 @@ export default function ApiKeysPage() {
           <input placeholder="Name *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
           <input placeholder="Business name" value={form.businessName} onChange={(e) => setForm({ ...form, businessName: e.target.value })} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
           <input placeholder="Callback URL" value={form.callbackUrl} onChange={(e) => setForm({ ...form, callbackUrl: e.target.value })} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" />
+          <select value={form.projectId} onChange={(e) => setForm({ ...form, projectId: e.target.value })} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm">
+            <option value="">No project</option>
+            {projects?.map((p) => (
+              <option key={p._id} value={p._id}>{p.name} ({p.projectCode})</option>
+            ))}
+          </select>
           <button onClick={handleCreate} disabled={!form.name.trim()} className="rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90 disabled:opacity-50">
             Create
           </button>
@@ -116,6 +124,7 @@ export default function ApiKeysPage() {
       name: key.name ?? "",
       businessName: key.businessName ?? "",
       callbackUrl: key.callbackUrl ?? "",
+      projectId: key.projectId ?? "",
     });
   };
 
@@ -127,6 +136,7 @@ export default function ApiKeysPage() {
         name: editForm.name || undefined,
         businessName: editForm.businessName || undefined,
         callbackUrl: editForm.callbackUrl || undefined,
+        projectId: (editForm.projectId as any) || undefined,
         token: getStoredToken() ?? "",
       });
       toast.success("API key updated");
@@ -143,6 +153,7 @@ export default function ApiKeysPage() {
                   <div className="font-medium">{key.name}</div>
                   <div className="text-xs text-muted-foreground font-mono">{key.keyPrefix}…</div>
                   {key.businessName && <div className="text-xs text-muted-foreground">{key.businessName}</div>}
+                  {key.projectId && <div className="text-xs text-muted-foreground">Project: {(projects?.find(p => p._id === key.projectId)?.name ?? key.projectId)}</div>}
                 </div>
                 <div className="flex items-center gap-2 shrink-0 ml-4">
                   <button
@@ -171,25 +182,31 @@ export default function ApiKeysPage() {
                 </div>
               </div>
               {editing === key._id && (
-                <div className="mt-3 space-y-2 border-t border-border pt-3">
-                  <input
-                    value={editForm.name}
-                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    placeholder="Name"
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                  />
-                  <input
-                    value={editForm.businessName}
-                    onChange={(e) => setEditForm({ ...editForm, businessName: e.target.value })}
-                    placeholder="Business name"
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                  />
-                  <input
-                    value={editForm.callbackUrl}
-                    onChange={(e) => setEditForm({ ...editForm, callbackUrl: e.target.value })}
-                    placeholder="Callback URL"
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                  />
+                  <div className="mt-3 space-y-3 border-t border-border pt-3">
+                    <input
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      placeholder="Name"
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                    />
+                    <input
+                      value={editForm.businessName}
+                      onChange={(e) => setEditForm({ ...editForm, businessName: e.target.value })}
+                      placeholder="Business name"
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                    />
+                    <input
+                      value={editForm.callbackUrl}
+                      onChange={(e) => setEditForm({ ...editForm, callbackUrl: e.target.value })}
+                      placeholder="Callback URL"
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                    />
+                    <select value={editForm.projectId} onChange={(e) => setEditForm({ ...editForm, projectId: e.target.value })} className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm">
+                      <option value="">No project</option>
+                      {projects?.map((p) => (
+                        <option key={p._id} value={p._id}>{p.name} ({p.projectCode})</option>
+                      ))}
+                    </select>
                   <div className="flex gap-2">
                     <button onClick={handleSaveEdit} className="rounded-full bg-foreground px-4 py-1.5 text-xs font-medium text-background hover:opacity-90">
                       Save

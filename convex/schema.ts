@@ -236,6 +236,7 @@ export default defineSchema({
     businessName: v.optional(v.string()),
     callbackUrl: v.optional(v.string()),
     signingSecret: v.optional(v.string()),
+    projectId: v.optional(v.id("projects")),
     createdBy: v.optional(v.id("users")),
     lastUsedAt: v.optional(v.number()),
     revokedAt: v.optional(v.number()),
@@ -243,7 +244,8 @@ export default defineSchema({
   })
     .index("by_key_hash", ["keyHash"])
     .index("by_business_name", ["businessName"])
-    .index("by_revoked", ["revokedAt"]),
+    .index("by_revoked", ["revokedAt"])
+    .index("by_project", ["projectId"]),
 
   // Counters (for sequence generation)
   counters: defineTable({
