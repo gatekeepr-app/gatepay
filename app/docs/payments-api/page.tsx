@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useId } from "react";
-import { Copy, Check, ChevronRight } from "lucide-react";
+import { Copy, Check, ChevronRight, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SITE = "https://pay.darvizlabs.com";
@@ -23,6 +23,10 @@ const SECTIONS = [
   { id: "api-refunds", label: "Refund lifecycle" },
   { id: "errors", label: "Error codes" },
   { id: "security", label: "Security" },
+  { id: "module-ts", label: "TS module" },
+  { id: "module-py", label: "Python module" },
+  { id: "module-express", label: "Express example" },
+  { id: "module-subscription", label: "Subscription" },
 ] as const;
 
 function CopyBlock({ code, language = "bash" }: { code: string; language?: string }) {
@@ -215,6 +219,16 @@ export default function PublicApiDocsPage() {
               Public endpoint that lets partner sites confirm a payment matches a transaction
               recorded in GatePay, and stamp it with the verifier's business identity.
             </p>
+            <div className="mt-4">
+              <a
+                href="/docs.md"
+                download
+                className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-xs font-medium text-background hover:opacity-90"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Download docs.md
+              </a>
+            </div>
           </header>
 
           <Section id="overview" title="Overview">
@@ -527,6 +541,38 @@ User-Agent: GatePay-Verify/1.0
               <li>Callback URLs must use HTTPS. Callbacks have a 15-second timeout.</li>
               <li>Callback signatures use HMAC-SHA256 with your key's <Inline>signing_secret</Inline>.</li>
             </ul>
+          </section>
+
+          <section id="module-ts" className="mb-12 scroll-mt-20">
+            <h2 className="mb-4 text-xl font-semibold tracking-tight">TypeScript module</h2>
+            <p className="mb-3 text-sm leading-relaxed text-foreground/80">
+              A reusable GatePay client class you can drop into any Node.js/TypeScript project.
+            </p>
+            <CopyBlock language="typescript" code={'// gatepay.ts\nimport crypto from "node:crypto";\n\ninterface GatePayConfig {\n  apiKey: string;\n  signingSecret: string;\n  baseUrl?: string;\n}\n\nclass GatePayError extends Error {\n  constructor(public status: number, public code: string, public details?: any) {\n    super(code);\n    this.name = "GatePayError";\n  }\n}\n\nclass GatePay {\n  private baseUrl: string;\n  private apiKey: string;\n  private signingSecret: string;\n\n  constructor(config: GatePayConfig) {\n    this.apiKey = config.apiKey;\n    this.signingSecret = config.signingSecret;\n    this.baseUrl = config.baseUrl ?? "https://pay.darvizlabs.com/api/v1/public";\n  }\n\n  private async request<T>(path: string, body: unknown): Promise<T> {\n    const res = await fetch(`${this.baseUrl}${path}`, {\n      method: "POST",\n      headers: {\n        Authorization: `Bearer ${this.apiKey}`,\n        "Content-Type": "application/json",\n      },\n      body: JSON.stringify(body),\n    });\n    const data = await res.json();\n    if (!res.ok) throw new GatePayError(res.status, data.error ?? "unknown_error");\n    return data as T;\n  }\n\n  async submit(payload: any) { return this.request("/transactions/submit", payload); }\n  async verify(payload: any) { return this.request("/transactions/verify", payload); }\n  async refund(payload: any) { return this.request("/transactions/refund", payload); }\n  async review(payload: any) { return this.request("/transactions/review", payload); }\n}\n\n// Usage\nconst gp = new GatePay({\n  apiKey: process.env.GATEKEEPR_API_KEY!,\n  signingSecret: process.env.GATEKEEPR_SIGNING_SECRET!,\n});\nconst { status } = await gp.submit({\n  transaction_ref: "INV-2026-00482",\n  amount: 1499.00,\n  currency: "BDT",\n  method: "bkash",\n  business_name: "Nerdy",\n});\nconsole.log(status); // "unverified"'} />
+          </section>
+
+          <section id="module-py" className="mb-12 scroll-mt-20">
+            <h2 className="mb-4 text-xl font-semibold tracking-tight">Python module</h2>
+            <p className="mb-3 text-sm leading-relaxed text-foreground/80">
+              A Python client using <Inline>httpx</Inline>.
+            </p>
+            <CopyBlock language="python" code={'# gatepay.py\nimport hmac, hashlib\nfrom dataclasses import dataclass\nimport httpx\n\nclass GatePayError(Exception):\n    def __init__(self, status: int, code: str, details: dict = None):\n        self.status = status\n        self.code = code\n        self.details = details\n        super().__init__(code)\n\n@dataclass\nclass GatePayConfig:\n    api_key: str\n    signing_secret: str\n    base_url: str = "https://pay.darvizlabs.com/api/v1/public"\n\nclass GatePay:\n    def __init__(self, config: GatePayConfig):\n        self.config = config\n        self._client = httpx.Client(base_url=self.config.base_url)\n\n    def _headers(self):\n        return {"Authorization": f"Bearer {self.config.api_key}", "Content-Type": "application/json"}\n\n    def submit(self, transaction_ref: str, amount: float, **kwargs):\n        payload = {"transaction_ref": transaction_ref, "amount": amount, **kwargs}\n        resp = self._client.post("/transactions/submit", json=payload, headers=self._headers())\n        data = resp.json()\n        if not resp.is_success:\n            raise GatePayError(resp.status_code, data.get("error", "unknown"))\n        return data\n\n    def verify(self, transaction_ref: str, business_name: str):\n        resp = self._client.post("/transactions/verify", json={\n            "transaction_ref": transaction_ref, "business_name": business_name,\n        }, headers=self._headers())\n        return resp.json()\n\n# Usage\ngp = GatePay(GatePayConfig(api_key="gk_xxxx", signing_secret="xxxx"))\nresult = gp.submit("INV-001", 1499.00, business_name="Nerdy", method="bkash")\nprint(result["status"])  # "unverified"\nverify = gp.verify("INV-001", "Nerdy")\nprint(verify["verified"])  # True/False'} />
+          </section>
+
+          <section id="module-express" className="mb-12 scroll-mt-20">
+            <h2 className="mb-4 text-xl font-semibold tracking-tight">Express.js example</h2>
+            <p className="mb-3 text-sm leading-relaxed text-foreground/80">
+              Payment flow with checkout, callback handling, and HMAC verification.
+            </p>
+            <CopyBlock language="typescript" code={'import { Router } from "express";\nimport crypto from "node:crypto";\n\nconst router = Router();\n\nrouter.post("/checkout", async (req, res) => {\n  const { amount, userId } = req.body;\n  const ref = `INV-${Date.now()}`;\n  const submit = await fetch("https://pay.darvizlabs.com/api/v1/public/transactions/submit", {\n    method: "POST",\n    headers: {\n      Authorization: `Bearer ${process.env.GATEKEEPR_API_KEY}`,\n      "Content-Type": "application/json",\n    },\n    body: JSON.stringify({\n      transaction_ref: ref, amount, currency: "BDT",\n      method: "bkash", business_name: "Nerdy", external_user_id: userId,\n    }),\n  }).then(r => r.json());\n  res.json({ ref, gatepay_id: submit.id });\n});\n\nrouter.post("/gatepay/callback", async (req, res) => {\n  const signature = req.headers["x-gatepay-signature"];\n  const rawBody = JSON.stringify(req.body);\n  const expected = crypto.createHmac("sha256", process.env.GATEKEEPR_SIGNING_SECRET!)\n    .update(rawBody).digest("hex");\n  if (`sha256=${expected}` !== signature) return res.status(401).json({ error: "invalid signature" });\n  for (const tx of req.body.transactions) console.log(`Verified: ${tx.transaction_ref}`);\n  res.sendStatus(200);\n});\n\nexport { router as paymentRouter };\n\n// Integration checklist:\n// ☐ Set GATEKEEPR_API_KEY and GATEKEEPR_SIGNING_SECRET\n// ☐ Add callback URL to API key\n// ☐ Call POST /submit on order placement\n// ☐ Handle callback with HMAC verification'} />
+          </section>
+
+          <section id="module-subscription" className="mb-12 scroll-mt-20">
+            <h2 className="mb-4 text-xl font-semibold tracking-tight">Subscription module</h2>
+            <p className="mb-3 text-sm leading-relaxed text-foreground/80">
+              Recurring monthly billing via GatePay\'s customer-facing pay page. Payments are auto-verified with <Inline>verifiedSource: "subscription"</Inline>.
+            </p>
+            <CopyBlock language="typescript" code={'class GatePaySubscription {\n  private baseUrl = "https://pay.darvizlabs.com";\n  getPayLink(payCode: string): string {\n    return `${this.baseUrl}/pay/${payCode}`;\n  }\n}\n\n// 1. Admin creates project with billing config in dashboard\n// 2. Share link with client\nconst link = new GatePaySubscription().getPayLink("DNKX4U");\n// → https://pay.darvizlabs.com/pay/DNKX4U\n\n// 3. Client opens link, selects month, pays via bKash\n// 4. Transaction auto-verified as subscription payment\n// 5. Confirmation email sent to client automatically'} />
           </section>
 
           <footer className="mt-12 border-t border-border pt-6 text-xs text-muted-foreground">
