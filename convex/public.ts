@@ -34,40 +34,14 @@ export const submitTransaction = mutation({
     if (!businessName) throw new ConvexError({ code: "missing_business_name" });
 
     // Resolve project + client from API key's linked project
-    let resolvedProjectId: typeof args.keyHash | undefined;
-    let resolvedClientId: typeof args.keyHash | undefined;
+    let resolvedProjectId: any;
+    let resolvedClientId: any;
     if (key.projectId) {
       const project = await ctx.db.get(key.projectId);
       if (project) {
         resolvedProjectId = key.projectId;
         resolvedClientId = project.clientId;
       }
-    }
-
-    // Idempotency check
-    if (args.idempotencyKey) {
-      const existingIdempotent = await ctx.db
-        .query("transactions")
-        .withIndex("by_idempotency_key", (q) => q.eq("idempotencyKey", args.idempotencyKey))
-        .first();
-      if (existingIdempotent) {
-        return {
-          id: existingIdempotent._id,
-          transactionRef: existingIdempotent.transactionRef,
-          status: "duplicate",
-          duplicate: true,
-        };
-      }
-    }
-
-    // Duplicate ref check
-    const existing = await ctx.db
-      .query("transactions")
-      .withIndex("by_transaction_ref", (q) => q.eq("transactionRef", args.transactionRef.toLowerCase()))
-      .first();
-
-    if (existing) {
-      throw new ConvexError({ code: "duplicate_ref" });
     }
 
     const now = Date.now();
@@ -138,8 +112,8 @@ export const verifyTransaction = mutation({
     }
 
     // Resolve project + client from API key's linked project
-    let resolvedProjectId: typeof args.keyHash | undefined;
-    let resolvedClientId: typeof args.keyHash | undefined;
+    let resolvedProjectId: any;
+    let resolvedClientId: any;
     if (key.projectId) {
       const project = await ctx.db.get(key.projectId);
       if (project) {
