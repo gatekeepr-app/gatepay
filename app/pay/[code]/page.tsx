@@ -99,16 +99,20 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
   const monthOptions = useMemo(() => {
     if (!billing || billing.billingType !== "monthly") return [];
     const start = billing.startDate ? new Date(billing.startDate) : new Date();
-    const totalMonths = billing.monthsCount ?? Infinity;
-    const now = new Date();
-    const elapsed = Math.min(monthsBetween(start, now), totalMonths);
+    const totalMonths = billing.monthsCount;
     const paidMonths = computed?.paidMonths ?? 0;
-    const months = [];
-    for (let i = 0; i < elapsed; i++) {
-      months.push({ index: i, label: monthLabel(start, i), paid: i < paidMonths });
+    if (totalMonths === undefined) {
+      const now = new Date();
+      const elapsed = monthsBetween(start, now);
+      return Array.from({ length: elapsed }, (_, i) => ({ index: i, label: monthLabel(start, i), paid: i < paidMonths }));
     }
-    return months;
+    return Array.from({ length: totalMonths }, (_, i) => ({ index: i, label: monthLabel(start, i), paid: i < paidMonths }));
   }, [billing, computed]);
+
+  const allMonthsPaid = monthOptions.length > 0 && monthOptions.every(m => m.paid);
+  const showNoPaymentDue = computed && (
+    billing?.billingType === "monthly" ? allMonthsPaid : computed.due <= 0
+  );
 
   const activeMonth = selectedMonth !== null ? monthOptions[selectedMonth] ?? null : null;
   const fallbackMonth = monthOptions.find((m) => !m.paid) ?? monthOptions[0] ?? null;
@@ -152,7 +156,7 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!computed || computed.due <= 0) return;
+    if (!computed || showNoPaymentDue) return;
     if (activeAmount <= 0) return;
     const parsed = paymentSubmissionSchema.safeParse({ ...form, method: "bKash" });
     if (!parsed.success) {
@@ -268,7 +272,7 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
                 </ol>
               </div>
             </div>
-          ) : computed && computed.due <= 0 ? (
+          ) : showNoPaymentDue ? (
             <div className="mt-6 rounded-xl border border-border bg-background p-6 text-center">
               <CheckCircle2 className="mx-auto h-10 w-10 text-foreground" />
               <h2 className="mt-3 text-lg font-semibold">No payment due</h2>
@@ -282,9 +286,9 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">Amount due</div>
                 <div className="mt-1 text-3xl font-semibold">{formatMoney(activeAmount, computed.currency)}</div>
                 <p className="mt-2 text-sm text-muted-foreground">for {activePeriod}</p>
-                {billing.billingType === "monthly" && computed.remainingTotal !== undefined && computed.remainingTotal > computed.due && (
+                {billing.billingType === "monthly" && billing.monthsCount && (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Total outstanding across all months: {formatMoney(computed.remainingTotal, computed.currency)}
+                    Project: {monthLabel(billing.startDate ? new Date(billing.startDate) : new Date(), 0)} – {monthLabel(billing.startDate ? new Date(billing.startDate) : new Date(), billing.monthsCount - 1)} · {billing.monthsCount} months · {formatMoney(Number(billing.amount) * billing.monthsCount, computed.currency)} total
                   </p>
                 )}
               </div>
