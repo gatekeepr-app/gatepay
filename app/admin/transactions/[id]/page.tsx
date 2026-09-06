@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, Clock, FileText, ExternalLink, RotateCcw, RefreshCw, XCircle, Ban } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, FileText, ExternalLink, RotateCcw, RefreshCw, XCircle, Ban, Receipt } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/admin/format";
 import { getStoredToken } from "@/integrations/convex/auth";
 
@@ -172,6 +172,16 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
           </div>
         </div>
         <div className="flex gap-2">
+          {(tx.status ?? "pending") === "verified" && (
+            <a
+              href={`/receipt/${tx._id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-full border border-border px-4 py-1.5 text-xs font-medium hover:bg-muted"
+            >
+              <Receipt className="h-3 w-3" /> Receipt
+            </a>
+          )}
           <button onClick={handleDelete} className="rounded-full bg-destructive px-4 py-1.5 text-xs font-medium text-destructive-foreground hover:opacity-90">Delete</button>
         </div>
       </div>

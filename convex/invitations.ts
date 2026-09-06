@@ -85,9 +85,11 @@ export const updateStatus = mutation({
     id: v.id("invitations"),
     status: v.string(),
     acceptedAt: v.optional(v.number()),
+    token: v.string(),
   },
   handler: async (ctx, args) => {
-    const { id, ...fields } = args;
+    await requireAdmin(ctx, args.token);
+    const { id, token: _, ...fields } = args;
     await ctx.db.patch(id, fields as any);
   },
 });

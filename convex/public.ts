@@ -361,6 +361,7 @@ export const triggerVerifyBatch = mutation({
                             ${project ? `<tr><td style="padding:8px 0;color:#888;">Project</td><td style="padding:8px 0;">${escapeHtml(project.name)} (${project.projectCode})</td></tr>` : ""}
                             <tr><td style="padding:8px 0;color:#888;">Verified at</td><td style="padding:8px 0;">${new Date(verifiedAt).toLocaleDateString()}</td></tr>
                           </table>
+                          <p style="margin:24px 0 0;"><a href="https://pay.darvizlabs.com/receipt/${t._id}" style="display:inline-block;background:#111;color:#fff;padding:12px 24px;border-radius:9999px;text-decoration:none;font-size:14px;font-weight:500;">View Receipt</a></p>
                           <p style="color:#888;font-size:12px;margin:24px 0 0;">GatePay — Payment Verification</p>
                         </div>`,
                       }),

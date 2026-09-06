@@ -4,7 +4,6 @@ import { use, useMemo, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { formatMoney } from "@/lib/admin/format";
-import { getStoredToken } from "@/integrations/convex/auth";
 import { toast } from "sonner";
 import { CheckCircle2, Lock } from "lucide-react";
 import { payCodeSchema, paymentSubmissionSchema } from "@/lib/validation";
@@ -68,7 +67,6 @@ function computeDue(billing: any, txs: any[]) {
 
 export default function PayCodePage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
-  const payToken = getStoredToken();
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [submittedRef, setSubmittedRef] = useState<string | null>(null);
@@ -85,8 +83,8 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
     project ? { projectId: project._id } : "skip",
   );
   const txs = useQuery(
-    api.transactions.getByProject,
-    payToken && project ? { projectId: project._id, token: payToken } : "skip",
+    api.transactions.getByProjectPublic,
+    project ? { projectId: project._id } : "skip",
   );
 
   const submitPay = useMutation(api.transactions.submitPayPayment);
@@ -363,6 +361,49 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
           <p className="mt-4 text-center text-xs text-muted-foreground">Powered by GatePay</p>
         </div>
       </div>
+
+      {/* Payment History */}
+      {txs && txs.length > 0 && (
+        <div className="mx-auto mt-8 max-w-5xl">
+          <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
+            <h2 className="text-lg font-semibold">Payment History</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Your recent transactions for this project.</p>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="pb-2 pr-4">Date</th>
+                    <th className="pb-2 pr-4">Reference</th>
+                    <th className="pb-2 pr-4">Amount</th>
+                    <th className="pb-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {txs.slice(0, 10).map((tx: any) => (
+                    <tr key={tx._id} className="border-b border-border/50">
+                      <td className="py-3 pr-4 text-muted-foreground">{new Date(tx.occurredAt).toLocaleDateString()}</td>
+                      <td className="py-3 pr-4 font-mono text-xs font-medium">{tx.transactionRef}</td>
+                      <td className="py-3 pr-4 font-medium">{formatMoney(tx.amount, tx.currency)}</td>
+                      <td className="py-3">
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                          tx.status === "verified" ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                          tx.status === "reimbursed" ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                          tx.status === "failed" ? "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+                          "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                        }`}>
+                          {tx.status === "verified" ? "Verified" :
+                           tx.status === "reimbursed" ? "Reimbursed" :
+                           tx.status === "failed" ? "Failed" : "Pending"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

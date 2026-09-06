@@ -247,6 +247,22 @@ export default defineSchema({
     .index("by_revoked", ["revokedAt"])
     .index("by_project", ["projectId"]),
 
+  // Webhook retries
+  webhookRetries: defineTable({
+    transactionId: v.id("transactions"),
+    callbackUrl: v.string(),
+    payload: v.string(),
+    headers: v.record(v.string(), v.string()),
+    event: v.string(),
+    retryCount: v.number(),
+    nextRetryAt: v.number(),
+    maxRetries: v.number(),
+    lastError: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_next_retry", ["nextRetryAt"])
+    .index("by_transaction", ["transactionId"]),
+
   // Counters (for sequence generation)
   counters: defineTable({
     name: v.string(),

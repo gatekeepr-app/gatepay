@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { generateInvoiceNumber, escapeHtml, logAdminAction } from "./lib/helpers";
 import { hmacSha256 } from "./lib/crypto";
 import { requireAdmin } from "./lib/auth";
@@ -51,10 +51,28 @@ export const getById = query({
   },
 });
 
+export const getByIdPublic = query({
+  args: { id: v.id("transactions") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id);
+  },
+});
+
 export const getByProject = query({
   args: { projectId: v.id("projects"), token: v.string() },
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.token);
+    return await ctx.db
+      .query("transactions")
+      .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
+      .order("desc")
+      .take(100);
+  },
+});
+
+export const getByProjectPublic = query({
+  args: { projectId: v.id("projects") },
+  handler: async (ctx, args) => {
     return await ctx.db
       .query("transactions")
       .withIndex("by_project", (q) => q.eq("projectId", args.projectId))
@@ -197,10 +215,24 @@ async function fireCallback(
 
   try {
     const res = await fetch(keyRow.callbackUrl, { method: "POST", headers, body });
-    return res.ok;
-  } catch {
-    return false;
-  }
+    if (res.ok) return true;
+  } catch {}
+
+  // Queue for retry with exponential backoff
+  const now = Date.now();
+  const delays = [60_000, 300_000, 900_000]; // 1m, 5m, 15m
+  await ctx.db.insert("webhookRetries", {
+    transactionId: tx._id,
+    callbackUrl: keyRow.callbackUrl,
+    payload: body,
+    headers,
+    event,
+    retryCount: 0,
+    nextRetryAt: now + delays[0],
+    maxRetries: delays.length,
+    createdAt: now,
+  });
+  return false;
 }
 
 // ─── Helper: send status email ────────────────────────────
@@ -267,6 +299,7 @@ async function sendStatusEmail(
         ${period ? `<tr><td style="padding:8px 0;color:#888;">Period</td><td style="padding:8px 0;">${escapeHtml(period)}</td></tr>` : ""}
         ${project ? `<tr><td style="padding:8px 0;color:#888;">Project</td><td style="padding:8px 0;">${escapeHtml(project.name)} (${project.projectCode})</td></tr>` : ""}
       </table>
+      <p style="margin:24px 0 0;"><a href="https://pay.darvizlabs.com/receipt/${tx._id}" style="display:inline-block;background:#111;color:#fff;padding:12px 24px;border-radius:9999px;text-decoration:none;font-size:14px;font-weight:500;">View Receipt</a></p>
       <p style="color:#888;font-size:12px;margin:24px 0 0;">GatePay — Payment Verification</p>
     </div>`;
   } else if (newStatus === "reimbursed") {
@@ -330,6 +363,14 @@ export const submitPayPayment = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+
+    // Duplicate ref check — same bKash ref cannot be submitted twice
+    const existing = await ctx.db
+      .query("transactions")
+      .withIndex("by_transaction_ref", (q: any) => q.eq("transactionRef", args.transactionRef.toLowerCase()))
+      .first();
+    if (existing) throw new Error("duplicate_ref");
+
     const invoiceNumber = await generateInvoiceNumber(ctx);
 
     const invoiceId = await ctx.db.insert("invoices", {
@@ -632,5 +673,130 @@ export const remove = mutation({
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.token);
     await ctx.db.delete(args.id);
+  },
+});
+
+export const processWebhookRetries = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    const pending = await ctx.db
+      .query("webhookRetries")
+      .withIndex("by_next_retry", (q) => q.lte("nextRetryAt", now))
+      .take(20);
+
+    const delays = [60_000, 300_000, 900_000]; // 1m, 5m, 15m
+    let processed = 0;
+
+    for (const job of pending) {
+      try {
+        const res = await fetch(job.callbackUrl, {
+          method: "POST",
+          headers: job.headers,
+          body: job.payload,
+        });
+
+        if (res.ok) {
+          await ctx.db.delete(job._id);
+          processed++;
+          continue;
+        }
+      } catch {}
+
+      const nextRetry = job.retryCount + 1;
+      if (nextRetry >= job.maxRetries) {
+        await ctx.db.delete(job._id);
+        continue;
+      }
+
+      await ctx.db.patch(job._id, {
+        retryCount: nextRetry,
+        nextRetryAt: now + delays[nextRetry],
+        lastError: "retry_scheduled",
+      });
+    }
+
+    return { processed };
+  },
+});
+
+export const sendPaymentReminders = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    if (!RESEND_API_KEY) return { sent: 0 };
+
+    const now = Date.now();
+    const threeDays = 3 * 24 * 60 * 60 * 1000;
+    const reminderWindow = now + threeDays;
+
+    const billings = await ctx.db.query("projectBilling").collect();
+    let sent = 0;
+
+    for (const billing of billings) {
+      if (billing.billingType !== "monthly") continue;
+      if (!billing.startDate || !billing.monthsCount) continue;
+
+      const start = new Date(billing.startDate);
+      const currentMonth = new Date(reminderWindow).getMonth();
+      const currentYear = new Date(reminderWindow).getFullYear();
+      const monthsElapsed = (currentYear - start.getFullYear()) * 12 + (currentMonth - start.getMonth());
+
+      if (monthsElapsed < 0 || monthsElapsed >= billing.monthsCount) continue;
+
+      // Check if already paid this month
+      const monthStart = new Date(currentYear, currentMonth, 1).getTime();
+      const monthEnd = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999).getTime();
+
+      const txs = await ctx.db
+        .query("transactions")
+        .withIndex("by_project", (q) => q.eq("projectId", billing.projectId))
+        .collect();
+
+      const paidThisMonth = txs.some(
+        (t) =>
+          t.status === "verified" &&
+          t.occurredAt >= monthStart &&
+          t.occurredAt <= monthEnd
+      );
+
+      if (paidThisMonth) continue;
+
+      const project = await ctx.db.get(billing.projectId);
+      if (!project?.clientId) continue;
+
+      const client = await ctx.db.get(project.clientId);
+      if (!client?.email) continue;
+
+      const monthLabel = new Date(currentYear, currentMonth, 1).toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      });
+
+      try {
+        await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: EMAIL_FROM,
+            to: [client.email],
+            subject: `Payment Reminder — ${project.name}`,
+            html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px;">
+              <h2 style="margin:0 0 16px;font-size:20px;">Payment Reminder</h2>
+              <p style="color:#555;margin:0 0 24px;">Your payment for <strong>${monthLabel}</strong> is due soon.</p>
+              <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                <tr><td style="padding:8px 0;color:#888;">Project</td><td style="padding:8px 0;">${escapeHtml(project.name)} (${project.projectCode})</td></tr>
+                <tr><td style="padding:8px 0;color:#888;">Amount</td><td style="padding:8px 0;">${escapeHtml(billing.currency)} ${billing.amount.toLocaleString()}</td></tr>
+                <tr><td style="padding:8px 0;color:#888;">Period</td><td style="padding:8px 0;">${monthLabel}</td></tr>
+              </table>
+              ${project.payCode ? `<p style="margin:24px 0 0;"><a href="https://pay.darvizlabs.com/pay/${project.payCode}" style="display:inline-block;background:#111;color:#fff;padding:12px 24px;border-radius:9999px;text-decoration:none;font-size:14px;font-weight:500;">Pay Now</a></p>` : ""}
+              <p style="color:#888;font-size:12px;margin:24px 0 0;">GatePay — Payment Verification</p>
+            </div>`,
+          }),
+        });
+        sent++;
+      } catch {}
+    }
+
+    return { sent };
   },
 });

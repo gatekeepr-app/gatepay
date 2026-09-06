@@ -8,6 +8,8 @@ import { Users, Briefcase, FileText, Wallet, ArrowRight } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/admin/format";
 import { DashboardBanner } from "@/components/dashboard/banner";
 import { useUser } from "@/components/admin/UserProvider";
+import { OverdueAlert } from "@/components/admin/OverdueAlert";
+import { RevenueForecast } from "@/components/admin/RevenueForecast";
 
 export default function DashboardPage() {
   const user = useUser();
@@ -25,6 +27,11 @@ export default function DashboardPage() {
     <div className="p-6">
       <h1 className="text-2xl pb-4 font-semibold">Dashboard</h1>
       <DashboardBanner userName={user?.name ?? "Admin"} />
+
+      {/* Overdue alert */}
+      <div className="mt-4">
+        <OverdueAlert />
+      </div>
 
       {/* Stat cards */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -82,6 +89,11 @@ export default function DashboardPage() {
             </ul>
           )}
         </div>
+      </div>
+
+      {/* Revenue forecast */}
+      <div className="mt-6">
+        <RevenueForecast />
       </div>
     </div>
   );

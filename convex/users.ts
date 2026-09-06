@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { requireAdmin } from "./lib/auth";
-import { logAdminAction } from "./lib/helpers";
+import { logAdminAction, roleValidator } from "./lib/helpers";
 
 export const list = query({
   args: { token: v.string() },
@@ -19,8 +19,9 @@ export const list = query({
 });
 
 export const getByEmail = query({
-  args: { email: v.string() },
+  args: { email: v.string(), token: v.string() },
   handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
     return await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", args.email.toLowerCase()))
@@ -48,10 +49,10 @@ export const create = internalMutation({
 });
 
 export const updateRole = mutation({
-  args: { userId: v.id("users"), role: v.string(), token: v.string() },
+  args: { userId: v.id("users"), role: roleValidator, token: v.string() },
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.token);
-    await ctx.db.patch(args.userId, { role: args.role as any });
+    await ctx.db.patch(args.userId, { role: args.role });
   },
 });
 

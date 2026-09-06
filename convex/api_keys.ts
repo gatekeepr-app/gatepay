@@ -31,18 +31,31 @@ export const revealKey = query({
     await requireAdmin(ctx, args.token);
     const key = await ctx.db.get(args.id);
     if (!key) throw new Error("not_found");
-    if (!key.signingSecret) throw new Error("Key has no signing secret");
-    return { keyToken: key.keyToken!, signingSecret: key.signingSecret };
+    // Only return the signing secret — raw API key is gone from DB
+    return { signingSecret: key.signingSecret ?? null };
   },
 });
 
 export const getByKeyHash = query({
   args: { keyHash: v.string() },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const key = await ctx.db
       .query("apiKeys")
       .withIndex("by_key_hash", (q) => q.eq("keyHash", args.keyHash))
       .first();
+    if (!key) return null;
+    // Never return plaintext secrets
+    return {
+      _id: key._id,
+      name: key.name,
+      keyPrefix: key.keyPrefix,
+      businessName: key.businessName,
+      callbackUrl: key.callbackUrl,
+      signingSecret: key.signingSecret,
+      projectId: key.projectId,
+      revokedAt: key.revokedAt,
+      createdAt: key.createdAt,
+    };
   },
 });
 
@@ -66,7 +79,6 @@ export const create = mutation({
       name: args.name,
       keyPrefix: prefix,
       keyHash: hash,
-      keyToken: apiToken,
       businessName: args.businessName,
       callbackUrl: args.callbackUrl,
       projectId: args.projectId,
@@ -83,6 +95,7 @@ export const create = mutation({
       userEmail: admin.email,
     });
 
+    // Return raw key + secret ONCE — never stored in DB
     return { id, token: apiToken, signingSecret };
   },
 });

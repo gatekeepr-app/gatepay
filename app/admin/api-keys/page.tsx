@@ -19,7 +19,7 @@ export default function ApiKeysPage() {
   const [newCredentials, setNewCredentials] = useState<{ token: string; signingSecret: string } | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", businessName: "", callbackUrl: "", projectId: "" });
-  const [revealed, setRevealed] = useState<Record<string, { keyToken: string; signingSecret: string }>>({});
+  const [revealed, setRevealed] = useState<Record<string, { signingSecret: string | null }>>({});
   const [loadingReveal, setLoadingReveal] = useState<Record<string, boolean>>({});
   const [editing, setEditing] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", businessName: "", callbackUrl: "", projectId: "" });
@@ -219,22 +219,18 @@ export default function ApiKeysPage() {
               )}
               {isRevealed && (
                 <div className="mt-3 space-y-2 border-t border-border pt-3">
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground">API Key</p>
-                    <div className="mt-0.5 flex items-center gap-2">
-                      <code className="flex-1 rounded bg-muted px-2 py-1 font-mono text-xs break-all">{isRevealed.keyToken}</code>
-                      <button onClick={() => copyText(isRevealed.keyToken)} className="shrink-0 rounded p-1 hover:bg-muted">
-                        <Copy className="h-3 w-3" />
-                      </button>
-                    </div>
-                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    The raw API key was shown only at creation and cannot be revealed again.
+                  </p>
                   <div>
                     <p className="text-xs font-medium text-muted-foreground">Signing Secret</p>
                     <div className="mt-0.5 flex items-center gap-2">
-                      <code className="flex-1 rounded bg-muted px-2 py-1 font-mono text-xs break-all">{isRevealed.signingSecret}</code>
-                      <button onClick={() => copyText(isRevealed.signingSecret)} className="shrink-0 rounded p-1 hover:bg-muted">
-                        <Copy className="h-3 w-3" />
-                      </button>
+                      <code className="flex-1 rounded bg-muted px-2 py-1 font-mono text-xs break-all">{isRevealed.signingSecret ?? "N/A"}</code>
+                      {isRevealed.signingSecret && (
+                        <button onClick={() => copyText(isRevealed.signingSecret!)} className="shrink-0 rounded p-1 hover:bg-muted">
+                          <Copy className="h-3 w-3" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -1,18 +1,15 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
-import { sha256, randomHex } from "./lib/crypto";
+import { randomHex, pbkdf2Hash, verifyPbkdf2 } from "./lib/crypto";
 
 async function hashPassword(password: string): Promise<string> {
-  const salt = randomHex(16);
-  const hash = await sha256(salt + password);
+  const { hash, salt } = await pbkdf2Hash(password);
   return `${salt}:${hash}`;
 }
 
 async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  const [salt, hash] = stored.split(":");
-  const check = await sha256(salt + password);
-  return hash === check;
+  return verifyPbkdf2(password, stored);
 }
 
 async function createSession(ctx: any, userId: string): Promise<string> {

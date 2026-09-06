@@ -37,15 +37,15 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ re
 
     try {
       const result = await signIn(creds);
-      storeToken(result.token);
+      await storeToken(result.token);
       toast.success("Signed in");
       router.push(target);
     } catch {
       try {
         const result = await signUp(creds);
-        storeToken(result.token);
+        await storeToken(result.token);
         const retryResult = await signIn(creds);
-        storeToken(retryResult.token);
+        await storeToken(retryResult.token);
         toast.success("Account created and signed in");
         router.push(target);
       } catch (signUpErr: any) {

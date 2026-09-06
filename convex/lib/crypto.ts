@@ -33,3 +33,26 @@ export function randomToken(length: number): string {
   crypto.getRandomValues(arr);
   return Array.from(arr).map((b) => chars[b % chars.length]).join("");
 }
+
+export async function pbkdf2Hash(password: string, salt?: string): Promise<{ hash: string; salt: string }> {
+  const usedSalt = salt ?? randomHex(16);
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveBits"],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt: encoder.encode(usedSalt), iterations: 100_000, hash: "SHA-256" },
+    keyMaterial,
+    256,
+  );
+  return { hash: bufToHex(bits), salt: usedSalt };
+}
+
+export async function verifyPbkdf2(password: string, stored: string): Promise<boolean> {
+  const [salt, hash] = stored.split(":");
+  const { hash: check } = await pbkdf2Hash(password, salt);
+  return hash === check;
+}

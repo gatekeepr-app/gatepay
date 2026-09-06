@@ -33,7 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         const u = await getMe({ token });
         setUser(u);
       } catch {
-        clearToken();
+        await clearToken();
         router.push("/login");
       }
       setLoading(false);
@@ -50,8 +50,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!user) return null;
 
-  const handleSignOut = () => {
-    clearToken();
+  const handleSignOut = async () => {
+    await clearToken();
     router.push("/login");
   };
 
