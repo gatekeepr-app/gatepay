@@ -12,6 +12,23 @@ export default defineSchema({
     .index("by_token", ["token"])
     .index("by_user", ["userId"]),
 
+  brandSettings: defineTable({
+    key: v.literal("default"),
+    brandName: v.string(),
+    businessName: v.string(),
+    address: v.string(),
+    email: v.string(),
+    phone: v.string(),
+    footer: v.string(),
+    logoStorageId: v.optional(v.id("_storage")),
+    referencePrefix: v.optional(v.string()),
+    referenceMonthCodes: v.optional(v.string()),
+    referenceSeriesPrefix: v.optional(v.string()),
+    referencePattern: v.optional(v.string()),
+    referenceSequenceScope: v.optional(v.union(v.literal("global"), v.literal("project"))),
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]),
+
   users: defineTable({
     email: v.string(),
     passwordHash: v.optional(v.string()),

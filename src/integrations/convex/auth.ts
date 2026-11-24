@@ -12,27 +12,25 @@ function parseCookies(): Record<string, string> {
 
 export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
-  // Read from httpOnly cookie (set by /api/auth/* routes)
+  // Prefer local storage. The token is needed by the client for authenticated
+  // Convex calls; fall back to the earlier cookie format for existing sessions.
+  try {
+    const stored = window.localStorage.getItem(TOKEN_KEY);
+    if (stored) return stored;
+  } catch {
+    // Continue to the cookie fallback when storage is unavailable.
+  }
   const cookies = parseCookies();
   return cookies[TOKEN_KEY] ?? null;
 }
 
 export async function storeToken(token: string): Promise<void> {
   if (typeof window === "undefined") return;
-  // Set cookie via server route (httpOnly, secure, SameSite=Strict)
-  await fetch("/api/auth/session", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "set", token }),
-  });
+  window.localStorage.setItem(TOKEN_KEY, token);
 }
 
 export async function clearToken(): Promise<void> {
   if (typeof window === "undefined") return;
-  // Clear cookie via server route
-  await fetch("/api/auth/session", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "clear" }),
-  });
+  window.localStorage.removeItem(TOKEN_KEY);
+  document.cookie = `${TOKEN_KEY}=; Max-Age=0; path=/; SameSite=Strict`;
 }

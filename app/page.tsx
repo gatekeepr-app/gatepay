@@ -14,15 +14,27 @@ import {
   X,
 } from "lucide-react";
 
-function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+function ScrollReveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
+      setVisible(true);
+      setReady(true);
+      return;
+    }
+    setReady(true);
     const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
-      { threshold: 0.1 },
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          obs.unobserve(el);
+        }
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -30,14 +42,41 @@ function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
   return (
     <div
       ref={ref}
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(24px)",
-        transition: `opacity 0.9s cubic-bezier(0.2,0.8,0.2,1) ${delay}ms, transform 0.9s cubic-bezier(0.2,0.8,0.2,1) ${delay}ms`,
-      }}
+      className="home-scroll-reveal"
+      data-ready={ready}
+      data-visible={visible}
+      style={{ "--reveal-delay": `${delay}ms` } as React.CSSProperties}
     >
       {children}
     </div>
+  );
+}
+
+function AnimatedLines({ lines, suffix }: { lines: string[]; suffix?: React.ReactNode }) {
+  let wordIndex = 0;
+  return (
+    <>
+      {lines.map((line, lineIndex) => {
+        const words = line.split(" ");
+        return (
+          <span className="home-heading-line" key={line}>
+            {words.map((word, index) => {
+              const delay = wordIndex++ * 35;
+              return (
+                <span
+                  className="home-word"
+                  key={`${word}-${index}`}
+                  style={{ "--word-delay": `${delay}ms` } as React.CSSProperties}
+                >
+                  {word}{index < words.length - 1 ? " " : ""}
+                </span>
+              );
+            })}
+            {lineIndex === lines.length - 1 ? suffix : null}
+          </span>
+        );
+      })}
+    </>
   );
 }
 
@@ -45,12 +84,12 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <Hero />
-      <About />
-      <Features />
-      <HowItWorks />
-      <Monitoring />
-      <Testimonial />
-      <Footer />
+      <ScrollReveal><About /></ScrollReveal>
+      <ScrollReveal><Features /></ScrollReveal>
+      <ScrollReveal><HowItWorks /></ScrollReveal>
+      <ScrollReveal><Monitoring /></ScrollReveal>
+      <ScrollReveal><Testimonial /></ScrollReveal>
+      <ScrollReveal><Footer /></ScrollReveal>
     </main>
   );
 }
@@ -99,11 +138,11 @@ function Hero() {
       {/* Content */}
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 pb-12 pt-4 sm:px-6 sm:pb-16 sm:pt-6 lg:grid-cols-12 lg:px-10 lg:pb-24">
         <div className="lg:col-span-7">
-          <h1 className="font-display text-[11vw] leading-[0.9] sm:text-[10vw] lg:text-[112px] lg:leading-[0.92] text-ink-foreground">
-            SECURE YOUR
-            <br />
-            PAYMENTS
-            <Sparkles className="ml-2 inline-block h-6 w-6 -translate-y-4 fill-primary text-primary sm:h-10 sm:w-10 sm:-translate-y-6 lg:h-14 lg:w-14" />
+          <h1 className="home-hero-title font-display text-[11vw] leading-[0.9] text-ink-foreground sm:text-[10vw] lg:text-[112px] lg:leading-[0.92]">
+            <AnimatedLines
+              lines={["SECURE YOUR", "PAYMENTS"]}
+              suffix={<Sparkles className="ml-2 inline-block h-6 w-6 -translate-y-4 fill-primary text-primary sm:h-10 sm:w-10 sm:-translate-y-6 lg:h-14 lg:w-14" />}
+            />
           </h1>
           <p className="mt-6 max-w-md text-sm text-ink-foreground/70 sm:mt-8">
             Verify bKash, Nagad, Rocket & bank payments in under 3 seconds.
@@ -142,7 +181,7 @@ function Hero() {
         </div>
 
         <div className="relative lg:col-span-5">
-          <div className="mx-auto w-full max-w-md rounded-3xl bg-ink-foreground/5 p-5 ring-1 ring-ink-foreground/10 sm:p-8">
+          <div className="home-hero-card mx-auto w-full max-w-md rounded-3xl bg-ink-foreground/5 p-5 ring-1 ring-ink-foreground/10 sm:p-8">
             <div className="flex items-center gap-2 text-xs text-ink-foreground/60">
               <Lock className="h-3 w-3" /> Secure API
             </div>
@@ -159,7 +198,7 @@ function Hero() {
           </div>
           <div className="mt-5 space-y-4 sm:mt-6 sm:space-y-5">
             {steps.map((s, i) => (
-              <div key={i} className="flex items-center justify-between gap-4 border-b border-dashed border-ink-foreground/20 pb-3">
+              <div key={i} className="home-hero-step flex items-center justify-between gap-4 border-b border-dashed border-ink-foreground/20 pb-3" style={{ "--step-delay": `${i * 55}ms` } as React.CSSProperties}>
                 <span className="text-xs text-ink-foreground/85 sm:text-sm">{s}</span>
                 <ArrowUpRight className="h-3 w-3 text-ink-foreground/60 sm:h-4 sm:w-4" />
               </div>
@@ -179,17 +218,15 @@ function About() {
       <div className="text-xs font-semibold tracking-[0.2em] text-muted-foreground">ABOUT US</div>
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-16">
         <h2 className="font-display text-4xl text-foreground sm:text-5xl lg:text-7xl">
-          GETTING TO
-          <br />
-          KNOW GATEPAY
+          <AnimatedLines lines={["GETTING TO", "KNOW GATEPAY"]} />
         </h2>
         <p className="max-w-md self-end text-base text-muted-foreground">
           GatePay helps Bangladeshi businesses verify mobile financial service payments in real time. Built for freelancers, agencies, and SaaS companies tired of manual screenshot verification.
         </p>
       </div>
 
-      <div className="mt-10 grid grid-cols-1 gap-4 sm:mt-12 sm:grid-cols-3 sm:gap-5">
-        <div className="rounded-3xl bg-primary p-6 text-primary-foreground sm:p-7">
+      <div className="home-stagger-grid mt-10 grid grid-cols-1 gap-4 sm:mt-12 sm:grid-cols-3 sm:gap-5">
+          <div className="rounded-3xl bg-primary p-6 text-primary-foreground sm:p-7">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-black/30">
             <Shield className="h-4 w-4" />
           </div>
@@ -241,16 +278,14 @@ function Features() {
       <div className="text-xs font-semibold tracking-[0.2em] text-muted-foreground">FEATURES</div>
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-16">
         <h2 className="font-display text-4xl leading-[0.95] sm:text-5xl lg:col-span-7 lg:text-7xl">
-          ALL-IN-ONE PLATFORM
-          <br />
-          FOR PAYMENTS
+          <AnimatedLines lines={["ALL-IN-ONE PLATFORM", "FOR PAYMENTS"]} />
         </h2>
           <p className="max-w-md self-end text-base text-muted-foreground lg:col-span-5">
           Accept payments without the back-and-forth. Customers pay via bKash or Nagad, you call our API once, and get a verified or rejected verdict instantly.
         </p>
       </div>
 
-      <div className="mt-10 grid grid-cols-1 gap-10 sm:mt-14 lg:grid-cols-12 lg:gap-12">
+      <div className="home-stagger-grid mt-10 grid grid-cols-1 gap-10 sm:mt-14 lg:grid-cols-12 lg:gap-12">
         <div className="lg:col-span-7">
           <ul className="divide-y divide-border border-y border-border">
             {items.map((it) => {
@@ -328,13 +363,11 @@ function HowItWorks() {
     <section id="how-it-works" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-10 lg:py-28">
       <div className="text-xs font-semibold tracking-[0.2em] text-muted-foreground">HOW IT WORKS</div>
       <h2 className="mt-6 font-display text-4xl leading-[0.95] sm:text-5xl lg:text-7xl">
-        THREE CALLS.
-        <br />
-        INFINITE CONFIDENCE.
+        <AnimatedLines lines={["THREE CALLS.", "INFINITE CONFIDENCE."]} />
       </h2>
-      <div className="mt-10 grid gap-8 sm:mt-14 md:grid-cols-3">
+      <div className="home-stagger-grid mt-10 grid gap-8 sm:mt-14 md:grid-cols-3">
         {steps.map((step) => (
-          <div key={step.num} className="group">
+            <div key={step.num} className="group">
             <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-muted text-sm font-medium text-muted-foreground transition-colors group-hover:border-primary group-hover:text-primary sm:mb-6 sm:h-12 sm:w-12">
               {step.num}
             </div>
@@ -358,16 +391,14 @@ function Monitoring() {
         </div>
         <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-16">
           <h2 className="font-display text-4xl leading-[0.95] sm:text-5xl lg:col-span-7 lg:text-7xl">
-            REAL-TIME FINANCIAL
-            <br />
-            MONITORING
+            <AnimatedLines lines={["REAL-TIME FINANCIAL", "MONITORING"]} />
           </h2>
           <p className="self-end text-sm text-ink-foreground/70 lg:col-span-5">
             GatePay connects to bKash, Nagad, Rocket, and major Bangladeshi banks. Submit a transaction reference through one endpoint and get a verified or rejected verdict in under 3 seconds.
           </p>
         </div>
 
-        <div className="mt-10 grid grid-cols-2 gap-3 sm:mt-14 sm:gap-4 md:grid-cols-4 md:grid-rows-2">
+        <div className="home-stagger-grid mt-10 grid grid-cols-2 gap-3 sm:mt-14 sm:gap-4 md:grid-cols-4 md:grid-rows-2">
           <div className="row-span-2 rounded-3xl bg-primary p-5 text-primary-foreground sm:p-7">
             <div className="font-display text-5xl leading-none sm:text-7xl lg:text-8xl">
               98<span className="align-top text-xl sm:text-3xl">%</span>
@@ -413,7 +444,7 @@ function Testimonial() {
       <div className="text-[10px] font-semibold tracking-[0.3em] text-muted-foreground">
         WHAT THEY SAY ABOUT US
       </div>
-      <div className="mt-8 grid grid-cols-1 items-end gap-8 lg:grid-cols-12 lg:gap-10">
+      <div className="home-stagger-grid mt-8 grid grid-cols-1 items-end gap-8 lg:grid-cols-12 lg:gap-10">
         <div className="lg:col-span-9">
           <Quote className="h-6 w-6 text-primary sm:h-8 sm:w-8" />
           <p className="mt-4 font-display text-2xl leading-[1.15] sm:mt-6 sm:text-3xl lg:text-5xl">

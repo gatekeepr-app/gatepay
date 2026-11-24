@@ -217,7 +217,7 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
         {/* Right: confirmation form */}
         <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
           <div className="flex items-center justify-center">
-            <img src={gatepayLogo.src} alt="GatePay" className="h-[1.4rem] w-auto" />
+            <img src={gatepayLogo.src} alt="GatePay" className="h-[0.98rem] w-auto" />
           </div>
           <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
             <Lock className="h-3 w-3" /> Secure payment

@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { internalMutation, mutation } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { randomHex, pbkdf2Hash, verifyPbkdf2 } from "./lib/crypto";
 
@@ -64,6 +64,76 @@ export const signIn = mutation({
 
     const token = await createSession(ctx, user._id);
     return { userId: user._id, token, role: user.role };
+  },
+});
+
+// Handles the login page's sign-in-or-create flow in one transaction. Expected
+// credential failures are returned as data so they don't appear as server errors.
+export const authenticate = mutation({
+  args: {
+    email: v.string(),
+    password: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const email = args.email.toLowerCase();
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .first();
+
+    if (user) {
+      if (!user.passwordHash || !(await verifyPassword(args.password, user.passwordHash))) {
+        return { ok: false as const, reason: "invalid_credentials" as const };
+      }
+      return {
+        ok: true as const,
+        token: await createSession(ctx, user._id),
+        created: false,
+      };
+    }
+
+    const userId = await ctx.db.insert("users", {
+      email,
+      passwordHash: await hashPassword(args.password),
+      role: email === "product.gatekeepr@gmail.com" ? "super_admin" : "admin",
+      createdAt: Date.now(),
+    });
+    return {
+      ok: true as const,
+      token: await createSession(ctx, userId),
+      created: true,
+    };
+  },
+});
+
+// Operator-only recovery path. Run once from the Convex CLI, then remove it.
+export const resetAdminPassword = internalMutation({
+  args: { password: v.string() },
+  handler: async (ctx, args) => {
+    if (args.password.length < 8 || args.password.length > 128) {
+      throw new Error("Password must be between 8 and 128 characters");
+    }
+
+    const email = "product.gatekeepr@gmail.com";
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .first();
+    if (!user) throw new Error(`No account found for ${email}`);
+
+    const sessions = await ctx.db
+      .query("sessions")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .take(1001);
+    if (sessions.length > 1000) {
+      throw new Error("Too many active sessions to reset safely; remove sessions in batches first");
+    }
+
+    await ctx.db.patch(user._id, { passwordHash: await hashPassword(args.password) });
+    for (const session of sessions) {
+      await ctx.db.delete(session._id);
+    }
+    return { email, sessionsRevoked: sessions.length };
   },
 });
 

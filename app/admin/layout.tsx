@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
@@ -15,6 +15,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [user, setUser] = useState<{ _id: string; email: string; name?: string; role: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const toggleSidebarCollapsed = useCallback(() => {
+    setSidebarCollapsed((collapsed) => !collapsed);
+  }, []);
+
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if (!event.ctrlKey || event.altKey || event.shiftKey) return;
+      if (event.key.toLowerCase() !== "b" && event.code !== "KeyB") return;
+      const target = event.target;
+      if (target instanceof HTMLElement && (target.isContentEditable || target.closest("input, textarea, select, [contenteditable='true']"))) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      if (window.matchMedia("(min-width: 768px)").matches) {
+        toggleSidebarCollapsed();
+      } else {
+        setSidebarOpen((open) => !open);
+      }
+    };
+
+    document.addEventListener("keydown", handleShortcut, true);
+    return () => document.removeEventListener("keydown", handleShortcut, true);
+  }, [toggleSidebarCollapsed]);
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
@@ -59,7 +83,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <UserProvider>
       <style>{`.scrollico{overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}.scrollico::-webkit-scrollbar{display:none}`}</style>
       <div className="flex max-h-screen bg-background">
-        <Sidebar user={user} onSignOut={handleSignOut} open={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+        <Sidebar
+          user={user}
+          onSignOut={handleSignOut}
+          open={sidebarOpen}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
+          collapsed={sidebarCollapsed}
+          onCollapseToggle={toggleSidebarCollapsed}
+        />
         <div className="scrollico flex-1 max-h-screen pt-12 md:pt-0">{children}</div>
       </div>
     </UserProvider>

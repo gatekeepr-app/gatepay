@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { loginSchema } from "@/lib/validation";
 import { storeToken, getStoredToken } from "@/integrations/convex/auth";
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage({ searchParams }: { searchParams: Promise<{ redirect?: string }> }) {
   const router = useRouter();
@@ -20,10 +21,10 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ re
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const signIn = useMutation(api.auth.signIn);
-  const signUp = useMutation(api.auth.signUp);
+  const authenticate = useMutation(api.auth.authenticate);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,23 +37,19 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ re
     setSubmitting(true);
 
     try {
-      const result = await signIn(creds);
+      const result = await authenticate(creds);
+      if (!result.ok) {
+        toast.error("Invalid email or password");
+        return;
+      }
       await storeToken(result.token);
-      toast.success("Signed in");
+      toast.success(result.created ? "Account created and signed in" : "Signed in");
       router.push(target);
     } catch {
-      try {
-        const result = await signUp(creds);
-        await storeToken(result.token);
-        const retryResult = await signIn(creds);
-        await storeToken(retryResult.token);
-        toast.success("Account created and signed in");
-        router.push(target);
-      } catch (signUpErr: any) {
-        toast.error(signUpErr?.message ?? "Authentication failed");
-      }
+      toast.error("Authentication failed. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   const [checking, setChecking] = useState(true);
@@ -93,16 +90,30 @@ export default function LoginPage({ searchParams }: { searchParams: Promise<{ re
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            minLength={8}
-            maxLength={128}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              required
+              minLength={8}
+              maxLength={128}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="pr-12"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+              onClick={() => setShowPassword((visible) => !visible)}
+            >
+              {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+            </Button>
+          </div>
         </div>
         <Button type="submit" disabled={submitting} className="w-full">
           {submitting ? "Signing in…" : "Sign in"}

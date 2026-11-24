@@ -1,8 +1,9 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
-import { generateInvoiceNumber, escapeHtml, logAdminAction } from "./lib/helpers";
+import { escapeHtml, logAdminAction } from "./lib/helpers";
 import { hmacSha256 } from "./lib/crypto";
 import { requireAdmin } from "./lib/auth";
+import { reserveNextInvoiceReference } from "./lib/invoiceReference";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const EMAIL_FROM = "GatePay <pay@mail.darvizlabs.online>";
@@ -371,7 +372,7 @@ export const submitPayPayment = mutation({
       .first();
     if (existing) throw new Error("duplicate_ref");
 
-    const invoiceNumber = await generateInvoiceNumber(ctx);
+    const invoiceNumber = await reserveNextInvoiceReference(ctx, args.projectId, now);
 
     const invoiceId = await ctx.db.insert("invoices", {
       invoiceNumber,

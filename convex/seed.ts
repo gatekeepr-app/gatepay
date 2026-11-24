@@ -1,5 +1,5 @@
 import { internalMutation } from "./_generated/server";
-import { sha256, randomHex } from "./lib/crypto";
+import { pbkdf2Hash } from "./lib/crypto";
 
 export const seed = internalMutation({
   args: {},
@@ -10,8 +10,7 @@ export const seed = internalMutation({
     const defaultPassword = process.env.SEED_ADMIN_PASSWORD;
     if (!defaultPassword) return;
 
-    const salt = randomHex(16);
-    const hash = await sha256(salt + defaultPassword);
+    const { salt, hash } = await pbkdf2Hash(defaultPassword);
 
     await ctx.db.insert("users", {
       email: "product.gatekeepr@gmail.com",
