@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -14,37 +14,10 @@ import {
   X,
 } from "lucide-react";
 
-function ScrollReveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [ready, setReady] = useState(false);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
-      setVisible(true);
-      setReady(true);
-      return;
-    }
-    setReady(true);
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          obs.unobserve(el);
-        }
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
+function PageEnter({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   return (
     <div
-      ref={ref}
-      className="home-scroll-reveal"
-      data-ready={ready}
-      data-visible={visible}
+      className="home-section-enter"
       style={{ "--reveal-delay": `${delay}ms` } as React.CSSProperties}
     >
       {children}
@@ -84,12 +57,12 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <Hero />
-      <ScrollReveal><About /></ScrollReveal>
-      <ScrollReveal><Features /></ScrollReveal>
-      <ScrollReveal><HowItWorks /></ScrollReveal>
-      <ScrollReveal><Monitoring /></ScrollReveal>
-      <ScrollReveal><Testimonial /></ScrollReveal>
-      <ScrollReveal><Footer /></ScrollReveal>
+      <PageEnter delay={80}><About /></PageEnter>
+      <PageEnter delay={150}><Features /></PageEnter>
+      <PageEnter delay={220}><HowItWorks /></PageEnter>
+      <PageEnter delay={290}><Monitoring /></PageEnter>
+      <PageEnter delay={360}><Testimonial /></PageEnter>
+      <PageEnter delay={430}><Footer /></PageEnter>
     </main>
   );
 }

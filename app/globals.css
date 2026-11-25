@@ -143,50 +143,25 @@
   animation-delay: var(--word-delay, 0ms);
 }
 
-.home-scroll-reveal {
-  transition: clip-path 600ms var(--ease-in-out);
-  transition-delay: var(--reveal-delay, 0ms);
+.home-section-enter {
+  animation: home-rise-in 600ms var(--ease-out) both;
+  animation-delay: var(--reveal-delay, 0ms);
 }
 
-.home-scroll-reveal[data-ready="true"][data-visible="false"] {
-  clip-path: inset(0 0 100% 0);
-}
-
-.home-scroll-reveal[data-ready="true"][data-visible="true"] {
-  clip-path: inset(0 0 0 0);
-}
-
-.home-scroll-reveal:not([data-ready="true"]) .home-word {
-  animation: none;
-  opacity: 1;
-  transform: none;
-}
-
-.home-scroll-reveal:not([data-ready="true"]) .home-stagger-grid > * {
-  animation: none;
-  opacity: 1;
-  transform: none;
-}
-
-.home-scroll-reveal[data-ready="true"][data-visible="false"] .home-word,
-.home-scroll-reveal[data-ready="true"][data-visible="false"] .home-stagger-grid > * {
-  animation-play-state: paused;
+.page-enter {
+  animation: home-rise-in 520ms var(--ease-out) both;
 }
 
 .home-stagger-grid > * {
   animation: home-rise-in 360ms var(--ease-out) both;
-  animation-play-state: paused;
+  animation-delay: var(--reveal-delay, 0ms);
 }
 
-.home-scroll-reveal[data-visible="true"] .home-stagger-grid > * {
-  animation-play-state: running;
-}
-
-.home-stagger-grid > :nth-child(2) { animation-delay: 45ms; }
-.home-stagger-grid > :nth-child(3) { animation-delay: 90ms; }
-.home-stagger-grid > :nth-child(4) { animation-delay: 135ms; }
-.home-stagger-grid > :nth-child(5) { animation-delay: 180ms; }
-.home-stagger-grid > :nth-child(6) { animation-delay: 225ms; }
+.home-stagger-grid > :nth-child(2) { animation-delay: calc(var(--reveal-delay, 0ms) + 45ms); }
+.home-stagger-grid > :nth-child(3) { animation-delay: calc(var(--reveal-delay, 0ms) + 90ms); }
+.home-stagger-grid > :nth-child(4) { animation-delay: calc(var(--reveal-delay, 0ms) + 135ms); }
+.home-stagger-grid > :nth-child(5) { animation-delay: calc(var(--reveal-delay, 0ms) + 180ms); }
+.home-stagger-grid > :nth-child(6) { animation-delay: calc(var(--reveal-delay, 0ms) + 225ms); }
 
 .home-hero-card {
   animation: home-rise-in 420ms var(--ease-out) 140ms both;
@@ -199,6 +174,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .home-word,
+  .home-section-enter,
+  .page-enter,
   .home-stagger-grid > *,
   .home-hero-card,
   .home-hero-step {
@@ -207,14 +184,4 @@
     animation-delay: 0ms !important;
   }
 
-  .home-scroll-reveal[data-ready="true"] {
-    clip-path: inset(0);
-    opacity: 0;
-    transition: opacity 160ms ease-out;
-    transition-delay: 0ms;
-  }
-
-  .home-scroll-reveal[data-ready="true"][data-visible="true"] {
-    opacity: 1;
-  }
 }

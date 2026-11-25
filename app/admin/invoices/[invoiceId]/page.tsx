@@ -35,7 +35,7 @@ const fromDateInput = (value: string) => {
 
 function InvoiceLoadingState() {
   return (
-    <main className="min-h-full bg-muted/30 px-4 py-8 sm:px-6 lg:px-10" aria-label="Loading invoice">
+    <main className="page-enter min-h-full bg-muted/30 px-4 py-8 sm:px-6 lg:px-10" aria-label="Loading invoice">
       <div className="mx-auto max-w-7xl animate-pulse space-y-8">
         <div className="h-4 w-36 rounded bg-muted" />
         <div className="flex flex-col gap-4 border-b border-border pb-7 sm:flex-row sm:items-end sm:justify-between">
@@ -79,7 +79,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ invoic
 
   if (invoice === null) {
     return (
-      <main className="min-h-full bg-muted/30 px-4 py-8 sm:px-6 lg:px-10">
+      <main className="page-enter min-h-full bg-muted/30 px-4 py-8 sm:px-6 lg:px-10">
         <div className="mx-auto max-w-7xl">
           <Button asChild variant="ghost" className="-ml-3 mb-6 text-muted-foreground">
             <Link href="/admin/invoices"><ArrowLeft aria-hidden="true" /> Invoices</Link>
@@ -155,7 +155,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ invoic
   };
 
   return (
-    <main className="min-h-full bg-muted/30 px-4 py-7 sm:px-6 sm:py-9 lg:px-10">
+    <main className="page-enter min-h-full bg-muted/30 px-4 py-7 sm:px-6 sm:py-9 lg:px-10">
       <div className="mx-auto max-w-7xl">
         <nav aria-label="Breadcrumb" className="mb-7 flex items-center gap-2 text-sm text-muted-foreground">
           <Link href="/admin/invoices" className="inline-flex items-center gap-2 transition-colors hover:text-foreground">

@@ -19,7 +19,7 @@ export default function InvoicesPage() {
   const invoices = useQuery(api.invoices.list, token ? { token } : "skip");
 
   return (
-    <main className="min-h-full bg-muted/30 px-4 py-7 sm:px-6 sm:py-9 lg:px-10">
+    <main className="page-enter min-h-full bg-muted/30 px-4 py-7 sm:px-6 sm:py-9 lg:px-10">
       <div className="mx-auto max-w-7xl">
         <header className="flex flex-col gap-4 border-b border-border pb-7 sm:flex-row sm:items-end sm:justify-between">
           <div>
