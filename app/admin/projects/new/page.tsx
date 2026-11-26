@@ -4,12 +4,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { useAdminSession } from "@/components/admin/UserProvider";
 import { toast } from "sonner";
 
 export default function NewProjectPage() {
+  const { token } = useAdminSession();
   const router = useRouter();
-  const token = getStoredToken();
   const clients = useQuery(api.clients.list, token ? { token } : "skip");
   const createProject = useMutation(api.projects.create);
   const [step, setStep] = useState(0);
@@ -25,7 +25,7 @@ export default function NewProjectPage() {
         clientId: form.clientId ? (form.clientId as any) : undefined,
         tags: form.tags ? form.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
         createdBy: undefined,
-        token: getStoredToken()!,
+        token,
       });
       toast.success("Project created");
       router.push("/admin/projects");

@@ -4,11 +4,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { useAdminSession } from "@/components/admin/UserProvider";
 import { toast } from "sonner";
 
 export default function NewClientPage() {
   const router = useRouter();
+  const { token } = useAdminSession();
   const createClient = useMutation(api.clients.create);
   const [form, setForm] = useState({ name: "", email: "", businessName: "", phone: "" });
   const [submitting, setSubmitting] = useState(false);
@@ -24,7 +25,7 @@ export default function NewClientPage() {
         businessName: form.businessName || undefined,
         phone: form.phone || undefined,
         createdBy: undefined,
-        token: getStoredToken()!,
+        token,
       });
       toast.success("Client created");
       router.push("/admin/clients");

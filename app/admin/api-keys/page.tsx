@@ -5,10 +5,11 @@ import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { toast } from "sonner";
 import { Copy, Check, Eye, EyeOff, Pencil } from "lucide-react";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { useAdminSession } from "@/components/admin/UserProvider";
 
 export default function ApiKeysPage() {
-  const token = getStoredToken() ?? "";
+  const { token: storedToken } = useAdminSession();
+  const token = storedToken ?? "";
   const convex = useConvex();
   const keys = useQuery(api.api_keys.list, token ? { token } : "skip");
   const projects = useQuery(api.projects.list, token ? { token } : "skip");
@@ -31,7 +32,7 @@ export default function ApiKeysPage() {
         businessName: form.businessName || undefined,
         callbackUrl: form.callbackUrl || undefined,
         projectId: (form.projectId as any) || undefined,
-        token: getStoredToken() ?? "",
+        token: token,
       });
       setNewCredentials({ token: result.token, signingSecret: result.signingSecret });
       setShowForm(false);
@@ -57,7 +58,7 @@ export default function ApiKeysPage() {
     }
     setLoadingReveal((prev) => ({ ...prev, [id]: true }));
     try {
-      const data = await convex.query(api.api_keys.revealKey, { id: id as any, token: getStoredToken() ?? "" });
+      const data = await convex.query(api.api_keys.revealKey, { id: id as any, token });
       setRevealed((prev) => ({ ...prev, [id]: data }));
     } catch (err: any) {
       toast.error(err?.message ?? "Failed");
@@ -137,7 +138,7 @@ export default function ApiKeysPage() {
         businessName: editForm.businessName || undefined,
         callbackUrl: editForm.callbackUrl || undefined,
         projectId: (editForm.projectId as any) || undefined,
-        token: getStoredToken() ?? "",
+        token,
       });
       toast.success("API key updated");
       setEditing(null);
@@ -170,12 +171,12 @@ export default function ApiKeysPage() {
                     {loadingReveal[key._id] ? "…" : isRevealed ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                   </button>
                   {!key.revokedAt && (
-                    <button onClick={() => revokeKey({ id: key._id, token: getStoredToken() ?? "" }).then(() => toast.success("Revoked"))} className="rounded bg-destructive/10 px-3 py-1 text-xs text-destructive">
+                    <button onClick={() => revokeKey({ id: key._id, token }).then(() => toast.success("Revoked"))} className="rounded bg-destructive/10 px-3 py-1 text-xs text-destructive">
                       Revoke
                     </button>
                   )}
                   {key.revokedAt && (
-                    <button onClick={() => { if (window.confirm("Permanently delete this API key?")) removeKey({ id: key._id, token: getStoredToken() ?? "" }).then(() => toast.success("Deleted")) }} className="rounded bg-destructive/10 px-3 py-1 text-xs text-destructive">
+                    <button onClick={() => { if (window.confirm("Permanently delete this API key?")) removeKey({ id: key._id, token }).then(() => toast.success("Deleted")) }} className="rounded bg-destructive/10 px-3 py-1 text-xs text-destructive">
                       Remove
                     </button>
                   )}

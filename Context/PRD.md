@@ -127,7 +127,18 @@ Clients can submit payments via a branded payment page:
 - Auto-invoice generation on payment
 - Email confirmation after admin verification
 
-### 3.8 Rate Limiting and Security
+Invoice references and project codes can also be looked up at `/payment`. Sent and overdue invoices can accept bKash transaction IDs for admin verification.
+
+### 3.8 Invoice Management
+
+- Admins create invoices with a project, client, line items, tax, notes, and optional due date.
+- Invoice form changes autosave to Draft after a one-second idle interval.
+- Generate invoice saves the current draft and changes its status to Sent.
+- Invoice details support status updates, due-date edits, and draft editing.
+- Brand settings control invoice logo, business details, and reference-number rules.
+- Invoice list provides print-ready PDF export using the saved invoice and brand data.
+
+### 3.9 Rate Limiting and Security
 
 - Per-IP rate limiting (30/60 req/min)
 - Per-key rate limiting (100 req/min)

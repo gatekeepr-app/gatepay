@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalMutation, mutation } from "./_generated/server";
+import { internalMutation, mutation, type MutationCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { randomHex, pbkdf2Hash, verifyPbkdf2 } from "./lib/crypto";
 
@@ -8,11 +8,9 @@ async function hashPassword(password: string): Promise<string> {
   return `${salt}:${hash}`;
 }
 
-async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  return verifyPbkdf2(password, stored);
-}
+const SUPER_ADMIN_EMAIL = "product.gatekeepr@gmail.com";
 
-async function createSession(ctx: any, userId: string): Promise<string> {
+async function createSession(ctx: MutationCtx, userId: Id<"users">): Promise<string> {
   const token = randomHex(32);
   await ctx.db.insert("sessions", {
     token,
@@ -21,6 +19,21 @@ async function createSession(ctx: any, userId: string): Promise<string> {
     createdAt: Date.now(),
   });
   return token;
+}
+
+async function createAdminUser(
+  ctx: MutationCtx,
+  email: string,
+  password: string,
+  name?: string,
+) {
+  return ctx.db.insert("users", {
+    email,
+    passwordHash: await hashPassword(password),
+    name,
+    role: email === SUPER_ADMIN_EMAIL ? "super_admin" : "admin",
+    createdAt: Date.now(),
+  });
 }
 
 export const signUp = mutation({
@@ -36,13 +49,8 @@ export const signUp = mutation({
       .first();
     if (existing) throw new Error("User already exists");
 
-    const userId = await ctx.db.insert("users", {
-      email: args.email.toLowerCase(),
-      passwordHash: await hashPassword(args.password),
-      name: args.name,
-      role: args.email === "product.gatekeepr@gmail.com" ? "super_admin" : "admin",
-      createdAt: Date.now(),
-    });
+    const email = args.email.toLowerCase();
+    const userId = await createAdminUser(ctx, email, args.password, args.name);
 
     const token = await createSession(ctx, userId);
     return { userId, token };
@@ -60,7 +68,7 @@ export const signIn = mutation({
       .withIndex("by_email", (q) => q.eq("email", args.email.toLowerCase()))
       .first();
     if (!user || !user.passwordHash) throw new Error("Invalid credentials");
-    if (!(await verifyPassword(args.password, user.passwordHash))) throw new Error("Invalid credentials");
+    if (!(await verifyPbkdf2(args.password, user.passwordHash))) throw new Error("Invalid credentials");
 
     const token = await createSession(ctx, user._id);
     return { userId: user._id, token, role: user.role };
@@ -82,7 +90,7 @@ export const authenticate = mutation({
       .first();
 
     if (user) {
-      if (!user.passwordHash || !(await verifyPassword(args.password, user.passwordHash))) {
+      if (!user.passwordHash || !(await verifyPbkdf2(args.password, user.passwordHash))) {
         return { ok: false as const, reason: "invalid_credentials" as const };
       }
       return {
@@ -92,12 +100,7 @@ export const authenticate = mutation({
       };
     }
 
-    const userId = await ctx.db.insert("users", {
-      email,
-      passwordHash: await hashPassword(args.password),
-      role: email === "product.gatekeepr@gmail.com" ? "super_admin" : "admin",
-      createdAt: Date.now(),
-    });
+    const userId = await createAdminUser(ctx, email, args.password);
     return {
       ok: true as const,
       token: await createSession(ctx, userId),
@@ -114,7 +117,7 @@ export const resetAdminPassword = internalMutation({
       throw new Error("Password must be between 8 and 128 characters");
     }
 
-    const email = "product.gatekeepr@gmail.com";
+    const email = SUPER_ADMIN_EMAIL;
     const user = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", email))

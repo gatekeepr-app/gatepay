@@ -3,17 +3,15 @@
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
-import { getStoredToken } from "@/integrations/convex/auth";
 import { Users, Briefcase, FileText, Wallet, ArrowRight } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/admin/format";
 import { DashboardBanner } from "@/components/dashboard/banner";
-import { useUser } from "@/components/admin/UserProvider";
+import { useAdminSession } from "@/components/admin/UserProvider";
 import { OverdueAlert } from "@/components/admin/OverdueAlert";
 import { RevenueForecast } from "@/components/admin/RevenueForecast";
 
 export default function DashboardPage() {
-  const user = useUser();
-  const token = getStoredToken();
+  const { user, token } = useAdminSession();
   const clients = useQuery(api.clients.list, token ? { token } : "skip");
   const projects = useQuery(api.projects.list, token ? { token } : "skip");
   const invoices = useQuery(api.invoices.list, token ? { token } : "skip");
@@ -28,12 +26,10 @@ export default function DashboardPage() {
       <h1 className="text-2xl pb-4 font-semibold">Dashboard</h1>
       <DashboardBanner userName={user?.name ?? "Admin"} />
 
-      {/* Overdue alert */}
       <div className="mt-4">
         <OverdueAlert />
       </div>
 
-      {/* Stat cards */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={Users} label="Clients" value={clients?.length ?? "…"} href="/admin/clients" />
         <StatCard icon={Briefcase} label="Projects" value={projects?.length ?? "…"} href="/admin/projects" />
@@ -47,9 +43,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Revenue + Recent activity */}
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        {/* Revenue card */}
         <div className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Total revenue</h2>
@@ -59,7 +53,6 @@ export default function DashboardPage() {
           <div className="mt-1 text-xs text-muted-foreground">{transactions?.length ?? 0} transactions</div>
         </div>
 
-        {/* Recent transactions */}
         <div className="rounded-xl border border-border bg-card p-5 lg:col-span-2">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent transactions</h2>
@@ -91,7 +84,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Revenue forecast */}
       <div className="mt-6">
         <RevenueForecast />
       </div>

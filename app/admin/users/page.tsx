@@ -3,24 +3,26 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
-import { getStoredToken } from "@/integrations/convex/auth";
+import type { Doc } from "@/../convex/_generated/dataModel";
+import { useAdminSession } from "@/components/admin/UserProvider";
 import { toast } from "sonner";
 
 export default function UsersPage() {
-  const token = getStoredToken();
+  type UserRole = Doc<"users">["role"];
+  const { token } = useAdminSession();
   const users = useQuery(api.users.list, token ? { token } : "skip");
   const invitations = useQuery(api.invitations.list, token ? { token } : "skip");
   const sendInvite = useMutation(api.invitations.create);
   const deleteUser = useMutation(api.users.remove);
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("member");
+  const [role, setRole] = useState<UserRole>("member");
   const [submitting, setSubmitting] = useState(false);
 
   const handleInvite = async () => {
     if (!email.trim()) return;
     setSubmitting(true);
     try {
-      await sendInvite({ email, role, invitedBy: undefined, token: getStoredToken()! });
+      await sendInvite({ email, role, invitedBy: undefined, token });
       toast.success("Invitation sent");
       setEmail("");
     } catch (err: any) {
@@ -44,7 +46,7 @@ export default function UsersPage() {
               onClick={async () => {
                 if (!confirm(`Remove user ${u.email}?`)) return;
                 try {
-                  await deleteUser({ userId: u._id, token: getStoredToken()! });
+                  await deleteUser({ userId: u._id, token });
                   toast.success("User removed");
                 } catch (err: any) {
                   toast.error(err?.message ?? "Failed");
@@ -61,7 +63,7 @@ export default function UsersPage() {
       <h2 className="mt-8 text-lg font-semibold">Invite user</h2>
       <div className="mt-2 flex gap-2">
         <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm" />
-        <select value={role} onChange={(e) => setRole(e.target.value)} className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
+        <select value={role} onChange={(e) => setRole(e.target.value as UserRole)} className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
           <option value="member">Member</option>
           <option value="admin">Admin</option>
         </select>

@@ -4,23 +4,16 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft, CalendarDays, Check, Clock3, FileText, Layers, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, CalendarDays, Check, Clock3, Copy, FileText, Layers, Link2Off, Pencil, Share2, Trash2 } from "lucide-react";
 import { api } from "@/../convex/_generated/api";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { useAdminSession } from "@/components/admin/UserProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InvoiceStatusBadge, type InvoiceStatus } from "@/components/admin/invoice-status-badge";
 import { toast } from "sonner";
-
-const formatMoney = (amount: number, currency: string) =>
-  new Intl.NumberFormat("en-BD", { style: "currency", currency, maximumFractionDigits: 2 }).format(amount);
-
-const formatDate = (timestamp?: number) =>
-  timestamp
-    ? new Intl.DateTimeFormat("en-BD", { day: "numeric", month: "long", year: "numeric" }).format(timestamp)
-    : "Not set";
+import { formatDate, formatMoney } from "@/lib/admin/format";
 
 const toDateInput = (timestamp?: number) => {
   if (!timestamp) return "";
@@ -52,9 +45,9 @@ function InvoiceLoadingState() {
 }
 
 export default function InvoiceDetailPage({ params }: { params: Promise<{ invoiceId: string }> }) {
+  const { token } = useAdminSession();
   const { invoiceId } = use(params);
   const router = useRouter();
-  const token = getStoredToken();
   const invoice = useQuery(api.invoices.getById, token ? { id: invoiceId as any, token } : "skip");
   const lineItems = useQuery(api.invoices.getLineItems, token ? { invoiceId: invoiceId as any, token } : "skip");
   const client = useQuery(
@@ -67,11 +60,14 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ invoic
   );
   const updateInvoice = useMutation(api.invoices.update);
   const deleteInvoice = useMutation(api.invoices.remove);
+  const createShareLink = useMutation(api.invoices.createShareLink);
+  const revokeShareLink = useMutation(api.invoices.revokeShareLink);
   const [deleting, setDeleting] = useState(false);
   const [markingPaid, setMarkingPaid] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [dueDate, setDueDate] = useState("");
   const [savingDueDate, setSavingDueDate] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     if (invoice) setDueDate(toDateInput(invoice.dueDate));
@@ -105,7 +101,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ invoic
   const markPaid = async () => {
     setMarkingPaid(true);
     try {
-      await updateInvoice({ id: invoiceId as any, status: "paid", token: getStoredToken()! });
+      await updateInvoice({ id: invoiceId as any, status: "paid", token });
       toast.success("Invoice marked as paid");
     } catch (error: any) {
       toast.error(error?.message ?? "Could not update invoice status");
@@ -114,11 +110,11 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ invoic
     }
   };
 
-  const changeStatus = async (nextStatus: string) => {
+  const changeStatus = async (nextStatus: InvoiceStatus) => {
     if (nextStatus === status) return;
     setUpdatingStatus(true);
     try {
-      await updateInvoice({ id: invoiceId as any, status: nextStatus, token: getStoredToken()! });
+      await updateInvoice({ id: invoiceId as any, status: nextStatus, token });
       toast.success(`Invoice status changed to ${nextStatus}`);
     } catch (error: any) {
       toast.error(error?.message ?? "Could not update invoice status");
@@ -132,7 +128,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ invoic
     if (!dueDateTimestamp) return;
     setSavingDueDate(true);
     try {
-      await updateInvoice({ id: invoiceId as any, dueDate: dueDateTimestamp, token: getStoredToken()! });
+      await updateInvoice({ id: invoiceId as any, dueDate: dueDateTimestamp, token });
       toast.success("Invoice due date saved");
     } catch (error: any) {
       toast.error(error?.message ?? "Could not save due date");
@@ -141,11 +137,55 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ invoic
     }
   };
 
+  const copyShareLink = async () => {
+    if (!invoice.shareToken) return;
+    const url = `${window.location.origin}/invoice/${invoice.shareToken}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Invoice link copied");
+    } catch {
+      toast.error("Could not copy the link. Open it and copy the address from your browser.");
+    }
+  };
+
+  const handleShareInvoice = async () => {
+    setSharing(true);
+    try {
+      if (!invoice.shareToken) {
+        const shareToken = await createShareLink({ id: invoiceId as any, token });
+        try {
+          await navigator.clipboard.writeText(`${window.location.origin}/invoice/${shareToken}`);
+          toast.success("Share link created and copied");
+        } catch {
+          toast.success("Share link created. Use Copy link below to share it.");
+        }
+      } else {
+        await copyShareLink();
+      }
+    } catch (error: any) {
+      toast.error(error?.message ?? "Could not create invoice link");
+    } finally {
+      setSharing(false);
+    }
+  };
+
+  const handleRevokeShareLink = async () => {
+    setSharing(true);
+    try {
+      await revokeShareLink({ id: invoiceId as any, token });
+      toast.success("Invoice link revoked");
+    } catch (error: any) {
+      toast.error(error?.message ?? "Could not revoke invoice link");
+    } finally {
+      setSharing(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!window.confirm(`Delete invoice ${invoice.invoiceNumber}? This cannot be undone.`)) return;
     setDeleting(true);
     try {
-      await deleteInvoice({ id: invoiceId as any, token: getStoredToken()! });
+      await deleteInvoice({ id: invoiceId as any, token });
       toast.success("Invoice deleted");
       router.replace("/admin/invoices");
     } catch (error: any) {
@@ -178,7 +218,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ invoic
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Select value={status} onValueChange={changeStatus} disabled={updatingStatus}>
+            <Select value={status} onValueChange={(value) => changeStatus(value as InvoiceStatus)} disabled={updatingStatus}>
               <SelectTrigger className="w-36" aria-label="Update invoice status"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="draft">Draft</SelectItem>
@@ -259,8 +299,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ invoic
                           <tr key={item._id}>
                             <td className="max-w-[280px] px-4 py-4 font-medium">{item.description}</td>
                             <td className="px-4 py-4 text-right tabular-nums text-muted-foreground">{item.quantity}</td>
-                            <td className="px-4 py-4 text-right tabular-nums text-muted-foreground">{formatMoney(item.unitPrice, invoice.currency)}</td>
-                            <td className="px-4 py-4 text-right font-medium tabular-nums">{formatMoney(item.amount, invoice.currency)}</td>
+                            <td className="px-4 py-4 text-right tabular-nums text-muted-foreground">{formatMoney(item.unitPrice, invoice.currency, { style: "currency" })}</td>
+                            <td className="px-4 py-4 text-right font-medium tabular-nums">{formatMoney(item.amount, invoice.currency, { style: "currency" })}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -289,13 +329,43 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ invoic
                 <CardTitle className="text-sm">Payment summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 pt-5">
-                <div className="flex items-center justify-between gap-4 text-sm"><span className="text-muted-foreground">Subtotal</span><span className="tabular-nums">{formatMoney(invoice.subtotal, invoice.currency)}</span></div>
-                <div className="flex items-center justify-between gap-4 text-sm"><span className="text-muted-foreground">Tax ({invoice.taxRate}%)</span><span className="tabular-nums">{formatMoney(invoice.taxAmount, invoice.currency)}</span></div>
+                <div className="flex items-center justify-between gap-4 text-sm"><span className="text-muted-foreground">Subtotal</span><span className="tabular-nums">{formatMoney(invoice.subtotal, invoice.currency, { style: "currency" })}</span></div>
+                <div className="flex items-center justify-between gap-4 text-sm"><span className="text-muted-foreground">Tax ({invoice.taxRate}%)</span><span className="tabular-nums">{formatMoney(invoice.taxAmount, invoice.currency, { style: "currency" })}</span></div>
                 <div className="flex items-end justify-between gap-4 border-t border-border pt-4">
                   <span className="text-sm font-medium">Total</span>
-                  <span className="text-2xl font-semibold tracking-tight tabular-nums">{formatMoney(invoice.total, invoice.currency)}</span>
+                  <span className="text-2xl font-semibold tracking-tight tabular-nums">{formatMoney(invoice.total, invoice.currency, { style: "currency" })}</span>
                 </div>
                 <p className="text-xs text-muted-foreground">{status === "paid" ? "Payment recorded" : status === "void" ? "This invoice is void" : "Amount billed"}</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">Client share link</CardTitle>
+                <p className="text-xs leading-5 text-muted-foreground">
+                  {status === "draft" ? "Generate this invoice before sharing it." : status === "void" ? "Inactive invoices cannot be shared." : "Anyone with this link can view the invoice. You can revoke it at any time."}
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {invoice.shareToken && status !== "draft" && status !== "void" ? (
+                  <>
+                    <Link href={`/invoice/${invoice.shareToken}`} target="_blank" rel="noreferrer" className="block truncate rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline">
+                      /invoice/{invoice.shareToken}
+                    </Link>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" className="flex-1" onClick={handleShareInvoice} disabled={sharing}>
+                        <Copy aria-hidden="true" /> Copy link
+                      </Button>
+                      <Button type="button" variant="ghost" size="sm" onClick={handleRevokeShareLink} disabled={sharing} aria-label="Revoke invoice share link" title="Revoke link">
+                        <Link2Off aria-hidden="true" />
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <Button type="button" variant="outline" className="w-full" onClick={handleShareInvoice} disabled={sharing || status === "draft" || status === "void"}>
+                    <Share2 aria-hidden="true" /> {sharing ? "Creating link…" : "Create share link"}
+                  </Button>
+                )}
               </CardContent>
             </Card>
 
@@ -303,7 +373,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ invoic
               <h2 id="invoice-dates-title" className="text-sm font-semibold">Invoice dates</h2>
               <div className="flex items-start gap-3 text-sm">
                 <CalendarDays aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                <div><p className="text-muted-foreground">Issue date</p><p className="mt-0.5 font-medium">{formatDate(invoice.issueDate)}</p></div>
+                <div><p className="text-muted-foreground">Issue date</p><p className="mt-0.5 font-medium">{formatDate(invoice.issueDate, { locale: "en-BD", month: "long" })}</p></div>
               </div>
               <div className="flex items-start gap-3 text-sm">
                 <Clock3 aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
@@ -317,7 +387,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ invoic
                   </div>
                 </div>
               </div>
-              {invoice.createdAt && <p className="border-t border-border pt-4 text-xs text-muted-foreground">Created {formatDate(invoice.createdAt)}</p>}
+              {invoice.createdAt && <p className="border-t border-border pt-4 text-xs text-muted-foreground">Created {formatDate(invoice.createdAt, { locale: "en-BD", month: "long" })}</p>}
             </section>
           </aside>
         </div>

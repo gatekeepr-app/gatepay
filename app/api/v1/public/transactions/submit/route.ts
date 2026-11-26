@@ -1,48 +1,25 @@
 import { NextRequest } from "next/server";
-import { z } from "zod";
 import { convex } from "@/integrations/convex/server";
 import { api } from "@/../convex/_generated/api";
+import { transactionApiContracts } from "@/lib/api/contracts";
 import {
-  json, generateRequestId,
-  hashIp, getClientIp, extractBearer, hashKey,
+  createLoggedApiRequest, readRequestJson,
+  extractBearer, hashKey,
   extractIdempotencyKey, checkRateLimit,
-  checkBodySize, logApiCall, corsHeaders, SECURITY_HEADERS,
+  checkBodySize, corsHeaders, SECURITY_HEADERS,
 } from "@/lib/api/helpers";
-
-const Schema = z.object({
-  transaction_ref: z.string().min(1).max(256),
-  amount: z.number(),
-  currency: z.string().optional(),
-  occurred_at: z.string().optional(),
-  method: z.string().optional(),
-  business_name: z.string().optional(),
-  external_user_id: z.string().optional(),
-  source: z.string().optional(),
-  notes: z.string().optional(),
-});
 
 export async function OPTIONS(request: NextRequest) {
   return new Response(null, { status: 204, headers: { ...corsHeaders(request), ...SECURITY_HEADERS } });
 }
 
 export async function POST(request: NextRequest) {
-  const startTime = Date.now();
-  const requestId = generateRequestId();
-  const ip = getClientIp(request);
-  const ipH = hashIp(ip);
-
-  let statusCode = 200;
-  let errorMsg: string | undefined;
-  let keyPrefix: string | undefined;
-
-  const respond = (status: number, body: unknown, err?: string) => {
-    statusCode = status;
-    errorMsg = err;
-    return json(body, status, { "x-request-id": requestId });
-  };
+  const apiRequest = createLoggedApiRequest(request, "/api/v1/public/transactions/submit");
+  const { requestId, ipHash } = apiRequest;
+  const respond = apiRequest.respond;
 
   try {
-    const rl = await checkRateLimit(ipH, "submit", 60, 60000);
+    const rl = await checkRateLimit(ipHash, "submit", 60, 60000);
     if (rl.blocked) return respond(429, { error: rl.reason }, rl.reason);
 
     if (!checkBodySize(request)) return respond(413, { error: "body_too_large" }, "body_too_large");
@@ -51,22 +28,14 @@ export async function POST(request: NextRequest) {
     if (!token) return respond(401, { error: "missing_api_key" }, "missing_api_key");
 
     const tokenHash = hashKey(token);
-    keyPrefix = token.slice(0, 8);
+    apiRequest.setApiKeyPrefix(token.slice(0, 8));
 
     const idempotencyKey = extractIdempotencyKey(request);
 
-    let body: unknown;
-    try {
-      const text = await request.text();
-      if (new TextEncoder().encode(text).length > 10_240) {
-        return respond(413, { error: "body_too_large" }, "body_too_large");
-      }
-      body = JSON.parse(text);
-    } catch {
-      return respond(400, { error: "invalid_json" }, "invalid_json");
-    }
+    const requestBody = await readRequestJson(request);
+    if (!requestBody.ok) return respond(requestBody.status, { error: requestBody.error }, requestBody.error);
 
-    const parsed = Schema.safeParse(body);
+    const parsed = transactionApiContracts.submit.schema.safeParse(requestBody.body);
     if (!parsed.success) {
       return respond(400, { error: "invalid_body", issues: parsed.error.issues }, "invalid_body");
     }
@@ -117,15 +86,6 @@ export async function POST(request: NextRequest) {
     }
     return respond(500, { error: "insert_failed" }, msg);
   } finally {
-    logApiCall({
-      requestId,
-      method: "POST",
-      path: "/api/v1/public/transactions/submit",
-      statusCode,
-      durationMs: Date.now() - startTime,
-      apiKeyPrefix: keyPrefix,
-      ipHash: ipH,
-      error: errorMsg,
-    });
+    void apiRequest.finish();
   }
 }

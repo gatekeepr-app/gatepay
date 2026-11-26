@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { calcBillingTotal } from "./lib/helpers";
+import { calcBillingTotal } from "./lib/billing";
+import { billingTypeValidator } from "./lib/validators";
 
 export const getByProject = query({
   args: { projectId: v.id("projects") },
@@ -15,7 +16,7 @@ export const getByProject = query({
 export const upsert = mutation({
   args: {
     projectId: v.id("projects"),
-    billingType: v.string(),
+    billingType: billingTypeValidator,
     amount: v.number(),
     currency: v.optional(v.string()),
     monthsCount: v.optional(v.number()),
@@ -26,7 +27,7 @@ export const upsert = mutation({
   },
   handler: async (ctx, args) => {
     const total = calcBillingTotal(
-      args.billingType as any,
+      args.billingType,
       args.amount,
       args.monthsCount,
       args.startDate,
@@ -39,7 +40,7 @@ export const upsert = mutation({
 
     const billing = {
       projectId: args.projectId,
-      billingType: args.billingType as any,
+      billingType: args.billingType,
       amount: args.amount,
       currency: args.currency ?? "BDT",
       monthsCount: args.monthsCount,

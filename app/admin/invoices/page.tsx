@@ -3,19 +3,14 @@
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { useAdminSession } from "@/components/admin/UserProvider";
 import { Download, FileText, Plus } from "lucide-react";
 import { InvoiceStatusBadge } from "@/components/admin/invoice-status-badge";
 import { Button } from "@/components/ui/button";
-
-const formatMoney = (amount: number, currency: string) =>
-  new Intl.NumberFormat("en-BD", { style: "currency", currency, maximumFractionDigits: 2 }).format(amount);
-
-const formatDate = (timestamp: number) =>
-  new Intl.DateTimeFormat("en-BD", { day: "numeric", month: "short", year: "numeric" }).format(timestamp);
+import { formatDate, formatMoney } from "@/lib/admin/format";
 
 export default function InvoicesPage() {
-  const token = getStoredToken();
+  const { token } = useAdminSession();
   const invoices = useQuery(api.invoices.list, token ? { token } : "skip");
 
   return (
@@ -69,11 +64,11 @@ export default function InvoicesPage() {
                       </div>
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium group-hover:underline">{invoice.invoiceNumber}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">Issued {formatDate(invoice.issueDate)}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">Issued {formatDate(invoice.issueDate, { locale: "en-BD" })}</p>
                       </div>
                     </Link>
                     <div className="col-start-1 row-start-2 justify-self-start sm:col-start-auto sm:row-start-auto sm:justify-self-end"><InvoiceStatusBadge status={invoice.status} /></div>
-                    <p className="col-start-2 row-start-1 text-right text-sm font-medium tabular-nums sm:col-start-auto sm:row-start-auto">{formatMoney(invoice.total, invoice.currency)}</p>
+                    <p className="col-start-2 row-start-1 text-right text-sm font-medium tabular-nums sm:col-start-auto sm:row-start-auto">{formatMoney(invoice.total, invoice.currency, { style: "currency" })}</p>
                     <Button asChild variant="ghost" size="icon" className="col-start-2 row-start-2 justify-self-end sm:col-start-auto sm:row-start-auto" aria-label={`Download PDF for invoice ${invoice.invoiceNumber}`} title="Download invoice PDF">
                       <Link href={`/admin/invoices/${invoice._id}/download`} target="_blank" rel="noreferrer">
                         <Download aria-hidden="true" />

@@ -1,7 +1,8 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { requireAdmin } from "./lib/auth";
-import { logAdminAction, roleValidator } from "./lib/helpers";
+import { logAdminAction } from "./lib/adminAuditLog";
+import { roleValidator } from "./lib/validators";
 
 export const list = query({
   args: { token: v.string() },
@@ -34,14 +35,14 @@ export const create = internalMutation({
     email: v.string(),
     passwordHash: v.optional(v.string()),
     name: v.optional(v.string()),
-    role: v.string(),
+    role: roleValidator,
   },
   handler: async (ctx, args) => {
     const id = await ctx.db.insert("users", {
       email: args.email.toLowerCase(),
       passwordHash: args.passwordHash,
       name: args.name,
-      role: args.role as any,
+      role: args.role,
       createdAt: Date.now(),
     });
     return id;

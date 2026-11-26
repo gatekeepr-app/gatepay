@@ -3,11 +3,11 @@
 import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { formatMoney } from "@/lib/admin/format";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { useAdminSession } from "@/components/admin/UserProvider";
 import { AlertTriangle } from "lucide-react";
 
 export function OverdueAlert() {
-  const token = getStoredToken();
+  const { token } = useAdminSession();
   const overdue = useQuery(
     api.overdue.getOverdueProjects,
     token ? { token } : "skip"

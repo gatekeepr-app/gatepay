@@ -8,7 +8,7 @@ import { api } from "@/../convex/_generated/api";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, Clock, FileText, ExternalLink, RotateCcw, RefreshCw, XCircle, Ban, Receipt } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/admin/format";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { useAdminSession } from "@/components/admin/UserProvider";
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-700",
@@ -34,9 +34,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 export default function TransactionDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { token } = useAdminSession();
   const { id } = use(params);
   const router = useRouter();
-  const token = getStoredToken();
   const tx = useQuery(api.transactions.getById, token ? { id: id as any, token } : "skip");
   const history = useQuery(api.transactions.getHistory, token ? { transactionId: id as any, token } : "skip");
   const invoice = useQuery(
@@ -66,7 +66,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
       await updateStatus({
         id: id as any,
         status: newStatus as any,
-        token: getStoredToken() ?? "",
+        token,
       });
       toast.success(`Status changed to ${newStatus}`);
     } catch (err: any) {
@@ -83,7 +83,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
         method: reimbForm.method,
         reimbursementRef: reimbForm.reimbursementRef || undefined,
         notes: reimbForm.notes || undefined,
-        token: getStoredToken() ?? "",
+        token,
       });
       toast.success("Payment reimbursed");
       setReimbOpen(false);
@@ -103,7 +103,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
         id: refundId,
         status: status as any,
         gatewayRef,
-        token: getStoredToken() ?? "",
+        token,
       });
       toast.success(`Refund ${status}`);
     } catch (err: any) {
@@ -114,7 +114,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
   const handleCancelRefund = async (refundId: any) => {
     if (!confirm("Cancel this refund?")) return;
     try {
-      await cancelRefund({ id: refundId, token: getStoredToken() ?? "" });
+      await cancelRefund({ id: refundId, token });
       toast.success("Refund cancelled");
     } catch (err: any) {
       toast.error(err?.message ?? "Failed");
@@ -123,7 +123,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
 
   const handleDelete = async () => {
     if (!confirm("Delete this transaction? This cannot be undone.")) return;
-    await deleteTx({ id: id as any, token: getStoredToken()! });
+      await deleteTx({ id: id as any, token });
     toast.success("Transaction deleted");
     router.push("/admin/transactions");
   };
@@ -140,7 +140,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
         receiverName: refundForm.receiverName || undefined,
         receiverNumber: refundForm.receiverNumber || undefined,
         notes: refundForm.notes || undefined,
-        token: getStoredToken() ?? "",
+        token,
       });
       toast.success("Refund initiated");
       setRefundOpen(false);
@@ -186,13 +186,11 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
         </div>
       </div>
 
-      {/* Amount */}
       <div className="mt-6 rounded-xl bg-muted p-5">
         <div className="text-xs uppercase tracking-wide text-muted-foreground">Amount</div>
         <div className="mt-1 text-3xl font-semibold">{formatMoney(tx.amount, tx.currency)}</div>
       </div>
 
-      {/* Status change */}
       <section className="mt-4 rounded-xl border border-border bg-card p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Status</h2>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -224,7 +222,6 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
         )}
       </section>
 
-      {/* Reimbursement form */}
       {reimbOpen && (
         <section className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-5 dark:border-purple-800 dark:bg-purple-950/30">
           <h2 className="text-sm font-semibold">Reimburse Payment</h2>
@@ -285,7 +282,6 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
         </section>
       )}
 
-      {/* Reimbursement info */}
       {(tx.status ?? "pending") === "reimbursed" && (
         <section className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-5 dark:border-purple-800 dark:bg-purple-950/30">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-purple-700 dark:text-purple-300">Reimbursement Details</h2>
@@ -298,7 +294,6 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
         </section>
       )}
 
-      {/* Receiving data */}
       <section className="mt-4 rounded-xl border border-border bg-card p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Payment details</h2>
         <div className="mt-4 grid grid-cols-2 gap-4">
@@ -309,7 +304,6 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
         </div>
       </section>
 
-      {/* Transaction info */}
       <section className="mt-4 rounded-xl border border-border bg-card p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Transaction info</h2>
         <div className="mt-4 grid grid-cols-2 gap-4">
@@ -327,7 +321,6 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
         )}
       </section>
 
-      {/* Linked records */}
       <section className="mt-4 rounded-xl border border-border bg-card p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Linked records</h2>
         <div className="mt-4 space-y-2">
@@ -352,7 +345,6 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
         </div>
       </section>
 
-      {/* Refunds */}
       {(tx.status ?? "pending") === "verified" && (
         <section className="mt-4 rounded-xl border border-border bg-card p-5">
           <div className="flex items-center justify-between">
@@ -430,7 +422,6 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
         </section>
       )}
 
-      {/* Refund form */}
       {refundOpen && (
         <section className="mt-4 rounded-xl border border-red-200 bg-red-50 p-5 dark:border-red-800 dark:bg-red-950/30">
           <h2 className="text-sm font-semibold">Initiate Refund</h2>
@@ -500,7 +491,6 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ id
         </section>
       )}
 
-      {/* Status history */}
       {history && history.length > 0 && (
         <section className="mt-4 rounded-xl border border-border bg-card p-5">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Status History</h2>

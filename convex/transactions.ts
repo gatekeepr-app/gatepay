@@ -1,14 +1,14 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
-import { escapeHtml, logAdminAction } from "./lib/helpers";
-import { hmacSha256 } from "./lib/crypto";
+import { escapeHtml } from "./lib/text";
+import { logAdminAction } from "./lib/adminAuditLog";
 import { requireAdmin } from "./lib/auth";
 import { reserveNextInvoiceReference } from "./lib/invoiceReference";
+import { EMAIL_FROM, RESEND_API_KEY, sendEmail } from "./lib/email";
+import { buildPaymentConfirmedEmail } from "./lib/paymentEmail";
+import { buildSignedWebhookRequest, WEBHOOK_RETRY_DELAYS } from "./lib/webhooks";
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_FROM = "GatePay <pay@mail.darvizlabs.online>";
 
-// ─── Queries ──────────────────────────────────────────────
 
 export const list = query({
   args: { token: v.string() },
@@ -22,7 +22,6 @@ export const getByStatus = query({
   args: { status: v.union(v.literal("pending"), v.literal("verified"), v.literal("reimbursed"), v.literal("failed")), token: v.string() },
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.token);
-    // Use index for O(log n) lookup instead of full table scan + JS filter
     const indexed = await ctx.db
       .query("transactions")
       .withIndex("by_status", (q) => q.eq("status", args.status))
@@ -119,7 +118,6 @@ export const getStatusCounts = query({
   args: { token: v.string() },
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.token);
-    // Bounded queries using indexes instead of loading entire table
     const pending = await ctx.db
       .query("transactions")
       .withIndex("by_status", (q) => q.eq("status", "pending"))
@@ -157,7 +155,6 @@ export const getStatusCounts = query({
   },
 });
 
-// ─── Helper: fire callback to partner ─────────────────────
 
 async function fireCallback(
   ctx: any,
@@ -180,7 +177,7 @@ async function fireCallback(
   if (!keyRow || keyRow.revokedAt || !keyRow.callbackUrl) return;
   if (!keyRow.callbackUrl.startsWith("https://")) return;
 
-  const txPayload: any = {
+  const transactionPayload: Record<string, unknown> = {
     transactionRef: tx.transactionRef,
     amount: tx.amount,
     currency: tx.currency,
@@ -192,36 +189,24 @@ async function fireCallback(
   };
 
   if (event === "reimbursed") {
-    txPayload.reimbursement_amount = tx.reimbursementAmount;
-    txPayload.reimbursement_method = tx.reimbursementMethod;
-    txPayload.reimbursement_ref = tx.reimbursementRef;
+    transactionPayload.reimbursement_amount = tx.reimbursementAmount;
+    transactionPayload.reimbursement_method = tx.reimbursementMethod;
+    transactionPayload.reimbursement_ref = tx.reimbursementRef;
   }
 
-  const payload = {
+  const { body, headers } = await buildSignedWebhookRequest({
     event,
     businessName,
-    sentAt: new Date().toISOString(),
-    transactions: [txPayload],
-  };
-  const body = JSON.stringify(payload);
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "User-Agent": "GatePay-Verify/1.0",
-  };
-  if (keyRow.signingSecret) {
-    const sig = await hmacSha256(keyRow.signingSecret, body);
-    headers["X-GatePay-Signature"] = `sha256=${sig}`;
-  }
+    transactions: [transactionPayload],
+    signingSecret: keyRow.signingSecret,
+  });
 
   try {
     const res = await fetch(keyRow.callbackUrl, { method: "POST", headers, body });
     if (res.ok) return true;
   } catch {}
 
-  // Queue for retry with exponential backoff
   const now = Date.now();
-  const delays = [60_000, 300_000, 900_000]; // 1m, 5m, 15m
   await ctx.db.insert("webhookRetries", {
     transactionId: tx._id,
     callbackUrl: keyRow.callbackUrl,
@@ -229,14 +214,13 @@ async function fireCallback(
     headers,
     event,
     retryCount: 0,
-    nextRetryAt: now + delays[0],
-    maxRetries: delays.length,
+    nextRetryAt: now + WEBHOOK_RETRY_DELAYS[0],
+    maxRetries: WEBHOOK_RETRY_DELAYS.length,
     createdAt: now,
   });
   return false;
 }
 
-// ─── Helper: send status email ────────────────────────────
 
 async function sendStatusEmail(
   ctx: any,
@@ -260,14 +244,10 @@ async function sendStatusEmail(
     for (const admin of admins) {
       if (!admin.email) continue;
       try {
-        await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            from: EMAIL_FROM,
-            to: [admin.email],
-            subject: `New Payment — ${escapeHtml(tx.transactionRef)}`,
-            html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px;">
+        await sendEmail(
+          [admin.email],
+          `New Payment — ${escapeHtml(tx.transactionRef)}`,
+          `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px;">
               <h2 style="margin:0 0 16px;font-size:20px;">New Payment Received</h2>
               <table style="width:100%;border-collapse:collapse;font-size:14px;">
                 <tr><td style="padding:8px 0;color:#888;">Transaction</td><td style="padding:8px 0;font-family:monospace;">${escapeHtml(tx.transactionRef)}</td></tr>
@@ -277,8 +257,7 @@ async function sendStatusEmail(
               </table>
               <p style="color:#888;font-size:12px;margin:24px 0 0;">GatePay — Payment Verification</p>
             </div>`,
-          }),
-        });
+        );
       } catch {}
     }
     return;
@@ -290,19 +269,17 @@ async function sendStatusEmail(
   let body = "";
 
   if (newStatus === "verified") {
-    subject = `Payment Confirmed — ${escapeHtml(project?.name ?? "GatePay")}`;
-    body = `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px;">
-      <h2 style="margin:0 0 16px;font-size:20px;">Payment Confirmed</h2>
-      <p style="color:#555;margin:0 0 24px;">Your payment has been verified by our team.</p>
-      <table style="width:100%;border-collapse:collapse;font-size:14px;">
-        <tr><td style="padding:8px 0;color:#888;">Transaction ref</td><td style="padding:8px 0;font-family:monospace;">${escapeHtml(tx.transactionRef)}</td></tr>
-        <tr><td style="padding:8px 0;color:#888;">Amount</td><td style="padding:8px 0;">${escapeHtml(tx.currency)} ${tx.amount.toLocaleString()}</td></tr>
-        ${period ? `<tr><td style="padding:8px 0;color:#888;">Period</td><td style="padding:8px 0;">${escapeHtml(period)}</td></tr>` : ""}
-        ${project ? `<tr><td style="padding:8px 0;color:#888;">Project</td><td style="padding:8px 0;">${escapeHtml(project.name)} (${project.projectCode})</td></tr>` : ""}
-      </table>
-      <p style="margin:24px 0 0;"><a href="https://pay.darvizlabs.com/receipt/${tx._id}" style="display:inline-block;background:#111;color:#fff;padding:12px 24px;border-radius:9999px;text-decoration:none;font-size:14px;font-weight:500;">View Receipt</a></p>
-      <p style="color:#888;font-size:12px;margin:24px 0 0;">GatePay — Payment Verification</p>
-    </div>`;
+    const confirmation = buildPaymentConfirmedEmail({
+      transactionRef: tx.transactionRef,
+      amount: tx.amount,
+      currency: tx.currency,
+      projectName: project?.name,
+      projectCode: project?.projectCode,
+      period,
+      transactionId: tx._id,
+    });
+    subject = confirmation.subject;
+    body = confirmation.html;
   } else if (newStatus === "reimbursed") {
     subject = `Payment Reimbursed — ${escapeHtml(project?.name ?? "GatePay")}`;
     body = `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px;">
@@ -333,11 +310,7 @@ async function sendStatusEmail(
   if (!subject) return;
 
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: EMAIL_FROM, to: [client.email], subject, html: body }),
-    });
+    const res = await sendEmail([client.email], subject, body);
     if (!res.ok) {
       const err = await res.text();
       console.error("Resend email failed:", res.status, err);
@@ -347,7 +320,6 @@ async function sendStatusEmail(
   }
 }
 
-// ─── Mutations ────────────────────────────────────────────
 
 export const submitPayPayment = mutation({
   args: {
@@ -365,7 +337,6 @@ export const submitPayPayment = mutation({
   handler: async (ctx, args) => {
     const now = Date.now();
 
-    // Duplicate ref check — same bKash ref cannot be submitted twice
     const existing = await ctx.db
       .query("transactions")
       .withIndex("by_transaction_ref", (q: any) => q.eq("transactionRef", args.transactionRef.toLowerCase()))
@@ -590,7 +561,6 @@ export const backfillStatus = mutation({
   args: { token: v.string() },
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.token);
-    // Batched: process 100 at a time instead of unbounded collect
     let totalBackfilled = 0;
     let hasMore = true;
 
@@ -686,7 +656,6 @@ export const processWebhookRetries = internalMutation({
       .withIndex("by_next_retry", (q) => q.lte("nextRetryAt", now))
       .take(20);
 
-    const delays = [60_000, 300_000, 900_000]; // 1m, 5m, 15m
     let processed = 0;
 
     for (const job of pending) {
@@ -712,7 +681,7 @@ export const processWebhookRetries = internalMutation({
 
       await ctx.db.patch(job._id, {
         retryCount: nextRetry,
-        nextRetryAt: now + delays[nextRetry],
+        nextRetryAt: now + WEBHOOK_RETRY_DELAYS[nextRetry],
         lastError: "retry_scheduled",
       });
     }
@@ -744,7 +713,6 @@ export const sendPaymentReminders = internalMutation({
 
       if (monthsElapsed < 0 || monthsElapsed >= billing.monthsCount) continue;
 
-      // Check if already paid this month
       const monthStart = new Date(currentYear, currentMonth, 1).getTime();
       const monthEnd = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999).getTime();
 

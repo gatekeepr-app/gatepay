@@ -1,13 +1,11 @@
 import { v, ConvexError } from "convex/values";
 import { mutation } from "./_generated/server";
-import { hmacSha256 } from "./lib/crypto";
-import { escapeHtml } from "./lib/helpers";
+import { RESEND_API_KEY, sendEmail } from "./lib/email";
+import { buildPaymentConfirmedEmail } from "./lib/paymentEmail";
+import { buildSignedWebhookRequest } from "./lib/webhooks";
 import { requireAdmin } from "./lib/auth";
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_FROM = "GatePay <pay@mail.darvizlabs.online>";
 
-// POST /api/public/transactions/submit
 export const submitTransaction = mutation({
   args: {
     transactionRef: v.string(),
@@ -33,7 +31,6 @@ export const submitTransaction = mutation({
     const businessName = args.businessName ?? key.businessName;
     if (!businessName) throw new ConvexError({ code: "missing_business_name" });
 
-    // Resolve project + client from API key's linked project
     let resolvedProjectId: any;
     let resolvedClientId: any;
     if (key.projectId) {
@@ -70,7 +67,6 @@ export const submitTransaction = mutation({
   },
 });
 
-// POST /api/public/transactions/verify
 export const verifyTransaction = mutation({
   args: {
     transactionRef: v.string(),
@@ -111,7 +107,6 @@ export const verifyTransaction = mutation({
       return { verified: false, reason: "amount_mismatch" };
     }
 
-    // Resolve project + client from API key's linked project
     let resolvedProjectId: any;
     let resolvedClientId: any;
     if (key.projectId) {
@@ -134,7 +129,6 @@ export const verifyTransaction = mutation({
 
     await ctx.db.patch(key._id, { lastUsedAt: Date.now() });
 
-    // Update project if linked
     let projectCode: string | null = null;
     if (tx.projectId) {
       const project = await ctx.db.get(tx.projectId);
@@ -161,7 +155,6 @@ export const verifyTransaction = mutation({
   },
 });
 
-// POST /api/v1/public/transactions/review
 export const reviewTransaction = mutation({
   args: {
     transactionId: v.id("transactions"),
@@ -204,7 +197,6 @@ export const reviewTransaction = mutation({
   },
 });
 
-// Trigger verify batch (admin function)
 export const triggerVerifyBatch = mutation({
   args: {
     ids: v.optional(v.array(v.id("transactions"))),
@@ -279,10 +271,10 @@ export const triggerVerifyBatch = mutation({
         continue;
       }
 
-      const payload = {
-        event: "verified" as const,
+      const { body, headers } = await buildSignedWebhookRequest({
+        event: "verified",
         businessName: displayName,
-        sentAt: new Date().toISOString(),
+        signingSecret: keyRow.signingSecret,
         transactions: group.map((t) => ({
           transactionRef: t.transactionRef,
           amount: t.amount,
@@ -293,17 +285,7 @@ export const triggerVerifyBatch = mutation({
           externalUserId: t.verifiedExternalUserId,
           source: t.verifiedSource,
         })),
-      };
-      const body = JSON.stringify(payload);
-
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-        "User-Agent": "GatePay-Verify/1.0",
-      };
-      if (keyRow.signingSecret) {
-        const sig = await hmacSha256(keyRow.signingSecret, body);
-        headers["X-GatePay-Signature"] = `sha256=${sig}`;
-      }
+      });
 
       try {
         const res = await fetch(keyRow.callbackUrl, {
@@ -332,7 +314,6 @@ export const triggerVerifyBatch = mutation({
             });
           }
 
-          // Send confirmation emails to clients with linked transactions
           if (RESEND_API_KEY) {
             for (const t of group) {
               if (t.clientId) {
@@ -341,31 +322,17 @@ export const triggerVerifyBatch = mutation({
                   const project = t.projectId ? await ctx.db.get(t.projectId) : null;
                   const period = t.notes?.match(/for (.+?) by/)?.[1] ?? "";
                   try {
-                    await fetch("https://api.resend.com/emails", {
-                      method: "POST",
-                      headers: {
-                        Authorization: `Bearer ${RESEND_API_KEY}`,
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify({
-                        from: EMAIL_FROM,
-                        to: [client.email],
-                        subject: `Payment Confirmed — ${escapeHtml(project?.name ?? "GatePay")}`,
-                        html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px;">
-                          <h2 style="margin:0 0 16px;font-size:20px;">Payment Confirmed</h2>
-                          <p style="color:#555;margin:0 0 24px;">Your payment has been verified by our team.</p>
-                          <table style="width:100%;border-collapse:collapse;font-size:14px;">
-                            <tr><td style="padding:8px 0;color:#888;">Transaction ref</td><td style="padding:8px 0;font-family:monospace;">${escapeHtml(t.transactionRef)}</td></tr>
-                            <tr><td style="padding:8px 0;color:#888;">Amount</td><td style="padding:8px 0;">${escapeHtml(t.currency)} ${t.amount.toLocaleString()}</td></tr>
-                            ${period ? `<tr><td style="padding:8px 0;color:#888;">Period</td><td style="padding:8px 0;">${escapeHtml(period)}</td></tr>` : ""}
-                            ${project ? `<tr><td style="padding:8px 0;color:#888;">Project</td><td style="padding:8px 0;">${escapeHtml(project.name)} (${project.projectCode})</td></tr>` : ""}
-                            <tr><td style="padding:8px 0;color:#888;">Verified at</td><td style="padding:8px 0;">${new Date(verifiedAt).toLocaleDateString()}</td></tr>
-                          </table>
-                          <p style="margin:24px 0 0;"><a href="https://pay.darvizlabs.com/receipt/${t._id}" style="display:inline-block;background:#111;color:#fff;padding:12px 24px;border-radius:9999px;text-decoration:none;font-size:14px;font-weight:500;">View Receipt</a></p>
-                          <p style="color:#888;font-size:12px;margin:24px 0 0;">GatePay — Payment Verification</p>
-                        </div>`,
-                      }),
+                    const confirmation = buildPaymentConfirmedEmail({
+                      transactionRef: t.transactionRef,
+                      amount: t.amount,
+                      currency: t.currency,
+                      projectName: project?.name,
+                      projectCode: project?.projectCode,
+                      period,
+                      transactionId: t._id,
+                      verifiedAt,
                     });
+                    await sendEmail([client.email], confirmation.subject, confirmation.html);
                   } catch {
                     // Email send failed silently — don't block verification
                   }
@@ -407,7 +374,6 @@ export const triggerVerifyBatch = mutation({
   },
 });
 
-// POST /api/v1/public/transactions/refund
 export const requestRefund = mutation({
   args: {
     transactionRef: v.string(),

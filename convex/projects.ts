@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { generateProjectCode, generatePayCode, logAdminAction } from "./lib/helpers";
+import { generateProjectCode, generatePayCode } from "./lib/projectCodes";
+import { logAdminAction } from "./lib/adminAuditLog";
+import { projectStatusValidator } from "./lib/validators";
 import { requireAdmin } from "./lib/auth";
 
 export const list = query({
@@ -35,7 +37,7 @@ export const create = mutation({
     description: v.optional(v.string()),
     clientId: v.optional(v.id("clients")),
     createdBy: v.optional(v.id("users")),
-    status: v.optional(v.string()),
+    status: v.optional(projectStatusValidator),
     tags: v.optional(v.array(v.string())),
     token: v.string(),
   },
@@ -50,7 +52,7 @@ export const create = mutation({
       description: args.description,
       clientId: args.clientId,
       createdBy: args.createdBy,
-      status: (args.status as any) ?? "draft",
+      status: args.status ?? "draft",
       tags: args.tags ?? [],
       payCode,
       createdAt: now,
@@ -74,7 +76,7 @@ export const update = mutation({
     name: v.optional(v.string()),
     description: v.optional(v.string()),
     clientId: v.optional(v.id("clients")),
-    status: v.optional(v.string()),
+    status: v.optional(projectStatusValidator),
     tags: v.optional(v.array(v.string())),
     lastTransactionRef: v.optional(v.string()),
     lastPaymentAt: v.optional(v.number()),
@@ -84,7 +86,7 @@ export const update = mutation({
     const admin = await requireAdmin(ctx, args.token);
     const { id, token: _, ...fields } = args;
     const project = await ctx.db.get(id);
-    await ctx.db.patch(id, { ...fields, updatedAt: Date.now() } as any);
+    await ctx.db.patch(id, { ...fields, updatedAt: Date.now() });
     await logAdminAction(ctx, {
       action: "project.update",
       entityType: "projects",

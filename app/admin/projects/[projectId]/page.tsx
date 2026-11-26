@@ -4,7 +4,8 @@ import { use, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
-import { getStoredToken } from "@/integrations/convex/auth";
+import type { Doc } from "@/../convex/_generated/dataModel";
+import { useAdminSession } from "@/components/admin/UserProvider";
 import { ArrowLeft, Copy, FileText, Pencil, Settings2 } from "lucide-react";
 import { formatDate, formatMoney } from "@/lib/admin/format";
 import { toast } from "sonner";
@@ -13,8 +14,9 @@ import {
 } from "@/components/ui/dialog";
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ projectId: string }> }) {
+  type ProjectStatus = Doc<"projects">["status"];
+  const { token } = useAdminSession();
   const { projectId } = use(params);
-  const token = getStoredToken();
   const project = useQuery(api.projects.getById, token ? { id: projectId as any, token } : "skip");
   const billing = useQuery(api.billing.getByProject, token ? { projectId: projectId as any } : "skip");
   const invoices = useQuery(api.invoices.list, token ? { token } : "skip");
@@ -23,7 +25,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
   const deleteProject = useMutation(api.projects.remove);
   const updateProject = useMutation(api.projects.update);
   const [editOpen, setEditOpen] = useState(false);
-  const [editForm, setEditForm] = useState({ name: "", description: "", clientId: "", status: "draft", tags: [] as string[] });
+  const [editForm, setEditForm] = useState<{ name: string; description: string; clientId: string; status: ProjectStatus; tags: string[] }>({ name: "", description: "", clientId: "", status: "draft", tags: [] });
   const [tagInput, setTagInput] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -60,7 +62,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
         clientId: editForm.clientId ? (editForm.clientId as any) : undefined,
         status: editForm.status,
         tags: editForm.tags,
-        token: getStoredToken()!,
+        token,
       });
       toast.success("Project updated");
       setEditOpen(false);
@@ -70,9 +72,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
     setSaving(false);
   };
 
-  const setStatus = async (status: string) => {
+  const setStatus = async (status: ProjectStatus) => {
     try {
-      await updateProject({ id: projectId as any, status, token: getStoredToken()! });
+      await updateProject({ id: projectId as any, status, token });
       toast.success("Updated");
     } catch (err: any) {
       toast.error(err?.message ?? "Failed");
@@ -81,7 +83,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
 
   const handleDelete = async () => {
     if (!confirm("Delete this project? This will also remove its billing and invoices.")) return;
-    await deleteProject({ id: projectId as any, token: getStoredToken()! });
+    await deleteProject({ id: projectId as any, token });
     toast.success("Deleted");
   };
 
@@ -193,7 +195,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
           <div className="mt-4 flex flex-wrap gap-2">
             {["draft", "active", "paused", "completed"].map((s) => (
               <button key={s}
-                onClick={() => setStatus(s)}
+                onClick={() => setStatus(s as ProjectStatus)}
                 className={`rounded-full px-3 py-1 text-xs ${project.status === s ? "bg-foreground text-background" : "border border-border hover:bg-muted"}`}
               >
                 {s}
@@ -258,7 +260,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ projec
             </label>
             <label className="block">
               <span className="mb-1 block text-xs font-medium text-muted-foreground">Status</span>
-              <select value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+              <select value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value as ProjectStatus })}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm">
                 <option value="draft">Draft</option>
                 <option value="active">Active</option>

@@ -4,8 +4,28 @@ import type { MutationCtx, QueryCtx } from "../_generated/server";
 type ReadContext = QueryCtx | MutationCtx;
 type ReferenceScope = "global" | "project";
 
-const DEFAULT_PATTERN = "{prefix}-{yy}{month}{project}-{series}{index}";
-const DEFAULT_MONTH_CODES = "JA,FE,MR,AP,MY,JN,JL,AU,SP,OC,NO,DE";
+export const invoiceReferenceDefaults = {
+  prefix: "TLS",
+  monthCodes: "JA,FE,MR,AP,MY,JN,JL,AU,SP,OC,NO,DE",
+  seriesPrefix: "AA",
+  pattern: "{prefix}-{yy}{month}{project}-{series}{index}",
+  sequenceScope: "project" as const,
+};
+
+const REFERENCE_TOKENS = ["prefix", "yy", "month", "project", "series", "index"] as const;
+
+export function validateReferencePattern(value: string): string {
+  const pattern = value.trim() || invoiceReferenceDefaults.pattern;
+  const tokens = [...pattern.matchAll(/\{([^}]+)\}/g)].map((match) => match[1]);
+  if (
+    !tokens.includes("index") ||
+    pattern.length > 100 ||
+    tokens.some((token) => !REFERENCE_TOKENS.includes(token as (typeof REFERENCE_TOKENS)[number]))
+  ) {
+    throw new Error("Reference pattern must include {index}, use supported tokens, and be 100 characters or fewer");
+  }
+  return pattern;
+}
 
 type Settings = {
   referencePrefix?: string;
@@ -37,19 +57,20 @@ function formatReference({
   const date = new Date(issueDate);
   const year = date.getUTCFullYear();
   const month = date.getUTCMonth();
-  const monthCodes = (settings.referenceMonthCodes ?? DEFAULT_MONTH_CODES).split(",").map((code) => code.trim().toUpperCase());
+  const monthCodes = (settings.referenceMonthCodes ?? invoiceReferenceDefaults.monthCodes).split(",").map((code) => code.trim().toUpperCase());
   const projectSequence = projectCode?.match(/(\d+)$/)?.[1];
   const projectNumber = projectSequence ? String(Number(projectSequence)).padStart(2, "0") : "00";
   const values: Record<string, string> = {
-    prefix: settings.referencePrefix?.trim().toUpperCase() || "TLS",
+    prefix: settings.referencePrefix?.trim().toUpperCase() || invoiceReferenceDefaults.prefix,
     yy: String(year).slice(-2),
     month: monthCodes[month] || String(month + 1).padStart(2, "0"),
     project: projectNumber,
-    series: settings.referenceSeriesPrefix?.trim().toUpperCase() || "AA",
+    series: settings.referenceSeriesPrefix?.trim().toUpperCase() || invoiceReferenceDefaults.seriesPrefix,
     index: String(index),
   };
-  const pattern = settings.referencePattern?.trim() || DEFAULT_PATTERN;
-  return pattern.replace(/\{(prefix|yy|month|project|series|index)\}/g, (_, token: string) => values[token]);
+  const pattern = settings.referencePattern?.trim() || invoiceReferenceDefaults.pattern;
+  const supportedTokens = REFERENCE_TOKENS.join("|");
+  return pattern.replace(new RegExp(`\\{(${supportedTokens})\\}`, "g"), (_, token: string) => values[token]);
 }
 
 async function nextCandidate(

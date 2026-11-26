@@ -1,9 +1,8 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireAdmin } from "./lib/auth";
-import { logAdminAction } from "./lib/helpers";
+import { logAdminAction } from "./lib/adminAuditLog";
 
-// ─── Queries ──────────────────────────────────────────────
 
 export const list = query({
   args: { token: v.string() },
@@ -33,7 +32,6 @@ export const getById = query({
   },
 });
 
-// ─── Mutations ────────────────────────────────────────────
 
 export const initiateRefund = mutation({
   args: {
@@ -121,7 +119,6 @@ export const updateRefundStatus = mutation({
       updatedAt: now,
     });
 
-    // If refund completed, update transaction status
     if (args.status === "completed") {
       const tx = await ctx.db.get(refund.transactionId);
       if (tx) {

@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { InvoiceFooterRenderer } from "@/components/admin/invoice-footer-renderer";
+import { DEFAULT_INVOICE_LOGO_ALIGNMENT, DEFAULT_INVOICE_LOGO_WIDTH_MM, parseInvoiceFooterDocument, type InvoiceLogoAlignment } from "@/lib/invoice-layout";
 
 type PreviewLineItem = { description: string; quantity: number; unitPrice: number };
 
@@ -12,6 +14,9 @@ type InvoiceDocumentPreviewProps = {
   email: string;
   phone: string;
   footer: string;
+  invoiceFooterContent?: string | null;
+  invoiceLogoWidthMm?: number;
+  invoiceLogoAlignment?: InvoiceLogoAlignment;
   logoUrl: string | null;
   projectName?: string;
   clientName?: string;
@@ -84,6 +89,9 @@ export function InvoiceDocumentPreview({
   email,
   phone,
   footer,
+  invoiceFooterContent,
+  invoiceLogoWidthMm = DEFAULT_INVOICE_LOGO_WIDTH_MM,
+  invoiceLogoAlignment = DEFAULT_INVOICE_LOGO_ALIGNMENT,
   logoUrl,
   projectName,
   clientName,
@@ -97,14 +105,16 @@ export function InvoiceDocumentPreview({
   total,
   notes,
 }: InvoiceDocumentPreviewProps) {
+  const footerDocument = parseInvoiceFooterDocument(invoiceFooterContent, footer);
+  const logoAlignment = invoiceLogoAlignment === "left" ? "justify-start" : invoiceLogoAlignment === "right" ? "justify-end" : "justify-center";
   return (
     <article className="mx-auto min-h-[720px] max-w-[760px] bg-white px-7 py-8 text-[11px] leading-[1.45] text-slate-950 shadow-lg sm:px-12 sm:py-12 lg:aspect-[210/297] lg:px-14 lg:py-14" aria-label="Invoice document preview">
       <div className="flex min-h-full flex-col">
-        <div className="pb-10 pt-2 text-center">
+        <div className={`flex pb-10 pt-2 ${logoAlignment}`}>
           {logoUrl ? (
-            <Image src={logoUrl} alt={`${brandName} logo`} width={168} height={56} unoptimized className="mx-auto max-h-11 w-auto max-w-[80%] object-contain" />
+            <Image src={logoUrl} alt={`${brandName} logo`} width={320} height={120} unoptimized style={{ width: `${invoiceLogoWidthMm}mm` }} className="h-auto max-h-16 max-w-full object-contain" />
           ) : (
-            <div className="inline-flex items-baseline text-2xl font-black tracking-[-0.075em] text-blue-900 sm:text-[30px]">
+            <div style={{ width: `${invoiceLogoWidthMm}mm` }} className="inline-flex items-baseline text-2xl font-black tracking-[-0.075em] text-blue-900 sm:text-[30px]">
               {brandName}{brandName === "GATEKEEPER" && <span className="ml-0.5 text-amber-400">↗</span>}
             </div>
           )}
@@ -186,7 +196,7 @@ export function InvoiceDocumentPreview({
         </div>
 
         <div className="mt-auto pt-16 text-center text-[9px] text-blue-900">
-          {footer && <p className="mb-1">{footer}</p>}
+          <div className="mb-1">{footerDocument.content?.length ? <InvoiceFooterRenderer document={footerDocument} /> : null}</div>
           <p className="font-bold tracking-wide">{brandName}</p>
           <p>{businessName}{email ? ` | ${email}` : ""}{phone ? ` | ${phone}` : ""}</p>
         </div>

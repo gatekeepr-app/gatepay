@@ -4,12 +4,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { useAdminSession } from "@/components/admin/UserProvider";
 import { toast } from "sonner";
 
 export default function NewTransactionPage() {
+  const { token } = useAdminSession();
   const router = useRouter();
-  const token = getStoredToken();
   const clients = useQuery(api.clients.list, token ? { token } : "skip");
   const projects = useQuery(api.projects.list, token ? { token } : "skip");
   const createTx = useMutation(api.transactions.create);
@@ -28,7 +28,7 @@ export default function NewTransactionPage() {
         projectId: form.projectId ? (form.projectId as any) : undefined,
         notes: form.notes || undefined,
         createdBy: "",
-        token: getStoredToken()!,
+        token,
       });
       toast.success("Transaction created");
       router.push("/admin/transactions");

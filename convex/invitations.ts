@@ -2,7 +2,10 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { randomHex } from "./lib/crypto";
 import { requireAdmin } from "./lib/auth";
-import { logAdminAction, escapeHtml } from "./lib/helpers";
+import { logAdminAction } from "./lib/adminAuditLog";
+import { escapeHtml } from "./lib/text";
+import { inviteStatusValidator, roleValidator } from "./lib/validators";
+import { sendEmail } from "./lib/email";
 
 export const list = query({
   args: { token: v.string() },
@@ -25,7 +28,7 @@ export const getByToken = query({
 export const create = mutation({
   args: {
     email: v.string(),
-    role: v.string(),
+    role: roleValidator,
     invitedBy: v.optional(v.id("users")),
     token: v.string(),
   },
@@ -36,7 +39,7 @@ export const create = mutation({
     const email = args.email.toLowerCase();
     const id = await ctx.db.insert("invitations", {
       email,
-      role: args.role as any,
+      role: args.role,
       invitedBy: args.invitedBy,
       token,
       status: "pending",
@@ -47,22 +50,14 @@ export const create = mutation({
     const inviteLink = `https://pay.darvizlabs.com/invite/${token}`;
 
     try {
-      await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: "GatePay <pay@mail.darvizlabs.online>",
-          to: email,
-          subject: `You're invited to join GatePay as ${args.role}`,
-          html: `<p>You've been invited to join GatePay as <strong>${escapeHtml(args.role)}</strong>.</p>
+      await sendEmail(
+        email,
+        `You're invited to join GatePay as ${args.role}`,
+        `<p>You've been invited to join GatePay as <strong>${escapeHtml(args.role)}</strong>.</p>
 <p>Click the link below to accept your invitation:</p>
 <p><a href="${inviteLink}">${inviteLink}</a></p>
 <p>This link expires in 7 days.</p>`,
-        }),
-      });
+      );
     } catch {
       // email send failure shouldn't block the invite
     }
@@ -83,14 +78,14 @@ export const create = mutation({
 export const updateStatus = mutation({
   args: {
     id: v.id("invitations"),
-    status: v.string(),
+    status: inviteStatusValidator,
     acceptedAt: v.optional(v.number()),
     token: v.string(),
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx, args.token);
     const { id, token: _, ...fields } = args;
-    await ctx.db.patch(id, fields as any);
+    await ctx.db.patch(id, fields);
   },
 });
 

@@ -19,6 +19,7 @@ const items = [
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/admin/activity-log", label: "Activity Log", icon: History },
   { to: "/admin/settings/brand", label: "Brand settings", icon: Settings2 },
+  { to: "/admin/settings/brand/invoice", label: "Invoice setup", icon: FileText, nested: true },
 ];
 
 function SidebarContent({
@@ -73,7 +74,7 @@ function SidebarContent({
               title={collapsed ? item.label : undefined}
               className={cn(
                 "flex items-center rounded-lg py-2 text-sm transition-colors",
-                collapsed ? "justify-center px-2" : "gap-3 px-3",
+                collapsed ? "justify-center px-2" : item.nested ? "ml-5 gap-3 px-3 text-xs" : "gap-3 px-3",
                 active
                   ? "bg-foreground text-background"
                   : "text-foreground/70 hover:bg-muted hover:text-foreground",
@@ -144,7 +145,6 @@ export function Sidebar({
 
   return (
     <>
-      {/* Mobile header bar */}
       <div className="fixed inset-x-0 top-0 z-40 flex items-center border-b border-border bg-card px-4 py-3 md:hidden">
         <Button type="button" variant="ghost" size="icon" aria-label={open ? "Close navigation menu" : "Open navigation menu"} onClick={onToggle}>
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -152,7 +152,6 @@ export function Sidebar({
         <Link href="/admin" className="ml-3 text-lg font-semibold tracking-tight">GatePay</Link>
       </div>
 
-      {/* Mobile overlay */}
       {open && (
         <div
           className="fixed inset-0 z-40 bg-black/40 md:hidden"
@@ -160,7 +159,6 @@ export function Sidebar({
         />
       )}
 
-      {/* Mobile drawer */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r border-border bg-card transition-transform duration-200 md:hidden",
@@ -170,7 +168,6 @@ export function Sidebar({
         <SidebarContent user={user} onSignOut={onSignOut} onLinkClick={onToggle} />
       </aside>
 
-      {/* Desktop sidebar */}
       <aside className={cn("hidden max-h-screen shrink-0 overflow-y-auto border-r border-border bg-card transition-[width] duration-200 md:flex md:flex-col [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]", collapsed ? "w-16" : "w-60")}>
         <SidebarContent user={user} onSignOut={onSignOut} collapsed={collapsed} onCollapseToggle={onCollapseToggle} />
       </aside>

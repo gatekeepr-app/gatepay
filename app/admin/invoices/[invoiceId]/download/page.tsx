@@ -4,12 +4,12 @@ import { useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { useAdminSession } from "@/components/admin/UserProvider";
 import { InvoiceDocumentPreview } from "@/components/admin/invoice-document-preview";
 
 export default function InvoiceDownloadPage() {
+  const { token } = useAdminSession();
   const params = useParams<{ invoiceId: string }>();
-  const token = getStoredToken();
   const documentData = useQuery(
     api.invoices.getDocumentData,
     token && params.invoiceId ? { token, id: params.invoiceId as any } : "skip",
@@ -51,6 +51,9 @@ export default function InvoiceDownloadPage() {
           email={brand.email}
           phone={brand.phone}
           footer={brand.footer}
+          invoiceFooterContent={brand.invoiceFooterContent}
+          invoiceLogoWidthMm={brand.invoiceLogoWidthMm}
+          invoiceLogoAlignment={brand.invoiceLogoAlignment}
           logoUrl={brand.logoUrl}
           projectName={project?.name}
           clientName={client?.businessName || client?.name}

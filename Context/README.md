@@ -42,7 +42,8 @@ app/                    # Next.js App Router pages
 ├── docs/               # API documentation
 ├── invite/[token]/     # Team invitation acceptance
 ├── login/              # Authentication
-├── pay/                # Client payment portal
+├── pay/                # Project pay links
+├── payment/            # Invoice and project code lookup portal
 ├── layout.tsx          # Root layout (ConvexClientProvider)
 └── page.tsx            # Marketing homepage
 
@@ -50,7 +51,8 @@ convex/                 # Convex backend
 ├── schema.ts           # 16 tables
 ├── auth.ts             # signUp, signIn, getMe
 ├── transactions.ts     # CRUD + submitPayPayment (auto-generates invoice)
-├── invoices.ts         # CRUD + line items
+├── invoices.ts         # Draft autosave, invoice lifecycle, payment lookup + line items
+├── brand.ts            # Business branding, logo and invoice reference rules
 ├── projects.ts         # CRUD + pay code lookup
 ├── billing.ts          # Billing config per project
 ├── clients.ts, users.ts, api_keys.ts, invitations.ts
@@ -77,7 +79,11 @@ src/                    # Shared client code
 | `/` | Marketing homepage |
 | `/login` | Sign in / sign up |
 | `/invite/:token` | Accept team invitation |
-| `/pay/:code` | Client payment page with bKash |
+| `/pay/:code` | Project payment page with bKash |
+| `/payment` | Look up an invoice or project code and submit invoice payment details |
+| `/admin/invoices` | Review invoices and open invoice PDFs |
+| `/admin/invoices/new` | Create/edit invoices with autosaved drafts and live preview |
+| `/admin/settings/brand` | Set invoice branding and reference-number rules |
 | `/docs/payments-api` | Public API docs |
 | `/admin` | Dashboard, clients, projects, invoices, transactions, users, API keys, activity log, analytics |
 | `/api/v1/public/*` | Partner API (verify, submit, review, refund, health, openapi) |
@@ -95,6 +101,11 @@ src/                    # Shared client code
 
 - **Transaction status lifecycle**: Pending → Verified → Reimbursed / Failed with full audit trail
 - **Auto-invoicing**: `submitPayPayment` creates a transaction + invoice atomically when a client pays
+- **Invoice workflow**: Invoice edits autosave to drafts after a one-second pause; Generate invoice changes the draft to Sent
+- **Invoice documents**: Live preview and print-ready PDF export use saved brand, client, project, due-date and line-item data
+- **Invoice status and due dates**: Admins can update invoice status and set or change due dates from invoice details
+- **Invoice payment lookup**: Clients can find sent/overdue invoices by reference on `/payment` and submit bKash transaction IDs for review
+- **Brand settings**: Configure business details, upload an invoice logo, and set invoice-reference numbering rules
 - **Reimbursement tracking**: Track amount, method, external reference when paying clients back
 - **Payment confirmation emails**: Resend integration sends GatePay confirmation to client after status changes
 - **Admin notifications**: Email sent to admins when new payment is received
@@ -108,6 +119,8 @@ src/                    # Shared client code
 - **Invitation email**: Resend sends invite link when admin invites a user
 - **Security hardened**: `requireAdmin` on 30+ functions, HTML escaping, open redirect protection, auto-generated signing secrets
 - **Performance optimized**: DB-backed counters, bounded queries, indexed lookups, pagination on all lists
+
+See [Invoice workflow](invoices.md) for the admin and client-facing invoice flow.
 
 ## Environment Variables
 

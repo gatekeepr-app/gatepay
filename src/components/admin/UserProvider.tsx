@@ -1,27 +1,18 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { useMutation } from "convex/react";
-import { api } from "@/../convex/_generated/api";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { createContext, useContext, type ReactNode } from "react";
 
 type User = { _id: string; email: string; name?: string; role: string };
+type AdminSession = { user: User; token: string };
 
-const UserContext = createContext<User | null>(null);
+const AdminSessionContext = createContext<AdminSession | null>(null);
 
-export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const getMe = useMutation(api.auth.getMe);
-  const token = getStoredToken();
-
-  useEffect(() => {
-    if (!token) return;
-    getMe({ token }).then(setUser).catch(() => {});
-  }, [token]);
-
-  return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
+export function AdminSessionProvider({ children, session }: { children: ReactNode; session: AdminSession }) {
+  return <AdminSessionContext.Provider value={session}>{children}</AdminSessionContext.Provider>;
 }
 
-export function useUser() {
-  return useContext(UserContext);
+export function useAdminSession() {
+  const session = useContext(AdminSessionContext);
+  if (!session) throw new Error("useAdminSession must be used inside AdminSessionProvider");
+  return session;
 }

@@ -1,7 +1,18 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireAdmin } from "./lib/auth";
-import { getNextInvoiceReference as buildNextInvoiceReference } from "./lib/invoiceReference";
+import {
+  DEFAULT_INVOICE_LOGO_ALIGNMENT,
+  DEFAULT_INVOICE_LOGO_WIDTH_MM,
+  MAX_INVOICE_LOGO_WIDTH_MM,
+  MIN_INVOICE_LOGO_WIDTH_MM,
+  validateInvoiceFooterContent,
+} from "./lib/invoiceLayout";
+import {
+  getNextInvoiceReference as buildNextInvoiceReference,
+  invoiceReferenceDefaults,
+  validateReferencePattern,
+} from "./lib/invoiceReference";
 
 const defaults = {
   brandName: "GATEKEEPER",
@@ -10,11 +21,13 @@ const defaults = {
   email: "",
   phone: "",
   footer: "",
-  referencePrefix: "TLS",
-  referenceMonthCodes: "JA,FE,MR,AP,MY,JN,JL,AU,SP,OC,NO,DE",
-  referenceSeriesPrefix: "AA",
-  referencePattern: "{prefix}-{yy}{month}{project}-{series}{index}",
-  referenceSequenceScope: "project" as const,
+  invoiceLogoWidthMm: DEFAULT_INVOICE_LOGO_WIDTH_MM,
+  invoiceLogoAlignment: DEFAULT_INVOICE_LOGO_ALIGNMENT,
+  referencePrefix: invoiceReferenceDefaults.prefix,
+  referenceMonthCodes: invoiceReferenceDefaults.monthCodes,
+  referenceSeriesPrefix: invoiceReferenceDefaults.seriesPrefix,
+  referencePattern: invoiceReferenceDefaults.pattern,
+  referenceSequenceScope: invoiceReferenceDefaults.sequenceScope,
 };
 
 export const getSettings = query({
@@ -28,8 +41,57 @@ export const getSettings = query({
     return {
       ...defaults,
       ...settings,
+      invoiceLogoWidthMm: settings?.invoiceLogoWidthMm ?? DEFAULT_INVOICE_LOGO_WIDTH_MM,
+      invoiceLogoAlignment: settings?.invoiceLogoAlignment ?? DEFAULT_INVOICE_LOGO_ALIGNMENT,
+      invoiceFooterContent: settings?.invoiceFooterContent ?? null,
       logoUrl: settings?.logoStorageId ? await ctx.storage.getUrl(settings.logoStorageId) : null,
     };
+  },
+});
+
+export const saveInvoiceLayoutSettings = mutation({
+  args: {
+    token: v.string(),
+    invoiceLogoWidthMm: v.number(),
+    invoiceLogoAlignment: v.union(v.literal("left"), v.literal("center"), v.literal("right")),
+    invoiceFooterContent: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx, args.token);
+    if (
+      !Number.isFinite(args.invoiceLogoWidthMm) ||
+      args.invoiceLogoWidthMm < MIN_INVOICE_LOGO_WIDTH_MM ||
+      args.invoiceLogoWidthMm > MAX_INVOICE_LOGO_WIDTH_MM
+    ) {
+      throw new Error(`Logo width must be between ${MIN_INVOICE_LOGO_WIDTH_MM} and ${MAX_INVOICE_LOGO_WIDTH_MM} mm`);
+    }
+    validateInvoiceFooterContent(args.invoiceFooterContent);
+
+    const current = await ctx.db
+      .query("brandSettings")
+      .withIndex("by_key", (q) => q.eq("key", "default"))
+      .unique();
+    const layout = {
+      invoiceLogoWidthMm: Math.round(args.invoiceLogoWidthMm),
+      invoiceLogoAlignment: args.invoiceLogoAlignment,
+      invoiceFooterContent: args.invoiceFooterContent,
+      updatedAt: Date.now(),
+    };
+
+    if (current) {
+      await ctx.db.patch(current._id, layout);
+    } else {
+      await ctx.db.insert("brandSettings", {
+        key: "default",
+        ...defaults,
+        ...layout,
+        address: "",
+        email: "",
+        phone: "",
+        footer: "",
+        logoStorageId: undefined,
+      });
+    }
   },
 });
 
@@ -81,12 +143,7 @@ export const saveSettings = mutation({
     if (monthCodes.length !== 12 || monthCodes.some((code) => !/^[A-Za-z0-9]{1,4}$/.test(code))) {
       throw new Error("Enter 12 month codes, separated by commas");
     }
-    const referencePattern = args.referencePattern.trim() || defaults.referencePattern;
-    const tokens = [...referencePattern.matchAll(/\{([^}]+)\}/g)].map((match) => match[1]);
-    const allowedTokens = new Set(["prefix", "yy", "month", "project", "series", "index"]);
-    if (!tokens.includes("index") || referencePattern.length > 100 || tokens.some((token) => !allowedTokens.has(token))) {
-      throw new Error("Reference pattern must include {index}, use supported tokens, and be 100 characters or fewer");
-    }
+    const referencePattern = validateReferencePattern(args.referencePattern);
     if (args.referencePrefix.trim() && !/^[A-Za-z0-9]+$/.test(args.referencePrefix.trim())) {
       throw new Error("Reference prefix can only contain letters and numbers");
     }

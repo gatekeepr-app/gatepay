@@ -1,5 +1,12 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import {
+  billingTypeValidator,
+  invoiceStatusValidator,
+  inviteStatusValidator,
+  projectStatusValidator,
+  roleValidator,
+} from "./lib/validators";
 
 export default defineSchema({
   // Auth
@@ -20,6 +27,9 @@ export default defineSchema({
     email: v.string(),
     phone: v.string(),
     footer: v.string(),
+    invoiceFooterContent: v.optional(v.string()),
+    invoiceLogoWidthMm: v.optional(v.number()),
+    invoiceLogoAlignment: v.optional(v.union(v.literal("left"), v.literal("center"), v.literal("right"))),
     logoStorageId: v.optional(v.id("_storage")),
     referencePrefix: v.optional(v.string()),
     referenceMonthCodes: v.optional(v.string()),
@@ -33,7 +43,7 @@ export default defineSchema({
     email: v.string(),
     passwordHash: v.optional(v.string()),
     name: v.optional(v.string()),
-    role: v.union(v.literal("admin"), v.literal("user"), v.literal("super_admin"), v.literal("member")),
+    role: roleValidator,
     createdAt: v.number(),
   })
     .index("by_email", ["email"])
@@ -62,7 +72,7 @@ export default defineSchema({
     description: v.optional(v.string()),
     clientId: v.optional(v.id("clients")),
     createdBy: v.optional(v.id("users")),
-    status: v.union(v.literal("draft"), v.literal("active"), v.literal("paused"), v.literal("completed")),
+    status: projectStatusValidator,
     tags: v.array(v.string()),
     payCode: v.optional(v.string()),
     lastTransactionRef: v.optional(v.string()),
@@ -87,7 +97,7 @@ export default defineSchema({
   // Billing
   projectBilling: defineTable({
     projectId: v.id("projects"),
-    billingType: v.union(v.literal("monthly"), v.literal("yearly"), v.literal("per_project")),
+    billingType: billingTypeValidator,
     amount: v.number(),
     currency: v.string(),
     monthsCount: v.optional(v.number()),
@@ -103,11 +113,12 @@ export default defineSchema({
   // Invoices
   invoices: defineTable({
     invoiceNumber: v.string(),
+    shareToken: v.optional(v.string()),
     projectId: v.optional(v.id("projects")),
     clientId: v.optional(v.id("clients")),
     issueDate: v.number(),
     dueDate: v.optional(v.number()),
-    status: v.union(v.literal("draft"), v.literal("sent"), v.literal("paid"), v.literal("overdue"), v.literal("void")),
+    status: invoiceStatusValidator,
     currency: v.string(),
     subtotal: v.number(),
     taxRate: v.number(),
@@ -119,6 +130,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_invoice_number", ["invoiceNumber"])
+    .index("by_share_token", ["shareToken"])
     .index("by_project", ["projectId"])
     .index("by_client", ["clientId"])
     .index("by_status", ["status"]),
@@ -232,10 +244,10 @@ export default defineSchema({
   // Invitations
   invitations: defineTable({
     email: v.string(),
-    role: v.union(v.literal("admin"), v.literal("user"), v.literal("super_admin"), v.literal("member")),
+    role: roleValidator,
     invitedBy: v.optional(v.id("users")),
     token: v.string(),
-    status: v.union(v.literal("pending"), v.literal("accepted"), v.literal("revoked"), v.literal("expired")),
+    status: inviteStatusValidator,
     expiresAt: v.number(),
     acceptedAt: v.optional(v.number()),
     createdAt: v.number(),

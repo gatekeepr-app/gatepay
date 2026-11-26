@@ -2,10 +2,10 @@
 
 import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { useAdminSession } from "@/components/admin/UserProvider";
 
 export default function AnalyticsPage() {
-  const token = getStoredToken();
+  const { token } = useAdminSession();
   const stats = useQuery(api.analytics.getApiLogStats, token ? { hours: 24, token } : "skip");
 
   return (

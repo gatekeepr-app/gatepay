@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { useAdminSession } from "@/components/admin/UserProvider";
 import { formatMoney, formatDate } from "@/lib/admin/format";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -15,7 +15,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function RefundsPage() {
-  const token = getStoredToken();
+  const { token } = useAdminSession();
   const refunds = useQuery(api.refunds.list, token ? { token } : "skip");
 
   return (

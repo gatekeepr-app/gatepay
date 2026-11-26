@@ -1,15 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { getStoredToken, clearToken } from "@/integrations/convex/auth";
 import { Sidebar } from "@/components/admin/Sidebar";
-import { UserProvider } from "@/components/admin/UserProvider";
+import { AdminSessionProvider } from "@/components/admin/UserProvider";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isInvoicePrintPage = /^\/admin\/invoices\/[^/]+\/download\/?$/.test(pathname);
   const token = getStoredToken();
   const getMe = useMutation(api.auth.getMe);
   const [user, setUser] = useState<{ _id: string; email: string; name?: string; role: string } | null>(null);
@@ -80,19 +82,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   return (
-    <UserProvider>
-      <style>{`.scrollico{overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}.scrollico::-webkit-scrollbar{display:none}`}</style>
-      <div className="flex max-h-screen bg-background">
-        <Sidebar
-          user={user}
-          onSignOut={handleSignOut}
-          open={sidebarOpen}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
-          collapsed={sidebarCollapsed}
-          onCollapseToggle={toggleSidebarCollapsed}
-        />
-        <div className="scrollico flex-1 max-h-screen pt-12 md:pt-0">{children}</div>
-      </div>
-    </UserProvider>
+    <AdminSessionProvider session={{ user, token: token! }}>
+      {isInvoicePrintPage ? (
+        <div className="min-h-dvh bg-white">{children}</div>
+      ) : (
+        <>
+          <style>{`.scrollico{overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}.scrollico::-webkit-scrollbar{display:none}`}</style>
+          <div className="flex max-h-screen bg-background">
+            <Sidebar
+              user={user}
+              onSignOut={handleSignOut}
+              open={sidebarOpen}
+              onToggle={() => setSidebarOpen(!sidebarOpen)}
+              collapsed={sidebarCollapsed}
+              onCollapseToggle={toggleSidebarCollapsed}
+            />
+            <div className="scrollico flex-1 max-h-screen pt-12 md:pt-0">{children}</div>
+          </div>
+        </>
+      )}
+    </AdminSessionProvider>
   );
 }

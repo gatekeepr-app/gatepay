@@ -2,7 +2,7 @@
 
 import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { useAdminSession } from "@/components/admin/UserProvider";
 import { formatDate } from "@/lib/admin/format";
 
 const ACTION_LABELS: Record<string, string> = {
@@ -28,7 +28,7 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 export default function ActivityLogPage() {
-  const token = getStoredToken();
+  const { token } = useAdminSession();
   const logs = useQuery(api.admin_logs.list, token ? { token } : "skip");
 
   return (

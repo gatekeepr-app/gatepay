@@ -192,7 +192,6 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
   return (
     <main className="min-h-screen bg-muted/30 px-4 py-10">
       <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-2">
-        {/* Left: bKash instructions with image */}
         <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
           <h2 className="text-xl font-semibold">Pay with bKash</h2>
           <div className="mt-4 overflow-hidden rounded-xl">
@@ -214,7 +213,6 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
           </div>
         </div>
 
-        {/* Right: confirmation form */}
         <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
           <div className="flex items-center justify-center">
             <img src={gatepayLogo.src} alt="GatePay" className="h-[0.98rem] w-auto" />
@@ -362,7 +360,6 @@ export default function PayCodePage({ params }: { params: Promise<{ code: string
         </div>
       </div>
 
-      {/* Payment History */}
       {txs && txs.length > 0 && (
         <div className="mx-auto mt-8 max-w-5xl">
           <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">

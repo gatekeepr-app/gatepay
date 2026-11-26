@@ -6,7 +6,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { useAdminSession } from "@/components/admin/UserProvider";
 import { formatMoney, formatDate } from "@/lib/admin/format";
 
 const STATUS_TABS = [
@@ -25,7 +25,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function TransactionsPage() {
-  const token = getStoredToken();
+  const { token } = useAdminSession();
   const transactions = useQuery(api.transactions.list, token ? { token } : "skip");
   const counts = useQuery(api.transactions.getStatusCounts, token ? { token } : "skip");
   const updateStatus = useMutation(api.transactions.updateStatus);
@@ -55,7 +55,7 @@ export default function TransactionsPage() {
 
   const handleBatchStatus = async () => {
     if (selected.size === 0 || !batchStatus) return;
-    const token = getStoredToken() ?? "";
+    const authToken = token ?? "";
     let success = 0;
     for (const id of selected) {
       try {
@@ -84,7 +84,6 @@ export default function TransactionsPage() {
         </Link>
       </div>
 
-      {/* Status tabs */}
       <div className="mt-4 flex flex-wrap gap-2">
         {STATUS_TABS.map((tab) => (
           <button
@@ -109,7 +108,6 @@ export default function TransactionsPage() {
         ))}
       </div>
 
-      {/* Batch actions */}
       {selected.size > 0 && (
         <div className="mt-4 flex items-center gap-3 rounded-lg border border-border bg-card p-3">
           <span className="text-sm text-muted-foreground">
@@ -136,7 +134,6 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      {/* Transaction list */}
       <div className="mt-4 space-y-2">
         {filtered?.map((tx: any) => (
           <Link

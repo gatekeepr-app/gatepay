@@ -1,7 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { redirectLegacyPublicApi, respondToLegacyPreflight } from "@/lib/api/legacyAliases";
+
+export async function OPTIONS(request: NextRequest) {
+  return respondToLegacyPreflight(request);
+}
 
 export async function POST(request: NextRequest) {
-  const url = new URL(request.url);
-  url.pathname = url.pathname.replace("/api/public", "/api/v1/public");
-  return NextResponse.redirect(url.toString(), { status: 308 });
+  return redirectLegacyPublicApi(request);
 }

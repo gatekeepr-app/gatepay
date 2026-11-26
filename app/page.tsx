@@ -67,7 +67,6 @@ export default function HomePage() {
   );
 }
 
-/* ─── Hero ─────────────────────────────────────────────── */
 
 function Hero() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -78,7 +77,6 @@ function Hero() {
   ];
   return (
     <section className="relative overflow-hidden rounded-b-[28px] bg-ink text-ink-foreground">
-      {/* Nav */}
       <header className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 sm:py-6 lg:px-10">
         <Link href="/" className="text-xl font-bold tracking-tight sm:text-2xl">GatePay</Link>
         <nav className="hidden items-center gap-8 text-sm text-ink-foreground/70 md:flex">
@@ -96,7 +94,6 @@ function Hero() {
         </div>
       </header>
 
-      {/* Mobile menu */}
       {menuOpen && (
         <div className="border-t border-ink-foreground/10 px-4 pb-4 md:hidden">
           <nav className="flex flex-col gap-3 text-sm text-ink-foreground/70">
@@ -108,7 +105,6 @@ function Hero() {
         </div>
       )}
 
-      {/* Content */}
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 pb-12 pt-4 sm:px-6 sm:pb-16 sm:pt-6 lg:grid-cols-12 lg:px-10 lg:pb-24">
         <div className="lg:col-span-7">
           <h1 className="home-hero-title font-display text-[11vw] leading-[0.9] text-ink-foreground sm:text-[10vw] lg:text-[112px] lg:leading-[0.92]">
@@ -183,7 +179,6 @@ function Hero() {
   );
 }
 
-/* ─── About ────────────────────────────────────────────── */
 
 function About() {
   return (
@@ -237,7 +232,6 @@ function About() {
   );
 }
 
-/* ─── Features ─────────────────────────────────────────── */
 
 function Features() {
   const items = [
@@ -324,7 +318,6 @@ function Features() {
   );
 }
 
-/* ─── How It Works ─────────────────────────────────────── */
 
 function HowItWorks() {
   const steps = [
@@ -353,7 +346,6 @@ function HowItWorks() {
   );
 }
 
-/* ─── Partners / Monitoring ────────────────────────────── */
 
 function Monitoring() {
   return (
@@ -409,7 +401,6 @@ function Monitoring() {
   );
 }
 
-/* ─── Testimonial ──────────────────────────────────────── */
 
 function Testimonial() {
   return (
@@ -438,7 +429,6 @@ function Testimonial() {
   );
 }
 
-/* ─── Footer ───────────────────────────────────────────── */
 
 function Footer() {
   return (

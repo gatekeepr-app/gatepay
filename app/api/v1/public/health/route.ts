@@ -5,8 +5,8 @@ export async function OPTIONS(request: NextRequest) {
   return new Response(null, { status: 204, headers: { ...corsHeaders(request), ...SECURITY_HEADERS } });
 }
 
-export async function GET() {
-  return json({ status: "ok" });
+export async function GET(request: NextRequest) {
+  return json({ status: "ok" }, 200, undefined, request);
 }
 
 

@@ -1,8 +1,41 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { logAdminAction } from "./lib/helpers";
+import { logAdminAction } from "./lib/adminAuditLog";
+import { invoiceStatusValidator } from "./lib/validators";
 import { requireAdmin } from "./lib/auth";
 import { reserveNextInvoiceReference } from "./lib/invoiceReference";
+import { DEFAULT_INVOICE_LOGO_ALIGNMENT, DEFAULT_INVOICE_LOGO_WIDTH_MM } from "./lib/invoiceLayout";
+import { randomHex } from "./lib/crypto";
+
+type SharedInvoiceResult = {
+  invoice: {
+    invoiceNumber: string;
+    issueDate: number;
+    dueDate: number | null;
+    status: "sent" | "overdue" | "paid";
+    currency: string;
+    subtotal: number;
+    taxRate: number;
+    taxAmount: number;
+    total: number;
+    notes: string;
+  };
+  lineItems: Array<{ description: string; quantity: number; unitPrice: number }>;
+  project: { name: string } | null;
+  client: { name: string; businessName: string | null; email: string | null; phone: string | null } | null;
+  brand: {
+    brandName: string;
+    businessName: string;
+    address: string;
+    email: string;
+    phone: string;
+    footer: string;
+    invoiceFooterContent: string | null;
+    invoiceLogoWidthMm: number;
+    invoiceLogoAlignment: "left" | "center" | "right";
+    logoUrl: string | null;
+  };
+};
 
 export const list = query({
   args: { token: v.string() },
@@ -63,9 +96,111 @@ export const getDocumentData = query({
         email: settings?.email ?? "",
         phone: settings?.phone ?? "",
         footer: settings?.footer ?? "",
+        invoiceFooterContent: settings?.invoiceFooterContent ?? null,
+        invoiceLogoWidthMm: settings?.invoiceLogoWidthMm ?? DEFAULT_INVOICE_LOGO_WIDTH_MM,
+        invoiceLogoAlignment: settings?.invoiceLogoAlignment ?? DEFAULT_INVOICE_LOGO_ALIGNMENT,
         logoUrl: settings?.logoStorageId ? await ctx.storage.getUrl(settings.logoStorageId) : null,
       },
     };
+  },
+});
+
+export const getSharedInvoice = query({
+  args: { shareToken: v.string() },
+  handler: async (ctx, args): Promise<SharedInvoiceResult | null> => {
+    if (!/^[a-f0-9]{64}$/.test(args.shareToken)) return null;
+    const invoice = await ctx.db
+      .query("invoices")
+      .withIndex("by_share_token", (q) => q.eq("shareToken", args.shareToken))
+      .unique();
+    if (!invoice || (invoice.status !== "sent" && invoice.status !== "overdue" && invoice.status !== "paid")) return null;
+
+    const [items, project, client, settings] = await Promise.all([
+      ctx.db.query("invoiceLineItems").withIndex("by_invoice", (q) => q.eq("invoiceId", invoice._id)).take(500),
+      invoice.projectId ? ctx.db.get(invoice.projectId) : Promise.resolve(null),
+      invoice.clientId ? ctx.db.get(invoice.clientId) : Promise.resolve(null),
+      ctx.db.query("brandSettings").withIndex("by_key", (q) => q.eq("key", "default")).unique(),
+    ]);
+
+    return {
+      invoice: {
+        invoiceNumber: invoice.invoiceNumber,
+        issueDate: invoice.issueDate,
+        dueDate: invoice.dueDate ?? null,
+        status: invoice.status,
+        currency: invoice.currency,
+        subtotal: invoice.subtotal,
+        taxRate: invoice.taxRate,
+        taxAmount: invoice.taxAmount,
+        total: invoice.total,
+        notes: invoice.notes ?? "",
+      },
+      lineItems: items.sort((a, b) => a.position - b.position).map(({ description, quantity, unitPrice }) => ({ description, quantity, unitPrice })),
+      project: project ? { name: project.name } : null,
+      client: client ? {
+        name: client.name,
+        businessName: client.businessName ?? null,
+        email: client.email ?? null,
+        phone: client.phone ?? null,
+      } : null,
+      brand: {
+        brandName: settings?.brandName ?? "GATEKEEPER",
+        businessName: settings?.businessName ?? "GatePay",
+        address: settings?.address ?? "",
+        email: settings?.email ?? "",
+        phone: settings?.phone ?? "",
+        footer: settings?.footer ?? "",
+        invoiceFooterContent: settings?.invoiceFooterContent ?? null,
+        invoiceLogoWidthMm: settings?.invoiceLogoWidthMm ?? DEFAULT_INVOICE_LOGO_WIDTH_MM,
+        invoiceLogoAlignment: settings?.invoiceLogoAlignment ?? DEFAULT_INVOICE_LOGO_ALIGNMENT,
+        logoUrl: settings?.logoStorageId ? await ctx.storage.getUrl(settings.logoStorageId) : null,
+      },
+    };
+  },
+});
+
+export const createShareLink = mutation({
+  args: { id: v.id("invoices"), token: v.string() },
+  handler: async (ctx, args) => {
+    const admin = await requireAdmin(ctx, args.token);
+    const invoice = await ctx.db.get(args.id);
+    if (!invoice) throw new Error("Invoice not found");
+    if (!["sent", "overdue", "paid"].includes(invoice.status)) {
+      throw new Error("Generate the invoice before sharing it");
+    }
+    if (invoice.shareToken) return invoice.shareToken;
+
+    const shareToken = randomHex(32);
+    await ctx.db.patch(args.id, { shareToken, updatedAt: Date.now() });
+    await logAdminAction(ctx, {
+      action: "invoice.share_link.create",
+      entityType: "invoices",
+      entityId: args.id,
+      details: `Created share link for invoice ${invoice.invoiceNumber}`,
+      userId: admin._id,
+      userEmail: admin.email,
+    });
+    return shareToken;
+  },
+});
+
+export const revokeShareLink = mutation({
+  args: { id: v.id("invoices"), token: v.string() },
+  handler: async (ctx, args) => {
+    const admin = await requireAdmin(ctx, args.token);
+    const invoice = await ctx.db.get(args.id);
+    if (!invoice) throw new Error("Invoice not found");
+    if (!invoice.shareToken) return null;
+    await ctx.db.patch(args.id, { shareToken: undefined, updatedAt: Date.now() });
+    await logAdminAction(ctx, {
+      action: "invoice.share_link.revoke",
+      entityType: "invoices",
+      entityId: args.id,
+      details: `Revoked share link for invoice ${invoice.invoiceNumber}`,
+      userId: admin._id,
+      userEmail: admin.email,
+    });
+    return null;
   },
 });
 
@@ -202,7 +337,7 @@ export const create = mutation({
     issueDate: v.number(),
     invoiceNumber: v.optional(v.string()),
     dueDate: v.optional(v.number()),
-    status: v.optional(v.string()),
+    status: v.optional(invoiceStatusValidator),
     currency: v.optional(v.string()),
     subtotal: v.number(),
     taxRate: v.number(),
@@ -243,7 +378,7 @@ export const create = mutation({
       clientId: args.clientId,
       issueDate: args.issueDate,
       dueDate: args.dueDate,
-      status: (args.status as any) ?? "draft",
+      status: args.status ?? "draft",
       currency: args.currency ?? "BDT",
       subtotal: args.subtotal,
       taxRate: args.taxRate,
@@ -284,7 +419,7 @@ export const create = mutation({
 export const update = mutation({
   args: {
     id: v.id("invoices"),
-    status: v.optional(v.string()),
+    status: v.optional(invoiceStatusValidator),
     notes: v.optional(v.string()),
     dueDate: v.optional(v.number()),
     token: v.string(),
@@ -293,7 +428,7 @@ export const update = mutation({
     const admin = await requireAdmin(ctx, args.token);
     const { id, token: _, ...fields } = args;
     const invoice = await ctx.db.get(id);
-    await ctx.db.patch(id, { ...fields, updatedAt: Date.now() } as any);
+    await ctx.db.patch(id, { ...fields, ...(fields.status === "void" ? { shareToken: undefined } : {}), updatedAt: Date.now() });
     await logAdminAction(ctx, {
       action: "invoice.update",
       entityType: "invoices",
@@ -441,7 +576,7 @@ export const setInactive = mutation({
     if (!args.inactive && invoice.status !== "void") throw new Error("Only inactive invoices can be reactivated");
 
     const status = args.inactive ? "void" : "draft";
-    await ctx.db.patch(args.id, { status, updatedAt: Date.now() });
+    await ctx.db.patch(args.id, { status, ...(args.inactive ? { shareToken: undefined } : {}), updatedAt: Date.now() });
     await logAdminAction(ctx, {
       action: args.inactive ? "invoice.deactivate" : "invoice.reactivate",
       entityType: "invoices",

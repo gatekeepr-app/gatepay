@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **Invoice autosave and generation**: Invoice form changes save as Draft after a one-second pause; Generate invoice saves the latest edits and changes status to Sent.
+- **Invoice status and due dates**: Admins can update invoice status and add or change due dates from invoice details. Drafts remain editable from the detail page.
+- **Invoice PDF export**: Invoice list download controls open a print-ready A4 invoice using saved invoice, client, project, and brand settings; use the browser print dialog to save a PDF.
+- **Invoice branding**: Brand settings support business contact details, an uploaded invoice logo, footer text, and configurable invoice-reference numbering rules.
+- **Invoice payment lookup**: The `/payment` portal searches invoice references and project codes and accepts bKash transaction IDs for sent or overdue invoices.
+- **Payment portal**: Project pay links remain available at `/pay/:code`.
+
 ## 2.5.0 (2026-05-31)
 
 ### Added

@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { useAdminSession } from "@/components/admin/UserProvider";
 import { toast } from "sonner";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { formatDate } from "@/lib/admin/format";
@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/dialog";
 
 export default function ClientDetailPage({ params }: { params: Promise<{ clientId: string }> }) {
+  const { token } = useAdminSession();
   const { clientId } = use(params);
-  const token = getStoredToken();
   const client = useQuery(api.clients.getById, token ? { id: clientId as any, token } : "skip");
   const projects = useQuery(api.projects.list, token ? { token } : "skip");
   const updateClient = useMutation(api.clients.update);
@@ -53,7 +53,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ clientI
         brandName: form.brandName.trim() || undefined,
         phone: form.phone.trim() || undefined,
         notes: form.notes.trim() || undefined,
-        token: getStoredToken()!,
+        token,
       });
       toast.success("Client updated");
       setEditOpen(false);
@@ -65,7 +65,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ clientI
 
   const handleDelete = async () => {
     if (!confirm("Delete this client? This cannot be undone.")) return;
-    await deleteClient({ id: clientId as any, token: getStoredToken()! });
+    await deleteClient({ id: clientId as any, token });
     toast.success("Client deleted");
   };
 
@@ -85,7 +85,6 @@ export default function ClientDetailPage({ params }: { params: Promise<{ clientI
         </button>
       </div>
 
-      {/* Details */}
       <section className="mt-6 rounded-xl border border-border bg-card p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Details</h2>
         <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
@@ -103,7 +102,6 @@ export default function ClientDetailPage({ params }: { params: Promise<{ clientI
         )}
       </section>
 
-      {/* Linked projects */}
       <section className="mt-4 rounded-xl border border-border bg-card p-5">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Projects</h2>
         {!clientProjects || clientProjects.length === 0 ? (
@@ -127,7 +125,6 @@ export default function ClientDetailPage({ params }: { params: Promise<{ clientI
 
       <button onClick={handleDelete} className="mt-6 text-xs text-destructive hover:underline">Delete client</button>
 
-      {/* Edit dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>

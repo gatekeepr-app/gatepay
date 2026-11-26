@@ -3,11 +3,11 @@
 import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import { formatMoney } from "@/lib/admin/format";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { useAdminSession } from "@/components/admin/UserProvider";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 export function RevenueForecast() {
-  const token = getStoredToken();
+  const { token } = useAdminSession();
   const forecast = useQuery(
     api.overdue.getRevenueForecast,
     token ? { token, months: 6 } : "skip"

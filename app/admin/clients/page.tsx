@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { useAdminSession } from "@/components/admin/UserProvider";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function ClientsPage() {
-  const token = getStoredToken();
+  const { token } = useAdminSession();
   const clients = useQuery(api.clients.list, token ? { token } : "skip");
 
   return (

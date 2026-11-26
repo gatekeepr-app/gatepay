@@ -8,13 +8,13 @@ const ALLOWED_ORIGINS = [
   "http://localhost:5173",
 ];
 
-function getCorsOrigin(request: Request): string {
-  const origin = request.headers.get("origin");
+function getCorsOrigin(request?: Request): string {
+  const origin = request?.headers.get("origin");
   if (origin && ALLOWED_ORIGINS.includes(origin)) return origin;
   return ALLOWED_ORIGINS[0];
 }
 
-export function corsHeaders(request: Request) {
+export function corsHeaders(request?: Request) {
   return {
     "Access-Control-Allow-Origin": getCorsOrigin(request),
     "Access-Control-Allow-Methods": "POST, OPTIONS, GET",
@@ -33,21 +33,7 @@ export const SECURITY_HEADERS = {
 
 export const MAX_BODY_BYTES = 10_240;
 
-export function json(body: unknown, status = 200, extraHeaders?: Record<string, string>) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": ALLOWED_ORIGINS[0],
-      "Access-Control-Allow-Methods": "POST, OPTIONS, GET",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization, Idempotency-Key",
-      ...SECURITY_HEADERS,
-      ...extraHeaders,
-    },
-  });
-}
-
-export function jsonFromRequest(body: unknown, request: Request, status = 200, extraHeaders?: Record<string, string>) {
+export function json(body: unknown, status = 200, extraHeaders?: Record<string, string>, request?: Request) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
@@ -57,14 +43,6 @@ export function jsonFromRequest(body: unknown, request: Request, status = 200, e
       ...extraHeaders,
     },
   });
-}
-
-export function jsonOk(data: unknown, requestId?: string) {
-  return json(data, 200, requestId ? { "x-request-id": requestId } : undefined);
-}
-
-export function jsonError(error: string, status: number, requestId?: string) {
-  return json({ error }, status, requestId ? { "x-request-id": requestId } : undefined);
 }
 
 export function generateRequestId(): string {
@@ -121,18 +99,26 @@ export async function checkRateLimit(
   return { blocked: false };
 }
 
-export function checkCsrf(request: Request): boolean {
-  const origin = request.headers.get("origin");
-  const referer = request.headers.get("referer");
-  const url = origin || referer;
-  if (!url) return false;
-  return ALLOWED_ORIGINS.some((allowed) => url.startsWith(allowed));
-}
-
 export function checkBodySize(request: Request): boolean {
   const contentLength = request.headers.get("content-length");
   if (contentLength && parseInt(contentLength, 10) > MAX_BODY_BYTES) return false;
   return true;
+}
+
+export async function readRequestJson(request: Request): Promise<
+  | { ok: true; body: unknown }
+  | { ok: false; status: 400 | 413; error: "invalid_json" | "body_too_large" }
+> {
+  if (!checkBodySize(request)) return { ok: false, status: 413, error: "body_too_large" };
+  try {
+    const text = await request.text();
+    if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) {
+      return { ok: false, status: 413, error: "body_too_large" };
+    }
+    return { ok: true, body: JSON.parse(text) };
+  } catch {
+    return { ok: false, status: 400, error: "invalid_json" };
+  }
 }
 
 export async function logApiCall(params: {
@@ -160,6 +146,42 @@ export async function logApiCall(params: {
   } catch {
     // logging failures are non-fatal
   }
+}
+
+export function createLoggedApiRequest(request: Request, path: string) {
+  const startedAt = Date.now();
+  const requestId = generateRequestId();
+  const ip = getClientIp(request);
+  const ipHash = hashIp(ip);
+  let statusCode = 200;
+  let error: string | undefined;
+  let apiKeyPrefix: string | undefined;
+
+  return {
+    requestId,
+    ip,
+    ipHash,
+    setApiKeyPrefix(prefix: string) {
+      apiKeyPrefix = prefix;
+    },
+    respond(status: number, body: unknown, errorMessage?: string) {
+      statusCode = status;
+      error = errorMessage;
+      return json(body, status, { "x-request-id": requestId }, request);
+    },
+    finish() {
+      return logApiCall({
+        requestId,
+        method: request.method,
+        path,
+        statusCode,
+        durationMs: Date.now() - startedAt,
+        apiKeyPrefix,
+        ipHash,
+        error,
+      });
+    },
+  };
 }
 
 export { extractBearer, hashKey };

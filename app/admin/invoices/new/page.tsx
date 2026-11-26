@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/../convex/_generated/api";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { useAdminSession } from "@/components/admin/UserProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,10 +29,10 @@ const fromDateInput = (value: string) => {
 };
 
 export default function NewInvoicePage() {
+  const { token } = useAdminSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const editInvoiceId = searchParams.get("invoiceId");
-  const token = getStoredToken();
   const projects = useQuery(api.projects.list, token ? { token } : "skip");
   const clients = useQuery(api.clients.list, token ? { token } : "skip");
   const brand = useQuery(api.brand.getSettings, token ? { token } : "skip");
@@ -117,7 +117,7 @@ export default function NewInvoicePage() {
           quantity: item.quantity,
           unitPrice: item.unitPrice,
         })),
-      token: getStoredToken()!,
+      token,
     });
     if (!savedInvoiceId) {
       setSavedInvoiceId(id);
@@ -185,7 +185,7 @@ export default function NewInvoicePage() {
     setAutosaveStatus("saving");
     try {
       const id = hasUnsavedChanges || !savedInvoiceId ? await persistDraft() : savedInvoiceId;
-      await finalizeDraft({ id: id as any, token: getStoredToken()! });
+      await finalizeDraft({ id: id as any, token });
       toast.success("Invoice generated and marked as sent");
       router.push(`/admin/invoices/${id}`);
     } catch (error: any) {
@@ -331,6 +331,9 @@ export default function NewInvoicePage() {
               email={brand?.email ?? ""}
               phone={brand?.phone ?? ""}
               footer={brand?.footer ?? ""}
+              invoiceFooterContent={brand?.invoiceFooterContent}
+              invoiceLogoWidthMm={brand?.invoiceLogoWidthMm}
+              invoiceLogoAlignment={brand?.invoiceLogoAlignment}
               logoUrl={brand?.logoUrl ?? null}
               projectName={project?.name}
               clientName={client?.businessName || client?.name}

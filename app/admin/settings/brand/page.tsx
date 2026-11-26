@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
-import { getStoredToken } from "@/integrations/convex/auth";
+import { useAdminSession } from "@/components/admin/UserProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,7 +44,7 @@ const emptyForm: BrandForm = {
 };
 
 export default function BrandSettingsPage() {
-  const token = getStoredToken();
+  const { token } = useAdminSession();
   const settings = useQuery(api.brand.getSettings, token ? { token } : "skip");
   const generateLogoUploadUrl = useMutation(api.brand.generateLogoUploadUrl);
   const saveSettings = useMutation(api.brand.saveSettings);

@@ -3,7 +3,7 @@ import { mutation, query } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { sha256, randomToken } from "./lib/crypto";
 import { requireAdmin } from "./lib/auth";
-import { logAdminAction } from "./lib/helpers";
+import { logAdminAction } from "./lib/adminAuditLog";
 
 export const list = query({
   args: { token: v.string() },
